@@ -15,6 +15,7 @@ import Inventory from "./pages/Inventory";
 import InventoryDashboard from "./pages/InventoryDashboard";
 import Expenses from "./pages/Expenses";
 import ExpenseReports from "./pages/ExpenseReports";
+import Users from "./pages/Users";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -106,6 +107,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredPermission="view_expense_reports">
             <ExpenseReports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute requiredPermission="view_users">
+            <Users />
           </ProtectedRoute>
         }
       />

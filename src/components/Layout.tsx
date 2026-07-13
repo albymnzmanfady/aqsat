@@ -15,7 +15,6 @@ import {
   Settings,
   Bell,
   Menu,
-  X,
   Sparkles,
   User,
   MessageSquareText,
@@ -26,6 +25,8 @@ import {
   PieChart,
   LogOut,
   Shield,
+  UserCog,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -39,7 +40,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { user, logout, hasPermission, isAdmin } = useAuth();
 
   const navItems = [
-    { path: "/", label: "الرئيسية", icon: Home, color: "from-violet-500 to-purple-600", permission: null },
+    { path: "/", label: "الرئيسية", icon: LayoutDashboard, color: "from-violet-500 to-purple-600", permission: null },
     { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500", permission: "view_customers" as const },
     { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500", permission: "view_contracts" as const },
     { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500", permission: "view_installments" as const },
@@ -64,10 +65,11 @@ const Layout = ({ children }: LayoutProps) => {
         { path: "/expense-reports", label: "التقارير", icon: PieChart, permission: "view_expense_reports" as const },
       ],
     },
+    { path: "/users", label: "المستخدمين", icon: UserCog, color: "from-indigo-500 to-violet-600", permission: "view_users" as const },
     { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
   ];
 
-  // Filter nav items based on permissions
+  // تصفية العناصر حسب الصلاحية
   const filteredNavItems = navItems.filter((item) => {
     if (item.permission === null) return true;
     return hasPermission(item.permission);
@@ -76,27 +78,30 @@ const Layout = ({ children }: LayoutProps) => {
   const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+    if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
 
   const roleLabels: Record<string, string> = {
-    admin: "المدير",
+    admin: "مدير النظام",
     supervisor: "مشرف مالي",
     collector: "محصل",
   };
 
+  const roleColors: Record<string, string> = {
+    admin: "from-amber-500 to-orange-500",
+    supervisor: "from-blue-500 to-cyan-500",
+    collector: "from-emerald-500 to-teal-500",
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex">
-      {/* Decorative background elements */}
+      {/* خلفيات زخرفية */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-20 w-72 h-72 bg-purple-200/30 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-purple-100/20 to-blue-100/20 rounded-full blur-3xl" />
       </div>
 
-      {/* Mobile Header */}
+      {/* رأس الموبايل */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl z-40 border-b border-white/20">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
@@ -120,14 +125,17 @@ const Layout = ({ children }: LayoutProps) => {
               <Bell className="h-5 w-5 text-slate-600" />
               <span className="absolute top-2 left-2 h-2 w-2 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full animate-pulse" />
             </Button>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-purple-500/30">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br",
+              roleColors[user?.role || "admin"]
+            )}>
               {user?.name?.charAt(0) || "م"}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* طبقة التعتيم للقائمة الجانبية في الموبايل */}
       <div
         className={cn(
           "lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300",
@@ -136,7 +144,7 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* Sidebar (Desktop only) */}
+      {/* القائمة الجانبية (ديسكتوب) */}
       <aside
         className={cn(
           "hidden lg:flex fixed top-0 right-0 h-full w-72 z-50 transition-transform duration-300 ease-out lg:translate-x-0 lg:static lg:border-l border-white/20 flex-col",
@@ -144,25 +152,26 @@ const Layout = ({ children }: LayoutProps) => {
           sidebarOpen ? "translate-x-0 shadow-2xl" : "translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Sidebar Header */}
+        {/* رأس القائمة */}
         <div className="p-5 border-b border-slate-100/80">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden">
-                <Sparkles className="h-6 w-6 text-white relative z-10" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-              </div>
-              <div>
-                <h1 className="font-bold text-slate-800 text-lg tracking-tight">أقساط</h1>
-                <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden">
+              <Sparkles className="h-6 w-6 text-white relative z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
+            <div>
+              <h1 className="font-bold text-slate-800 text-lg tracking-tight">أقساط</h1>
+              <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
             </div>
           </div>
         </div>
 
-        {/* User Profile Card */}
+        {/* بطاقة المستخدم */}
         <div className="p-4">
-          <div className="p-4 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl relative overflow-hidden">
+          <div className={cn(
+            "p-4 rounded-2xl relative overflow-hidden bg-gradient-to-br",
+            roleColors[user?.role || "admin"]
+          )}>
             <div className="absolute inset-0">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
               <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
@@ -182,13 +191,12 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* التنقل */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">القائمة الرئيسية</p>
 
           {filteredNavItems.map((item) => {
             if (item.subItems) {
-              // Check if any sub item is visible based on permission
               const visibleSubs = item.subItems.filter((sub) => {
                 if (!sub.permission) return true;
                 return hasPermission(sub.permission);
@@ -267,19 +275,8 @@ const Layout = ({ children }: LayoutProps) => {
           })}
         </nav>
 
-        {/* Sidebar Footer */}
+        {/* تذييل القائمة */}
         <div className="p-3 border-t border-slate-100/80 space-y-2">
-          <div className="p-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <MessageSquareText className="h-4 w-4 text-white" />
-              </div>
-              <div className="text-xs text-slate-600">
-                <p className="font-semibold text-slate-700">واتساب متصل</p>
-                <p className="text-slate-500">جاهز للإشعارات</p>
-              </div>
-            </div>
-          </div>
           <Button
             variant="ghost"
             onClick={logout}
@@ -291,14 +288,14 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* المحتوى الرئيسي */}
       <main className="flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0">
         <div className="p-4 lg:p-6 xl:p-8">
           {children}
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* التنقل السفلي للموبايل */}
       <MobileNav />
     </div>
   );

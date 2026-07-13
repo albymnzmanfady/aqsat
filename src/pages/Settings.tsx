@@ -248,7 +248,7 @@ const Settings = () => {
                   )}
 
                   <div className="flex-1 space-y-2">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -264,7 +264,7 @@ const Settings = () => {
                         <Upload className="h-4 w-4" />
                         رفع صورة
                       </Button>
-                      <span className="text-sm text-slate-400 self-center">أو</span>
+                      <span className="text-sm text-slate-400 self-center gap-1">أو</span>
                       <Input
                         value={
                           localSettings.logoUrl.startsWith("data:") ? "" : localSettings.logoUrl
@@ -275,7 +275,7 @@ const Settings = () => {
                             logoUrl: e.target.value,
                           })
                         }
-                        className="rounded-xl h-11 bg-white/50 backdrop-blur-sm flex-1"
+                        className="rounded-xl h-11 bg-white/50 backdrop-blur-sm min-w-[200px]"
                         placeholder="رابط الصورة (URL)"
                         dir="ltr"
                       />
@@ -444,9 +444,9 @@ const Settings = () => {
                     <SelectContent>
                       {providers.map((p) => (
                         <SelectItem key={p.value} value={p.value}>
-                          <div>
+                          <div className="flex items-center gap-2">
                             <span>{p.label}</span>
-                            <span className="text-xs text-slate-400 mr-2">{p.desc}</span>
+                            <span className="text-xs text-slate-400">{p.desc}</span>
                           </div>
                         </SelectItem>
                       ))}

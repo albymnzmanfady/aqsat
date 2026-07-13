@@ -36,6 +36,8 @@ import {
   ChevronLeft,
   PanelLeftOpen,
   PanelLeftClose,
+  ChevronDown,
+  RefreshCw,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -61,7 +63,7 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const navItems = [
-    { path: "/", label: "الرئيسية", icon: LayoutDashboard, color: "from-violet-500 to-purple-600", permission: null },
+    { path: "/", label: "الرئيسية", icon: LayoutDashboard, color: "from-violet-500 to-purple-600", permission: null as string | null },
     { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500", permission: "view_customers" as const },
     { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500", permission: "view_contracts" as const },
     { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500", permission: "view_installments" as const },
@@ -113,7 +115,7 @@ const Layout = ({ children }: LayoutProps) => {
     collector: "from-emerald-500 to-teal-500",
   };
 
-  // Helper to render nav item with optional tooltip when collapsed
+  // Helper to render nav item
   const renderNavItem = (item: typeof navItems[number]) => {
     if (item.subItems) {
       const visibleSubs = item.subItems.filter((sub) => {
@@ -126,7 +128,7 @@ const Layout = ({ children }: LayoutProps) => {
         const firstSub = visibleSubs[0];
         const isParentActive = visibleSubs.some(s => isActive(s.path!));
         return (
-          <Tooltip key={item.label}>
+          <Tooltip key={item.label} delayDuration={300}>
             <TooltipTrigger asChild>
               <Link to={firstSub.path!}>
                 <Button
@@ -134,14 +136,14 @@ const Layout = ({ children }: LayoutProps) => {
                   className={cn(
                     "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
                     isParentActive
-                      ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 shadow-sm"
+                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
                       : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
                   )}
                 >
                   <div className={cn(
                     "w-9 h-9 rounded-xl flex items-center justify-center",
                     isParentActive
-                      ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
+                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
                       : "bg-slate-100 text-slate-500"
                   )}>
                     <item.icon className="h-5 w-5" />
@@ -171,17 +173,17 @@ const Layout = ({ children }: LayoutProps) => {
                   className={cn(
                     "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
                     subActive
-                      ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 font-semibold shadow-sm"
+                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
                       : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
                   )}
                 >
                   {subActive && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-rose-500 to-pink-600 rounded-l-full" />
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
                   )}
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
                     subActive
-                      ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
+                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
                       : "bg-slate-100 text-slate-500"
                   )}>
                     <sub.icon className="h-4 w-4" />
@@ -264,11 +266,12 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/10 to-slate-50 flex">
-      {/* خلفيات زخرفية */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex dot-grid-bg">
+      {/* خلفيات زخرفية ثابتة تمتد مع الصفحة */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-200/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-200/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-200/5 rounded-full blur-3xl" />
       </div>
 
       {/* رأس الموبايل */}
@@ -279,7 +282,7 @@ const Layout = ({ children }: LayoutProps) => {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(true)}
-              className="h-10 w-10 rounded-xl"
+              className="h-10 w-10 rounded-xl active:scale-90"
             >
               <Menu className="h-5 w-5 text-slate-600" />
             </Button>
@@ -291,7 +294,7 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl active:scale-90">
               <Bell className="h-5 w-5 text-slate-600" />
               <span className="absolute top-2 left-2 h-2 w-2 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full animate-pulse" />
             </Button>
@@ -314,11 +317,11 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* القائمة الجانبية - ديسكتوب مع إمكانية التصغير */}
+      {/* القائمة الجانبية - ديسكتوب */}
       <aside
         className={cn(
           "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-white/20 flex-col",
-          "bg-white/80 backdrop-blur-xl transition-all duration-300 ease-out",
+          "bg-white/80 backdrop-blur-xl transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50",
           sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
@@ -356,7 +359,7 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* بطاقة المستخدم - مصغرة عند collapse */}
+        {/* بطاقة المستخدم */}
         <div className={cn("p-4", sidebarCollapsed && "px-2")}>
           <div className={cn(
             "rounded-2xl relative overflow-hidden bg-gradient-to-br",
@@ -388,7 +391,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* التنقل */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden scroll-smooth">
           {!sidebarCollapsed && (
             <p className="px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">القائمة الرئيسية</p>
           )}
@@ -418,7 +421,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Button
                   variant="ghost"
                   onClick={logout}
-                  className="h-11 w-11 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                  className="h-11 w-11 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 active:scale-90"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -460,7 +463,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}>
         <div
           key={location.pathname}
-          className="max-w-7xl mx-auto p-4 lg:p-6 xl:p-8 page-enter-animation"
+          className="max-w-7xl mx-auto p-4 lg:p-6 xl:p-8 page-enter-animation page-wrapper"
         >
           {children}
         </div>

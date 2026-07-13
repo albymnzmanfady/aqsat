@@ -1,4 +1,19 @@
-/* آخـر التعديلات – تمت الإضافة */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dot grid background pattern */
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50;
+  }
+  .dot-grid-bg {
+    background-image: radial-gradient(circle, #cbd5e1 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
+    background-position: 0 0;
+    background-repeat: repeat;
+  }
+}
 
 /* Button click feedback */
 .active-scale:active,
@@ -63,4 +78,26 @@ html {
 
 .counter-pop {
   animation: counter-pop 0.3s ease-out;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 12px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Ensure all pages have min-height for background */
+.page-wrapper {
+  min-height: 100vh;
+  position: relative;
 }

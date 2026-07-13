@@ -17,6 +17,8 @@ import {
   Receipt,
   PieChart,
   LogOut,
+  LayoutDashboard,
+  Plus,
 } from "lucide-react";
 import {
   Sheet,
@@ -26,18 +28,19 @@ import {
 import { Button } from "@/components/ui/button";
 
 const mainNavItems = [
-  { path: "/", label: "الرئيسية", icon: Home, permission: null },
+  { path: "/", label: "الرئيسية", icon: LayoutDashboard, permission: null as string | null },
   { path: "/customers", label: "العملاء", icon: Users, permission: "view_customers" as const },
   { path: "/contracts", label: "العقود", icon: FileText, permission: "view_contracts" as const },
   { path: "/installments", label: "الأقساط", icon: CreditCard, permission: "view_installments" as const },
+  { path: "/expenses", label: "المصروفات", icon: Receipt, permission: "view_expenses" as const },
 ];
 
 const moreItems = [
   { path: "/products", label: "المنتجات", icon: Package, color: "from-orange-500 to-red-500", permission: "view_products" as const },
   { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp, color: "from-teal-500 to-emerald-600", permission: "view_inventory" as const },
   { path: "/inventory-dashboard", label: "تقارير المخزون", icon: BarChart3, color: "from-cyan-500 to-blue-600", permission: "view_inventory" as const },
-  { path: "/expenses", label: "المصروفات", icon: Receipt, color: "from-rose-500 to-pink-600", permission: "view_expenses" as const },
   { path: "/expense-reports", label: "تقارير المصروفات", icon: PieChart, color: "from-emerald-500 to-teal-500", permission: "view_expense_reports" as const },
+  { path: "/users", label: "المستخدمين", icon: Users, color: "from-indigo-500 to-violet-600", permission: "view_users" as const },
   { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
 ];
 
@@ -57,9 +60,10 @@ const MobileNav = () => {
   return (
     <>
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom shadow-lg shadow-slate-200/50">
         <div className="flex items-center justify-around h-16 px-2">
-          {visibleMainItems.map((item) => {
+          {/* عرض أول 4 عناصر فقط + زر المزيد */}
+          {visibleMainItems.slice(0, 4).map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -90,7 +94,7 @@ const MobileNav = () => {
             );
           })}
 
-          {/* المزيد - يظهر فقط إذا كان فيه عناصر */}
+          {/* زر المزيد */}
           {visibleMoreItems.length > 0 && (
             <button
               onClick={() => setSheetOpen(true)}
@@ -115,15 +119,44 @@ const MobileNav = () => {
 
       {/* Bottom Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl pb-8 max-h-[70vh] overflow-y-auto">
+        <SheetContent side="bottom" className="rounded-t-3xl pb-8 max-h-[75vh] overflow-y-auto">
           <div className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                <Grid3X3 className="h-5 w-5 text-white" />
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-md">
+                <Grid3X3 className="h-6 w-6 text-white" />
               </div>
-              <h2 className="text-lg font-bold text-slate-800">القائمة الكاملة</h2>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">القائمة الكاملة</h2>
+                <p className="text-xs text-slate-500">جميع صفحات النظام</p>
+              </div>
             </div>
+
             <div className="grid grid-cols-3 gap-3">
+              {/* عرض العناصر الرئيسية المتبقية + كل العناصر الإضافية */}
+              {visibleMainItems.slice(4).map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSheetOpen(false)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200",
+                      isActive
+                        ? "bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-200/50"
+                        : "bg-slate-50/50 hover:bg-slate-100/50 border border-transparent"
+                    )}
+                  >
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-sm">
+                      <item.icon className="h-6 w-6" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 text-center leading-tight">
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+
               {visibleMoreItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
@@ -157,7 +190,7 @@ const MobileNav = () => {
               <Button
                 variant="ghost"
                 onClick={() => { logout(); setSheetOpen(false); }}
-                className="w-full justify-center gap-2 h-12 rounded-xl text-rose-600 hover:bg-rose-50"
+                className="w-full justify-center gap-2 h-12 rounded-xl text-rose-600 hover:bg-rose-50 active:scale-[0.98]"
               >
                 <LogOut className="h-5 w-5" />
                 <span>تسجيل الخروج</span>

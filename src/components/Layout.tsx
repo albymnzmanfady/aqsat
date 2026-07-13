@@ -276,8 +276,8 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-200/5 rounded-full blur-3xl" />
       </div>
 
-      {/* رأس الموبايل - crystal style */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 crystal z-40">
+      {/* رأس الموبايل - خلفية صلبة */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200/80 z-40 shadow-sm">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
             <Button
@@ -325,17 +325,17 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* القائمة الجانبية - ديسكتوب - crystal style */}
+      {/* القائمة الجانبية - ديسكتوب - خلفية صلبة */}
       <aside
         className={cn(
-          "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-white/20 flex-col",
-          "crystal transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50",
+          "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-slate-200 flex-col",
+          "bg-white transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50",
           sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
         {/* رأس القائمة */}
         <div className={cn(
-          "p-5 border-b border-white/20 flex items-center",
+          "p-5 border-b border-slate-100 flex items-center",
           sidebarCollapsed ? "justify-center" : "justify-between"
         )}>
           {sidebarCollapsed ? (
@@ -379,10 +379,10 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* بطاقة المستخدم - crystal-gradient */}
+        {/* بطاقة المستخدم - خلفية متدرجة صلبة */}
         <div className={cn("p-4", sidebarCollapsed && "px-2")}>
           <div className={cn(
-            "rounded-2xl relative overflow-hidden crystal-gradient",
+            "rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500",
             sidebarCollapsed ? "p-2" : "p-4"
           )}>
             <div className="absolute inset-0 pointer-events-none">
@@ -393,7 +393,7 @@ const Layout = ({ children }: LayoutProps) => {
               "relative z-10 flex items-center",
               sidebarCollapsed ? "justify-center" : "gap-3"
             )}>
-              <div className="w-12 h-12 rounded-xl bg-white/30 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
                 {user?.name?.charAt(0) || "م"}
               </div>
               {!sidebarCollapsed && (
@@ -433,7 +433,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* تذييل القائمة */}
-        <div className={cn("p-3 border-t border-white/20", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
+        <div className={cn("p-3 border-t border-slate-100", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
           {sidebarCollapsed ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
@@ -468,7 +468,7 @@ const Layout = ({ children }: LayoutProps) => {
           variant="ghost"
           size="icon"
           onClick={toggleCollapse}
-          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white/80 backdrop-blur-sm shadow-md border border-slate-200 text-slate-500 hover:text-slate-700 active:scale-90"
+          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white shadow-md border border-slate-200 text-slate-500 hover:text-slate-700 active:scale-90"
           title="توسيع القائمة"
         >
           <PanelLeftOpen className="h-4 w-4" />

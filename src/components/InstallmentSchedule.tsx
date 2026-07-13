@@ -4,6 +4,11 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Installment } from "@/types";
 import { CheckCircle, Clock, Calendar, Send, Loader2 } from "lucide-react";
@@ -59,7 +64,7 @@ const InstallmentSchedule = ({
           <div
             key={installment.id}
             className={cn(
-              "flex items-center justify-between p-3 rounded-xl transition-all",
+              "flex items-center justify-between p-3 rounded-xl transition-all active:scale-[0.99]",
               installment.isPaid
                 ? "bg-emerald-50/50 border border-emerald-100/50"
                 : "bg-white/80 border border-slate-100"
@@ -102,31 +107,43 @@ const InstallmentSchedule = ({
 
               <div className="flex gap-1">
                 {!readOnly && !installment.isPaid && onMarkPaid && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => onMarkPaid(installment.id)}
-                    title="تسديد"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                  </Button>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 active:scale-90"
+                        onClick={() => onMarkPaid(installment.id)}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="rounded-lg text-xs">
+                      <p>تسديد القسط</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50"
-                  onClick={() => handleSendReminder(installment)}
-                  disabled={sendingTo === installment.id}
-                  title="إرسال إشعار واتساب"
-                >
-                  {sendingTo === installment.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
+                      onClick={() => handleSendReminder(installment)}
+                      disabled={sendingTo === installment.id}
+                    >
+                      {sendingTo === installment.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="rounded-lg text-xs">
+                    <p>إرسال إشعار واتساب</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>

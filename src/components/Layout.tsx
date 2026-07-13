@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import MobileNav from "@/components/MobileNav";
+import ScrollToTop from "@/components/ScrollToTop";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Home,
   Users,
@@ -43,7 +49,6 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const { user, logout, hasPermission } = useAuth();
 
-  // تذكر حالة التصغير في localStorage
   useEffect(() => {
     const saved = localStorage.getItem("sidebar_collapsed");
     if (saved === "true") setSidebarCollapsed(true);
@@ -85,7 +90,6 @@ const Layout = ({ children }: LayoutProps) => {
     { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
   ];
 
-  // تصفية العناصر حسب الصلاحية
   const filteredNavItems = navItems.filter((item) => {
     if (item.permission === null) return true;
     return hasPermission(item.permission);
@@ -107,6 +111,156 @@ const Layout = ({ children }: LayoutProps) => {
     admin: "from-amber-500 to-orange-500",
     supervisor: "from-blue-500 to-cyan-500",
     collector: "from-emerald-500 to-teal-500",
+  };
+
+  // Helper to render nav item with optional tooltip when collapsed
+  const renderNavItem = (item: typeof navItems[number]) => {
+    if (item.subItems) {
+      const visibleSubs = item.subItems.filter((sub) => {
+        if (!sub.permission) return true;
+        return hasPermission(sub.permission);
+      });
+      if (visibleSubs.length === 0) return null;
+
+      if (sidebarCollapsed) {
+        const firstSub = visibleSubs[0];
+        const isParentActive = visibleSubs.some(s => isActive(s.path!));
+        return (
+          <Tooltip key={item.label}>
+            <TooltipTrigger asChild>
+              <Link to={firstSub.path!}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
+                    isParentActive
+                      ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 shadow-sm"
+                      : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                  )}
+                >
+                  <div className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center",
+                    isParentActive
+                      ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
+                      : "bg-slate-100 text-slate-500"
+                  )}>
+                    <item.icon className="h-4.5 w-4.5" />
+                  </div>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="rounded-xl text-sm">
+              <p>{item.label}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
+
+      return (
+        <div key={item.label} className="space-y-1">
+          <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">
+            <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${item.color}`} />
+            <span>{item.label}</span>
+          </div>
+          {visibleSubs.map((sub) => {
+            const subActive = sub.path ? isActive(sub.path) : false;
+            return (
+              <Link key={sub.path} to={sub.path}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
+                    subActive
+                      ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 font-semibold shadow-sm"
+                      : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                  )}
+                >
+                  {subActive && (
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-rose-500 to-pink-600 rounded-l-full" />
+                  )}
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
+                    subActive
+                      ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
+                      : "bg-slate-100 text-slate-500"
+                  )}>
+                    <sub.icon className="h-4 w-4" />
+                  </div>
+                  <span className="flex-1 text-right truncate">{sub.label}</span>
+                </Button>
+              </Link>
+            );
+          })}
+        </div>
+      );
+    }
+
+    const isItemActive = isActive(item.path!);
+
+    if (sidebarCollapsed) {
+      return (
+        <Tooltip key={item.path} delayDuration={300}>
+          <TooltipTrigger asChild>
+            <Link to={item.path} title={item.label}>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
+                  isItemActive
+                    ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                )}
+              >
+                <div className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center",
+                  isItemActive
+                    ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
+                    : "bg-slate-100 text-slate-500"
+                )}>
+                  <item.icon className="h-4.5 w-4.5" />
+                </div>
+                {isItemActive && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
+                )}
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="rounded-xl text-sm">
+            <p>{item.label}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <Link key={item.path} to={item.path}>
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative active:scale-[0.98]",
+            isItemActive
+              ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
+              : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+          )}
+        >
+          {isItemActive && (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
+          )}
+          <div className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
+            isItemActive
+              ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
+              : "bg-slate-100 text-slate-500"
+          )}>
+            <item.icon className="h-4.5 w-4.5" />
+          </div>
+          <span className="flex-1 text-right truncate">{item.label}</span>
+          {isItemActive && (
+            <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse flex-shrink-0" />
+          )}
+        </Button>
+      </Link>
+    );
   };
 
   return (
@@ -193,7 +347,7 @@ const Layout = ({ children }: LayoutProps) => {
                 variant="ghost"
                 size="icon"
                 onClick={toggleCollapse}
-                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 active:scale-90"
                 title="تصغير القائمة"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -239,139 +393,7 @@ const Layout = ({ children }: LayoutProps) => {
             <p className="px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">القائمة الرئيسية</p>
           )}
 
-          {filteredNavItems.map((item) => {
-            if (item.subItems) {
-              const visibleSubs = item.subItems.filter((sub) => {
-                if (!sub.permission) return true;
-                return hasPermission(sub.permission);
-              });
-              if (visibleSubs.length === 0) return null;
-
-              if (sidebarCollapsed) {
-                // في وضع التصغير نعرض أول أيقونة فقط
-                return (
-                  <Link key={item.label} to={visibleSubs[0].path!}>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
-                        visibleSubs.some(s => isActive(s.path!))
-                          ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 shadow-sm"
-                          : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-9 h-9 rounded-xl flex items-center justify-center",
-                        visibleSubs.some(s => isActive(s.path!))
-                          ? `bg-gradient-to-br ${item.color} text-white shadow-md`
-                          : "bg-slate-100 text-slate-500"
-                      )}>
-                        <item.icon className="h-4.5 w-4.5" />
-                      </div>
-                    </Button>
-                  </Link>
-                );
-              }
-
-              return (
-                <div key={item.label} className="space-y-1">
-                  <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">
-                    <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${item.color}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  {visibleSubs.map((sub) => {
-                    const subActive = sub.path ? isActive(sub.path) : false;
-                    return (
-                      <Link key={sub.path} to={sub.path}>
-                        <Button
-                          variant="ghost"
-                          className={cn(
-                            "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
-                            subActive
-                              ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 font-semibold shadow-sm"
-                              : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                          )}
-                        >
-                          {subActive && (
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-rose-500 to-pink-600 rounded-l-full" />
-                          )}
-                          <div className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
-                            subActive
-                              ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
-                              : "bg-slate-100 text-slate-500"
-                          )}>
-                            <sub.icon className="h-4 w-4" />
-                          </div>
-                          <span className="flex-1 text-right truncate">{sub.label}</span>
-                        </Button>
-                      </Link>
-                    );
-                  })}
-                </div>
-              );
-            }
-
-            const isItemActive = isActive(item.path!);
-
-            if (sidebarCollapsed) {
-              return (
-                <Link key={item.path} to={item.path} title={item.label}>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
-                      isItemActive
-                        ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
-                        : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-9 h-9 rounded-xl flex items-center justify-center",
-                      isItemActive
-                        ? `bg-gradient-to-br ${item.color} text-white shadow-md`
-                        : "bg-slate-100 text-slate-500"
-                    )}>
-                      <item.icon className="h-4.5 w-4.5" />
-                    </div>
-                    {isItemActive && (
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
-                    )}
-                  </Button>
-                </Link>
-              );
-            }
-
-            return (
-              <Link key={item.path} to={item.path}>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative",
-                    isItemActive
-                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                  )}
-                >
-                  {isItemActive && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
-                  )}
-                  <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
-                    isItemActive
-                      ? `bg-gradient-to-br ${item.color} text-white shadow-md`
-                      : "bg-slate-100 text-slate-500"
-                  )}>
-                    <item.icon className="h-4.5 w-4.5" />
-                  </div>
-                  <span className="flex-1 text-right truncate">{item.label}</span>
-                  {isItemActive && (
-                    <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse flex-shrink-0" />
-                  )}
-                </Button>
-              </Link>
-            );
-          })}
+          {filteredNavItems.map(renderNavItem)}
 
           {/* زر توسيع/تصغير في الأسفل */}
           {!sidebarCollapsed && (
@@ -379,7 +401,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={toggleCollapse}
-                className="w-full justify-start gap-3 h-11 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                className="w-full justify-start gap-3 h-11 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 active:scale-[0.98]"
               >
                 <PanelLeftClose className="h-4 w-4" />
                 <span>تصغير القائمة</span>
@@ -391,19 +413,25 @@ const Layout = ({ children }: LayoutProps) => {
         {/* تذييل القائمة */}
         <div className={cn("p-3 border-t border-slate-100/80", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
           {sidebarCollapsed ? (
-            <Button
-              variant="ghost"
-              onClick={logout}
-              className="h-11 w-11 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600"
-              title="تسجيل الخروج"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={logout}
+                  className="h-11 w-11 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="rounded-xl text-sm">
+                <p>تسجيل الخروج</p>
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <Button
               variant="ghost"
               onClick={logout}
-              className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+              className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600 active:scale-[0.98]"
             >
               <LogOut className="h-4 w-4" />
               <span>تسجيل الخروج</span>
@@ -418,7 +446,7 @@ const Layout = ({ children }: LayoutProps) => {
           variant="ghost"
           size="icon"
           onClick={toggleCollapse}
-          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white/80 backdrop-blur-sm shadow-md border border-slate-200 text-slate-500 hover:text-slate-700"
+          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white/80 backdrop-blur-sm shadow-md border border-slate-200 text-slate-500 hover:text-slate-700 active:scale-90"
           title="توسيع القائمة"
         >
           <PanelLeftOpen className="h-4 w-4" />
@@ -430,10 +458,16 @@ const Layout = ({ children }: LayoutProps) => {
         "flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0 transition-all duration-300",
         sidebarCollapsed ? "lg:mr-20" : "lg:mr-72"
       )}>
-        <div className="max-w-7xl mx-auto p-4 lg:p-6 xl:p-8">
+        <div
+          key={location.pathname}
+          className="max-w-7xl mx-auto p-4 lg:p-6 xl:p-8 page-enter-animation"
+        >
           {children}
         </div>
       </main>
+
+      {/* Scroll to top button */}
+      <ScrollToTop />
 
       {/* التنقل السفلي للموبايل */}
       <MobileNav />

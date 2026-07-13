@@ -6,6 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -36,6 +41,7 @@ import {
   AlertCircle,
   Layers,
   Warehouse,
+  X,
 } from "lucide-react";
 import { initialProducts } from "@/data/mockData";
 import { Product } from "@/types";
@@ -158,10 +164,17 @@ const Products = () => {
           }}
         >
           <DialogTrigger asChild>
-            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-500/30 h-12 px-6">
-              <Plus className="h-5 w-5" />
-              منتج جديد
-            </Button>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button className="gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-500/30 h-12 px-6 active:scale-[0.97]">
+                  <Plus className="h-5 w-5" />
+                  منتج جديد
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="rounded-lg text-xs">
+                إضافة منتج جديد إلى المخزن
+              </TooltipContent>
+            </Tooltip>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-3xl">
             <DialogHeader>
@@ -337,6 +350,14 @@ const Products = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors text-slate-500"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Products Grid */}

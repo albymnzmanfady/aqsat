@@ -6,6 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -25,7 +30,7 @@ import CustomerForm from "@/components/CustomerForm";
 import { initialCustomers } from "@/data/mockData";
 import { Customer } from "@/types";
 import { showSuccess } from "@/utils/toast";
-import { Users, Search, Plus, UserCheck, Sparkles, Phone, MapPin, IdCard } from "lucide-react";
+import { Users, Search, Plus, UserCheck, Sparkles, Phone, MapPin, IdCard, X } from "lucide-react";
 
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
@@ -72,21 +77,35 @@ const Customers = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <div className="flex gap-2">
-              <Button
-                className="gap-2 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30 h-12 px-6"
-                onClick={() => setDialogType("customer")}
-              >
-                <Plus className="h-5 w-5" />
-                عميل جديد
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 rounded-2xl border-blue-200 hover:bg-blue-50 h-12 px-6"
-                onClick={() => setDialogType("guarantor")}
-              >
-                <UserCheck className="h-5 w-5 text-blue-500" />
-                ضامن جديد
-              </Button>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="gap-2 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30 h-12 px-6 active:scale-[0.97]"
+                    onClick={() => setDialogType("customer")}
+                  >
+                    <Plus className="h-5 w-5" />
+                    عميل جديد
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="rounded-lg text-xs">
+                  إضافة عميل جديد
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="gap-2 rounded-2xl border-blue-200 hover:bg-blue-50 h-12 px-6 active:scale-[0.97]"
+                    onClick={() => setDialogType("guarantor")}
+                  >
+                    <UserCheck className="h-5 w-5 text-blue-500" />
+                    ضامن جديد
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="rounded-lg text-xs">
+                  إضافة ضامن جديد
+                </TooltipContent>
+              </Tooltip>
             </div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[450px] rounded-3xl">
@@ -148,6 +167,14 @@ const Customers = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors text-slate-500"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

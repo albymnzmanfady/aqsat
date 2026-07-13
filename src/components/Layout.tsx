@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import MobileNav from "@/components/MobileNav";
 import ScrollToTop from "@/components/ScrollToTop";
+import NotificationsDropdown from "@/components/NotificationsDropdown";
 import {
   Tooltip,
   TooltipContent,
@@ -117,7 +118,6 @@ const Layout = ({ children }: LayoutProps) => {
     collector: "from-emerald-500 to-teal-500",
   };
 
-  // Helper to render nav item
   const renderNavItem = (item: typeof navItems[number]) => {
     if (item.subItems) {
       const visibleSubs = item.subItems.filter((sub) => {
@@ -269,14 +269,14 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex dot-grid-bg">
-      {/* خلفيات زخرفية ثابتة تمتد مع الصفحة */}
+      {/* Decorative backgrounds */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-200/10 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-200/5 rounded-full blur-3xl" />
       </div>
 
-      {/* رأس الموبايل - خلفية صلبة */}
+      {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200/80 z-40 shadow-sm">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
@@ -302,10 +302,7 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl active:scale-90">
-              <Bell className="h-5 w-5 text-slate-600" />
-              <span className="absolute top-2 left-2 h-2 w-2 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full animate-pulse" />
-            </Button>
+            <NotificationsDropdown />
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br",
               roleColors[user?.role || "admin"]
@@ -316,7 +313,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </header>
 
-      {/* طبقة التعتيم للقائمة الجانبية في الموبايل */}
+      {/* Mobile Overlay */}
       <div
         className={cn(
           "lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300",
@@ -325,7 +322,7 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* القائمة الجانبية - ديسكتوب - خلفية صلبة */}
+      {/* Desktop Sidebar */}
       <aside
         className={cn(
           "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-slate-200 flex-col",
@@ -333,7 +330,7 @@ const Layout = ({ children }: LayoutProps) => {
           sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
-        {/* رأس القائمة */}
+        {/* Sidebar Header */}
         <div className={cn(
           "p-5 border-b border-slate-100 flex items-center",
           sidebarCollapsed ? "justify-center" : "justify-between"
@@ -379,7 +376,18 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* بطاقة المستخدم - خلفية متدرجة صلبة */}
+        {/* Notifications in sidebar */}
+        <div className={cn("px-3 pt-3", sidebarCollapsed && "flex justify-center px-2")}>
+          {sidebarCollapsed ? (
+            <div className="flex justify-center">
+              <NotificationsDropdown />
+            </div>
+          ) : (
+            <NotificationsDropdown triggerClassName="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-violet-50 hover:text-violet-600" />
+          )}
+        </div>
+
+        {/* User Card */}
         <div className={cn("p-4", sidebarCollapsed && "px-2")}>
           <div className={cn(
             "rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500",
@@ -409,7 +417,7 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
 
-        {/* التنقل */}
+        {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden scroll-smooth">
           {!sidebarCollapsed && (
             <p className="px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">القائمة الرئيسية</p>
@@ -417,7 +425,6 @@ const Layout = ({ children }: LayoutProps) => {
 
           {filteredNavItems.map(renderNavItem)}
 
-          {/* زر توسيع/تصغير في الأسفل */}
           {!sidebarCollapsed && (
             <div className="pt-4">
               <Button
@@ -432,7 +439,7 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </nav>
 
-        {/* تذييل القائمة */}
+        {/* Sidebar Footer */}
         <div className={cn("p-3 border-t border-slate-100", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
           {sidebarCollapsed ? (
             <Tooltip delayDuration={300}>
@@ -462,7 +469,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </aside>
 
-      {/* زر توسيع القائمة عند التصغير */}
+      {/* Sidebar expand button */}
       {sidebarCollapsed && (
         <Button
           variant="ghost"
@@ -475,7 +482,7 @@ const Layout = ({ children }: LayoutProps) => {
         </Button>
       )}
 
-      {/* المحتوى الرئيسي */}
+      {/* Main Content */}
       <main className={cn(
         "flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0 transition-all duration-300",
         sidebarCollapsed ? "lg:mr-20" : "lg:mr-72"
@@ -491,7 +498,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Scroll to top button */}
       <ScrollToTop />
 
-      {/* التنقل السفلي للموبايل */}
+      {/* Mobile Navigation */}
       <MobileNav />
     </div>
   );

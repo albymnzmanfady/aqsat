@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Home,
   Users,
@@ -15,7 +14,6 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronLeft
 } from "lucide-react";
 
 interface LayoutProps {
@@ -36,16 +34,15 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Close sidebar on route change (mobile)
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 bg-white z-40 border-b border-slate-200 shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white z-40 border-b border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -62,14 +59,12 @@ const Layout = ({ children }: LayoutProps) => {
               <h1 className="text-base font-bold text-slate-800">إدارة الأقساط</h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative h-10 w-10">
-              <Bell className="h-5 w-5 text-slate-600" />
-              <span className="absolute top-1.5 left-1.5 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-medium">
-                3
-              </span>
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" className="relative h-10 w-10">
+            <Bell className="h-5 w-5 text-slate-600" />
+            <span className="absolute top-1.5 left-1.5 h-4 w-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-medium">
+              3
+            </span>
+          </Button>
         </div>
       </header>
 
@@ -81,9 +76,9 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed on Right */}
       <aside
-        className={`fixed top-0 right-0 h-full w-72 bg-white z-50 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-md lg:border-l lg:border-slate-200 ${
+        className={`fixed top-0 right-0 h-full w-72 bg-white z-50 shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:shadow-md lg:border-l lg:border-slate-200 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
         }`}
       >
@@ -111,7 +106,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Navigation */}
-        <nav className="p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <Link key={item.path} to={item.path}>
               <Button
@@ -134,7 +129,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-100 bg-white">
+        <div className="p-3 border-t border-slate-100 bg-white">
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 h-12 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600"
@@ -145,8 +140,8 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="lg:mr-72 min-h-screen pt-16 lg:pt-0">
+      {/* Main Content - Left Side */}
+      <main className="flex-1 min-h-screen pt-16 lg:pt-0">
         <div className="p-4 lg:p-6 xl:p-8">
           {children}
         </div>

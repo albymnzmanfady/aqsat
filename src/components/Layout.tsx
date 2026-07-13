@@ -144,7 +144,7 @@ const Layout = ({ children }: LayoutProps) => {
                       ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
                       : "bg-slate-100 text-slate-500"
                   )}>
-                    <item.icon className="h-4.5 w-4.5" />
+                    <item.icon className="h-5 w-5" />
                   </div>
                 </Button>
               </Link>
@@ -217,7 +217,7 @@ const Layout = ({ children }: LayoutProps) => {
                     ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
                     : "bg-slate-100 text-slate-500"
                 )}>
-                  <item.icon className="h-4.5 w-4.5" />
+                  <item.icon className="h-5 w-5" />
                 </div>
                 {isItemActive && (
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
@@ -252,7 +252,7 @@ const Layout = ({ children }: LayoutProps) => {
               ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
               : "bg-slate-100 text-slate-500"
           )}>
-            <item.icon className="h-4.5 w-4.5" />
+            <item.icon className="h-5 w-5" />
           </div>
           <span className="flex-1 text-right truncate">{item.label}</span>
           {isItemActive && (

@@ -173,7 +173,7 @@ const Settings = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs defaultValue="general" className="w-full" dir="rtl">
         <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-100 p-1 rounded-2xl mb-6 overflow-x-auto flex-nowrap">
           <TabsTrigger value="general" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-800 data-[state=active]:text-white gap-2">
             <Settings2 className="h-4 w-4" />
@@ -264,7 +264,7 @@ const Settings = () => {
                         <Upload className="h-4 w-4" />
                         رفع صورة
                       </Button>
-                      <span className="text-sm text-slate-400 self-center gap-1">أو</span>
+                      <span className="text-sm text-slate-400 self-center">أو</span>
                       <Input
                         value={
                           localSettings.logoUrl.startsWith("data:") ? "" : localSettings.logoUrl

@@ -20,6 +20,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import ContractForm from "@/components/ContractForm";
 import InstallmentSchedule from "@/components/InstallmentSchedule";
 import { initialCustomers, initialContracts, generateInstallments, initialInstallments, initialProducts } from "@/data/mockData";
@@ -40,6 +46,9 @@ import {
   AlertTriangle,
   Package,
   X,
+  MoreHorizontal,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 const Contracts = () => {
@@ -49,50 +58,88 @@ const Contracts = () => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [sendingContract, setSendingContract] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const guarantors = customers.filter((c) => c.type === "guarantor");
   const availableProducts = products.filter((p) => p.currentStock > 0);
+
+  const contractCustomers = customers.filter((c) => c.type === "customer");
 
   const filteredContracts = contracts.filter((c) =>
     c.customerName.includes(searchQuery) || c.productType.includes(searchQuery)
   );
 
   const handleCreateContract = (data: any) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === data.productId ? { ...p, currentStock: p.currentStock - 1 } : p
-      )
-    );
+    const now = new Date().toISOString().split("T")[0];
 
-    const newContract: Contract = {
-      id: contracts.length + 1,
-      ...data,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-
-    const newInstallments = generateInstallments(newContract);
-
-    setContracts((prev) => [...prev, newContract]);
-    setInstallments((prev) => [...prev, ...newInstallments]);
-
-    const config = getWhatsAppConfig();
-    if (config.endpoint) {
-      sendWhatsAppMessage(
-        data.customerPhone,
-        MESSAGE_TEMPLATES.newContract(data.customerName, data.productType, data.totalPrice, data.installmentAmount),
-        config
-      ).then((result) => {
-        if (result.success) showSuccess("✅ تم إنشاء العقد وإرسال الإشعار للعميل");
-        else showSuccess("✅ تم إنشاء العقد بنجاح");
-      });
+    if (editingContract) {
+      setContracts((prev) =>
+        prev.map((c) =>
+          c.id === editingContract.id
+            ? { ...c, ...data, id: editingContract.id, createdAt: editingContract.createdAt }
+            : c
+        )
+      );
+      showSuccess("✅ تم تعديل العقد بنجاح");
     } else {
-      showSuccess("✅ تم إنشاء العقد بنجاح");
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === data.productId ? { ...p, currentStock: p.currentStock - 1 } : p
+        )
+      );
+
+      const newContract: Contract = {
+        id: contracts.length + 1,
+        ...data,
+        createdAt: now,
+      };
+
+      const newInstallments = generateInstallments(newContract);
+
+      setContracts((prev) => [...prev, newContract]);
+      setInstallments((prev) => [...prev, ...newInstallments]);
+
+      const config = getWhatsAppConfig();
+      if (config.endpoint) {
+        sendWhatsAppMessage(
+          data.customerPhone,
+          MESSAGE_TEMPLATES.newContract(data.customerName, data.productType, data.totalPrice, data.installmentAmount),
+          config
+        ).then((result) => {
+          if (result.success) showSuccess("✅ تم إنشاء العقد وإرسال الإشعار للعميل");
+          else showSuccess("✅ تم إنشاء العقد بنجاح");
+        });
+      } else {
+        showSuccess("✅ تم إنشاء العقد بنجاح");
+      }
     }
 
     setIsDialogOpen(false);
+    setEditingContract(null);
+  };
+
+  const handleEdit = (contract: Contract) => {
+    setEditingContract(contract);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    const contract = contracts.find((c) => c.id === id);
+    if (contract && contract.productId) {
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === contract.productId ? { ...p, currentStock: p.currentStock + 1 } : p
+        )
+      );
+    }
+    setContracts((prev) => prev.filter((c) => c.id !== id));
+    setInstallments((prev) => prev.filter((i) => i.contractId !== id));
+    showSuccess("✅ تم حذف العقد");
+    setDeleteConfirmId(null);
   };
 
   const handleMarkInstallmentPaid = (installmentId: number) => {
@@ -172,34 +219,41 @@ const Contracts = () => {
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Tooltip delayDuration={300}>
-              <TooltipTrigger asChild>
-                <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]">
-                  <Plus className="h-5 w-5" />
-                  عقد جديد
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="rounded-lg text-xs">
-                إنشاء عقد أقساط جديد
-              </TooltipContent>
-            </Tooltip>
-          </DialogTrigger>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingContract(null);
+          }}
+        >
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]">
+                <Plus className="h-5 w-5" />
+                {editingContract ? "تعديل العقد" : "عقد جديد"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="rounded-lg text-xs">
+              إنشاء عقد أقساط جديد
+            </TooltipContent>
+          </Tooltip>
           <DialogContent className="sm:max-w-[550px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-emerald-500" />
-                إنشاء عقد جديد
+                {editingContract ? "تعديل العقد" : "إنشاء عقد جديد"}
               </DialogTitle>
-              <DialogDescription>اختر العميل والمنتج من المخزن</DialogDescription>
+              <DialogDescription>
+                {editingContract ? "تعديل بيانات العقد" : "اختر العميل والمنتج من المخزن"}
+              </DialogDescription>
             </DialogHeader>
             <ContractForm
-              customers={customers.filter((c) => c.type === "customer")}
+              key={editingContract?.id || "new"}
+              customers={contractCustomers}
               guarantors={guarantors}
-              products={availableProducts}
+              products={editingContract ? products : availableProducts}
               onSave={handleCreateContract}
-              onCancel={() => setIsDialogOpen(false)}
+              onCancel={() => { setIsDialogOpen(false); setEditingContract(null); }}
             />
           </DialogContent>
         </Dialog>
@@ -239,7 +293,16 @@ const Contracts = () => {
               className="stagger-item border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className={cn("h-1.5 w-full", contract.status === "active" ? "bg-gradient-to-l from-emerald-400 to-teal-500" : contract.status === "completed" ? "bg-gradient-to-l from-blue-400 to-cyan-500" : "bg-gradient-to-l from-rose-400 to-pink-500")} />
+              <div
+                className={cn(
+                  "h-1.5 w-full",
+                  contract.status === "active"
+                    ? "bg-gradient-to-l from-emerald-400 to-teal-500"
+                    : contract.status === "completed"
+                    ? "bg-gradient-to-l from-blue-400 to-cyan-500"
+                    : "bg-gradient-to-l from-rose-400 to-pink-500"
+                )}
+              />
 
               <CardContent className="p-5">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -277,7 +340,14 @@ const Contracts = () => {
                       </div>
                       <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className={cn("h-full rounded-full transition-all duration-500", contract.status === "active" ? "bg-gradient-to-l from-emerald-400 to-teal-500" : contract.status === "completed" ? "bg-gradient-to-l from-blue-400 to-cyan-500" : "bg-gradient-to-l from-rose-400 to-pink-500")}
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            contract.status === "active"
+                              ? "bg-gradient-to-l from-emerald-400 to-teal-500"
+                              : contract.status === "completed"
+                              ? "bg-gradient-to-l from-blue-400 to-cyan-500"
+                              : "bg-gradient-to-l from-rose-400 to-pink-500"
+                          )}
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -321,6 +391,26 @@ const Contracts = () => {
                           إرسال تفاصيل العقد عبر واتساب
                         </TooltipContent>
                       </Tooltip>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
+                            <MoreHorizontal className="h-5 w-5 text-slate-500" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuItem onClick={() => handleEdit(contract)} className="cursor-pointer rounded-lg">
+                            <Edit className="h-4 w-4 ml-2" />
+                            تعديل
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteConfirmId(contract.id)}
+                            className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 ml-2" />
+                            حذف
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
@@ -382,6 +472,33 @@ const Contracts = () => {
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="sm:max-w-[350px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              تأكيد الحذف
+            </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف هذا العقد؟ سيتم أيضاً حذف جميع الأقساط المرتبطة به. لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId !== null && handleDelete(deleteConfirmId)}
+              className="rounded-xl h-11 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700"
+            >
+              حذف
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>

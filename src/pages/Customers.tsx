@@ -21,6 +21,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -30,13 +36,29 @@ import CustomerForm from "@/components/CustomerForm";
 import { initialCustomers } from "@/data/mockData";
 import { Customer } from "@/types";
 import { showSuccess } from "@/utils/toast";
-import { Users, Search, Plus, UserCheck, Sparkles, Phone, MapPin, IdCard, X } from "lucide-react";
+import {
+  Users,
+  Search,
+  Plus,
+  UserCheck,
+  Sparkles,
+  Phone,
+  MapPin,
+  X,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+} from "lucide-react";
+
+const emptyForm = { name: "", phone: "", nationalId: "", address: "", type: "customer" as const };
 
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"customer" | "guarantor">("customer");
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const filteredCustomers = customers.filter((c) => {
     const matchesSearch = c.name.includes(searchQuery) || c.phone.includes(searchQuery);
@@ -47,15 +69,116 @@ const Customers = () => {
   const guarantors = filteredCustomers.filter((c) => c.type === "guarantor");
 
   const handleAddCustomer = (data: any) => {
-    const newCustomer: Customer = {
-      id: customers.length + 1,
-      ...data,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setCustomers((prev) => [...prev, newCustomer]);
-    showSuccess(data.type === "customer" ? "تم إضافة العميل بنجاح" : "تم إضافة الضامن بنجاح");
+    if (editingCustomer) {
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === editingCustomer.id
+            ? { ...c, ...data, id: editingCustomer.id, createdAt: editingCustomer.createdAt }
+            : c
+        )
+      );
+      showSuccess(data.type === "customer" ? "تم تعديل العميل بنجاح" : "تم تعديل الضامن بنجاح");
+    } else {
+      const newCustomer: Customer = {
+        id: customers.length + 1,
+        ...data,
+        createdAt: new Date().toISOString().split("T")[0],
+      };
+      setCustomers((prev) => [...prev, newCustomer]);
+      showSuccess(data.type === "customer" ? "تم إضافة العميل بنجاح" : "تم إضافة الضامن بنجاح");
+    }
     setIsDialogOpen(false);
+    setEditingCustomer(null);
   };
+
+  const handleEdit = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setDialogType(customer.type);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    setCustomers((prev) => prev.filter((c) => c.id !== id));
+    showSuccess("✅ تم الحذف بنجاح");
+    setDeleteConfirmId(null);
+  };
+
+  const openAddDialog = (type: "customer" | "guarantor") => {
+    setDialogType(type);
+    setEditingCustomer(null);
+    setIsDialogOpen(true);
+  };
+
+  const renderCustomerCard = (customer: Customer, index: number) => (
+    <Card
+      key={customer.id}
+      className="stagger-item border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden"
+      style={{ animationDelay: `${index * 0.05}s` }}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md",
+                customer.type === "customer"
+                  ? "bg-gradient-to-br from-blue-500 to-cyan-500"
+                  : "bg-gradient-to-br from-emerald-500 to-teal-500"
+              )}
+            >
+              {customer.name.charAt(0)}
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800">{customer.name}</h3>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  {customer.phone}
+                </span>
+                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {customer.address}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "rounded-lg",
+                customer.type === "customer"
+                  ? "bg-blue-50 text-blue-600 border-blue-200"
+                  : "bg-emerald-50 text-emerald-600 border-emerald-200"
+              )}
+            >
+              {customer.type === "customer" ? "عميل" : "ضامن"}
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
+                  <MoreHorizontal className="h-5 w-5 text-slate-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-xl">
+                <DropdownMenuItem onClick={() => handleEdit(customer)} className="cursor-pointer rounded-lg">
+                  <Edit className="h-4 w-4 ml-2" />
+                  تعديل
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setDeleteConfirmId(customer.id)}
+                  className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4 ml-2" />
+                  حذف
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <Layout>
@@ -74,54 +197,68 @@ const Customers = () => {
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <div className="flex gap-2">
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="gap-2 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30 h-12 px-6 active:scale-[0.97]"
-                    onClick={() => setDialogType("customer")}
-                  >
-                    <Plus className="h-5 w-5" />
-                    عميل جديد
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="rounded-lg text-xs">
-                  إضافة عميل جديد
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="gap-2 rounded-2xl border-blue-200 hover:bg-blue-50 h-12 px-6 active:scale-[0.97]"
-                    onClick={() => setDialogType("guarantor")}
-                  >
-                    <UserCheck className="h-5 w-5 text-blue-500" />
-                    ضامن جديد
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="rounded-lg text-xs">
-                  إضافة ضامن جديد
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </DialogTrigger>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingCustomer(null);
+          }}
+        >
+          <div className="flex gap-2">
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
+                  className="gap-2 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/30 h-12 px-6 active:scale-[0.97]"
+                  onClick={() => openAddDialog("customer")}
+                >
+                  <Plus className="h-5 w-5" />
+                  عميل جديد
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="rounded-lg text-xs">
+                إضافة عميل جديد
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-2xl border-blue-200 hover:bg-blue-50 h-12 px-6 active:scale-[0.97]"
+                  onClick={() => openAddDialog("guarantor")}
+                >
+                  <UserCheck className="h-5 w-5 text-blue-500" />
+                  ضامن جديد
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="rounded-lg text-xs">
+                إضافة ضامن جديد
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <DialogContent className="sm:max-w-[450px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-blue-500" />
-                {dialogType === "customer" ? "إضافة عميل جديد" : "إضافة ضامن جديد"}
+                {editingCustomer
+                  ? `تعديل ${dialogType === "customer" ? "العميل" : "الضامن"}`
+                  : dialogType === "customer"
+                  ? "إضافة عميل جديد"
+                  : "إضافة ضامن جديد"}
               </DialogTitle>
               <DialogDescription>
-                أدخل بيانات {dialogType === "customer" ? "العميل" : "الضامن"}
+                {editingCustomer
+                  ? "تعديل بيانات " + (dialogType === "customer" ? "العميل" : "الضامن")
+                  : "أدخل بيانات " + (dialogType === "customer" ? "العميل" : "الضامن")}
               </DialogDescription>
             </DialogHeader>
             <CustomerForm
-              type={dialogType}
+              key={editingCustomer?.id || "new"}
+              type={editingCustomer?.type || dialogType}
               onSave={handleAddCustomer}
-              onCancel={() => setIsDialogOpen(false)}
+              onCancel={() => {
+                setIsDialogOpen(false);
+                setEditingCustomer(null);
+              }}
             />
           </DialogContent>
         </Dialog>
@@ -137,7 +274,9 @@ const Customers = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">إجمالي العملاء</p>
-                <p className="font-bold text-xl text-slate-800">{customers.filter(c => c.type === "customer").length}</p>
+                <p className="font-bold text-xl text-slate-800">
+                  {customers.filter((c) => c.type === "customer").length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -150,7 +289,9 @@ const Customers = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">الضامنون</p>
-                <p className="font-bold text-xl text-slate-800">{customers.filter(c => c.type === "guarantor").length}</p>
+                <p className="font-bold text-xl text-slate-800">
+                  {customers.filter((c) => c.type === "guarantor").length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -196,35 +337,7 @@ const Customers = () => {
 
         <TabsContent value="customers" className="mt-0">
           <div className="grid gap-4">
-            {realCustomers.map((customer, index) => (
-              <Card key={customer.id} className="stagger-item border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden" style={{ animationDelay: `${index * 0.05}s` }}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                        {customer.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800">{customer.name}</h3>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {customer.phone}
-                          </span>
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {customer.address}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="rounded-lg bg-blue-50 text-blue-600 border-blue-200">
-                      عميل
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {realCustomers.map((customer, index) => renderCustomerCard(customer, index))}
             {realCustomers.length === 0 && (
               <div className="text-center py-16">
                 <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -239,35 +352,7 @@ const Customers = () => {
 
         <TabsContent value="guarantors" className="mt-0">
           <div className="grid gap-4">
-            {guarantors.map((guarantor, index) => (
-              <Card key={guarantor.id} className="stagger-item border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden" style={{ animationDelay: `${index * 0.05}s` }}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                        {guarantor.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800">{guarantor.name}</h3>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {guarantor.phone}
-                          </span>
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {guarantor.address}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="rounded-lg bg-emerald-50 text-emerald-600 border-emerald-200">
-                      ضامن
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {guarantors.map((guarantor, index) => renderCustomerCard(guarantor, index))}
             {guarantors.length === 0 && (
               <div className="text-center py-16">
                 <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -280,6 +365,33 @@ const Customers = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="sm:max-w-[350px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              تأكيد الحذف
+            </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId !== null && handleDelete(deleteConfirmId)}
+              className="rounded-xl h-11 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700"
+            >
+              حذف
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

@@ -17,6 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -41,7 +47,10 @@ import {
   TrendingUp,
   Send,
   Loader2,
-  Phone,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  XCircle,
 } from "lucide-react";
 
 const InstallmentsPage = () => {
@@ -53,6 +62,7 @@ const InstallmentsPage = () => {
   const [selectedContractId, setSelectedContractId] = useState<string>("");
   const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState<string>("");
   const [sendingId, setSendingId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -84,13 +94,7 @@ const InstallmentsPage = () => {
   const activeContracts = contracts.filter((c) => c.status === "active");
 
   const handlePayment = () => {
-    if (!selectedContractId || !selectedInstallmentNumber) {
-      return;
-    }
-
-    const installmentToPay = installments.find(
-      (i) => i.contractId === Number(selectedContractId) && i.number === Number(selectedInstallmentNumber)
-    );
+    if (!selectedContractId || !selectedInstallmentNumber) return;
 
     setInstallments((prev) =>
       prev.map((inst) => {
@@ -105,6 +109,10 @@ const InstallmentsPage = () => {
       })
     );
 
+    const installmentToPay = installments.find(
+      (i) => i.contractId === Number(selectedContractId) && i.number === Number(selectedInstallmentNumber)
+    );
+
     if (installmentToPay) {
       const contract = contracts.find((c) => c.id === installmentToPay.contractId);
       if (contract) {
@@ -113,17 +121,10 @@ const InstallmentsPage = () => {
           const dueDate = `${installmentToPay.day}/${installmentToPay.month}/${installmentToPay.year}`;
           sendWhatsAppMessage(
             contract.customerPhone,
-            MESSAGE_TEMPLATES.installmentPaid(
-              contract.customerName,
-              installmentToPay.amount,
-              dueDate,
-              installmentToPay.number
-            ),
+            MESSAGE_TEMPLATES.installmentPaid(contract.customerName, installmentToPay.amount, dueDate, installmentToPay.number),
             config
           ).then((result) => {
-            if (result.success) {
-              showSuccess(`✅ تم تسجيل القسط وإرسال إشعار للعميل ${contract.customerName}`);
-            }
+            if (result.success) showSuccess(`✅ تم تسجيل القسط وإرسال إشعار للعميل ${contract.customerName}`);
           });
         } else {
           showSuccess("✅ تم تسجيل القسط بنجاح");
@@ -136,6 +137,27 @@ const InstallmentsPage = () => {
     setIsDialogOpen(false);
     setSelectedContractId("");
     setSelectedInstallmentNumber("");
+  };
+
+  const handleTogglePaid = (installment: Installment) => {
+    setInstallments((prev) =>
+      prev.map((inst) =>
+        inst.id === installment.id
+          ? { ...inst, isPaid: !inst.isPaid, paidDate: inst.isPaid ? undefined : new Date().toISOString().split("T")[0] }
+          : inst
+      )
+    );
+    if (installment.isPaid) {
+      showSuccess("✅ تم إلغاء تسديد القسط");
+    } else {
+      showSuccess("✅ تم تسديد القسط بنجاح");
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    setInstallments((prev) => prev.filter((i) => i.id !== id));
+    showSuccess("✅ تم حذف القسط");
+    setDeleteConfirmId(null);
   };
 
   const handleSendWhatsApp = async (installment: Installment) => {
@@ -156,25 +178,16 @@ const InstallmentsPage = () => {
 
     let message: string;
     if (installment.isPaid) {
-      message = MESSAGE_TEMPLATES.installmentPaid(
-        contract.customerName, installment.amount, dueDate, installment.number
-      );
+      message = MESSAGE_TEMPLATES.installmentPaid(contract.customerName, installment.amount, dueDate, installment.number);
     } else if (daysOverdue > 0) {
-      message = MESSAGE_TEMPLATES.installmentOverdue(
-        contract.customerName, installment.amount, daysOverdue, installment.number
-      );
+      message = MESSAGE_TEMPLATES.installmentOverdue(contract.customerName, installment.amount, daysOverdue, installment.number);
     } else {
-      message = MESSAGE_TEMPLATES.installmentDue(
-        contract.customerName, installment.amount, dueDate, installment.number
-      );
+      message = MESSAGE_TEMPLATES.installmentDue(contract.customerName, installment.amount, dueDate, installment.number);
     }
 
     const result = await sendWhatsAppMessage(contract.customerPhone, message, config);
-    if (result.success) {
-      showSuccess(`✅ تم إرسال الإشعار للعميل ${contract.customerName}`);
-    } else {
-      showError(result.message);
-    }
+    if (result.success) showSuccess(`✅ تم إرسال الإشعار للعميل ${contract.customerName}`);
+    else showError(result.message);
     setSendingId(null);
   };
 
@@ -183,30 +196,10 @@ const InstallmentsPage = () => {
   };
 
   const stats = [
-    {
-      title: "إجمالي الأقساط",
-      value: installments.length,
-      icon: CreditCard,
-      color: "from-slate-500 to-gray-600",
-    },
-    {
-      title: "مدفوعة",
-      value: paidCount,
-      icon: CheckCircle,
-      color: "from-emerald-500 to-teal-500",
-    },
-    {
-      title: "قيد الانتظار",
-      value: pendingCount,
-      icon: Clock,
-      color: "from-amber-500 to-orange-500",
-    },
-    {
-      title: "نسبة التحصيل",
-      value: `${collectionRate}%`,
-      icon: TrendingUp,
-      color: "from-violet-500 to-purple-500",
-    },
+    { title: "إجمالي الأقساط", value: installments.length, icon: CreditCard, color: "from-slate-500 to-gray-600" },
+    { title: "مدفوعة", value: paidCount, icon: CheckCircle, color: "from-emerald-500 to-teal-500" },
+    { title: "قيد الانتظار", value: pendingCount, icon: Clock, color: "from-amber-500 to-orange-500" },
+    { title: "نسبة التحصيل", value: `${collectionRate}%`, icon: TrendingUp, color: "from-violet-500 to-purple-500" },
   ];
 
   return (
@@ -419,40 +412,71 @@ const InstallmentsPage = () => {
                     </div>
                   </div>
 
-                  <div className="text-left">
-                    <p className="font-bold text-slate-800">{installment.amount.toLocaleString()} ج.م</p>
-                    <div className="flex items-center gap-2 justify-end mt-1">
-                      <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {dueDate}
-                      </span>
-                      <Badge className={cn(
-                        "rounded-lg text-white border-0",
-                        installment.isPaid
-                          ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                          : isOverdue
-                          ? "bg-gradient-to-r from-rose-500 to-pink-500"
-                          : "bg-gradient-to-r from-amber-500 to-orange-500"
-                      )}>
-                        {installment.isPaid ? "مدفوع" : isOverdue ? "متأخر" : "باقي"}
-                      </Badge>
-                      {!installment.isPaid && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
+                  <div className="flex items-center gap-2">
+                    <div className="text-left">
+                      <p className="font-bold text-slate-800">{installment.amount.toLocaleString()} ج.م</p>
+                      <div className="flex items-center gap-2 justify-end mt-1">
+                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {dueDate}
+                        </span>
+                        <Badge className={cn(
+                          "rounded-lg text-white border-0",
+                          installment.isPaid
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                            : isOverdue
+                            ? "bg-gradient-to-r from-rose-500 to-pink-500"
+                            : "bg-gradient-to-r from-amber-500 to-orange-500"
+                        )}>
+                          {installment.isPaid ? "مدفوع" : isOverdue ? "متأخر" : "باقي"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
+                          <MoreHorizontal className="h-5 w-5 text-slate-500" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-xl">
+                        <DropdownMenuItem
+                          onClick={() => handleTogglePaid(installment)}
+                          className="cursor-pointer rounded-lg"
+                        >
+                          {installment.isPaid ? (
+                            <>
+                              <XCircle className="h-4 w-4 ml-2" />
+                              إلغاء التسديد
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4 ml-2" />
+                              تسديد القسط
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleSendWhatsApp(installment)}
+                          className="cursor-pointer rounded-lg"
                           disabled={sendingId === installment.id}
-                          title="إرسال تذكير واتساب"
                         >
                           {sendingId === installment.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 ml-2 animate-spin" />
                           ) : (
-                            <Send className="h-4 w-4" />
+                            <Send className="h-4 w-4 ml-2" />
                           )}
-                        </Button>
-                      )}
-                    </div>
+                          إرسال إشعار واتساب
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setDeleteConfirmId(installment.id)}
+                          className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 ml-2" />
+                          حذف
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>
@@ -470,6 +494,33 @@ const InstallmentsPage = () => {
           </div>
         )}
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="sm:max-w-[350px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              تأكيد الحذف
+            </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف هذا القسط؟ لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId !== null && handleDelete(deleteConfirmId)}
+              className="rounded-xl h-11 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700"
+            >
+              حذف
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

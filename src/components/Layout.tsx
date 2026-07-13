@@ -1,14 +1,11 @@
-// IMPORTANT: You need to edit the file src/components/Layout.tsx to add navigation items for Expenses.
-// Find the navItems array and add the new items before the settings item.
-
-// We'll rewrite the whole Layout.tsx file to avoid confusion.
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileNav from "@/components/MobileNav";
 import {
   Home,
   Users,
@@ -18,7 +15,6 @@ import {
   Bell,
   Menu,
   X,
-  LogOut,
   Sparkles,
   User,
   MessageSquareText,
@@ -36,6 +32,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const navItems = [
     { path: "/", label: "الرئيسية", icon: Home, color: "from-violet-500 to-purple-600" },
@@ -66,10 +63,12 @@ const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Close sidebar on navigation
+  // Close sidebar on navigation for mobile
   useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex">
@@ -120,10 +119,10 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar (Desktop only) */}
       <aside
         className={cn(
-          "fixed top-0 right-0 h-full w-72 z-50 transition-transform duration-300 ease-out lg:translate-x-0 lg:static lg:border-l border-white/20 flex flex-col",
+          "hidden lg:flex fixed top-0 right-0 h-full w-72 z-50 transition-transform duration-300 ease-out lg:translate-x-0 lg:static lg:border-l border-white/20 flex-col",
           "bg-white/80 backdrop-blur-xl",
           sidebarOpen ? "translate-x-0 shadow-2xl" : "translate-x-full lg:translate-x-0"
         )}
@@ -141,14 +140,6 @@ const Layout = ({ children }: LayoutProps) => {
                 <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-9 w-9 rounded-xl"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5 text-slate-500" />
-            </Button>
           </div>
         </div>
 
@@ -180,11 +171,10 @@ const Layout = ({ children }: LayoutProps) => {
               return (
                 <div key={item.label} className="space-y-1">
                   <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    <div className={`w-1 h-4 rounded-full ${item.color.replace("from-", "bg-gradient-to-b from-").replace("to-", " to-")}`} />
+                    <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${item.color}`} />
                     <span>{item.label}</span>
                   </div>
                   {item.subItems.map((sub) => {
-                    // Determine if any sub item is active
                     const subActive = sub.path ? isActive(sub.path) : false;
                     return (
                       <Link key={sub.path} to={sub.path}>
@@ -267,11 +257,14 @@ const Layout = ({ children }: LayoutProps) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen pt-16 lg:pt-0 relative z-10">
+      <main className="flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0">
         <div className="p-4 lg:p-6 xl:p-8">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileNav />
     </div>
   );
 };

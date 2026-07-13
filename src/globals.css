@@ -54,6 +54,17 @@ body {
   text-align: right;
 }
 
+/* Safe area for bottom navigation on iOS */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Smooth touch scrolling */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 /* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.7);

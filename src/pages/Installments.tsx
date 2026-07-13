@@ -31,6 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import PrintDialog from "@/components/PrintDialog";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { getReceiptHtml } from "@/utils/pdfExport";
 import { initialInstallments, initialContracts } from "@/data/mockData";
 import { Installment, Contract } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
@@ -51,9 +54,11 @@ import {
   Edit,
   Trash2,
   XCircle,
+  Printer,
 } from "lucide-react";
 
 const InstallmentsPage = () => {
+  const { settings } = useAppSettings();
   const [installments, setInstallments] = useState<Installment[]>(initialInstallments);
   const [contracts] = useState<Contract[]>(initialContracts);
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,6 +68,12 @@ const InstallmentsPage = () => {
   const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState<string>("");
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  // Print state
+  const [printOpen, setPrintOpen] = useState(false);
+  const [printHtml, setPrintHtml] = useState("");
+  const [printTitle, setPrintTitle] = useState("");
+  const [printFilename, setPrintFilename] = useState("");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -92,6 +103,17 @@ const InstallmentsPage = () => {
   const collectionRate = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
 
   const activeContracts = contracts.filter((c) => c.status === "active");
+
+  const handlePrintReceipt = (installment: Installment) => {
+    const contract = contracts.find((c) => c.id === installment.contractId);
+    if (!contract) return;
+
+    const html = getReceiptHtml(installment, contract, settings);
+    setPrintHtml(html);
+    setPrintTitle(`إيصال سداد - ${contract.customerName} - القسط ${installment.number}`);
+    setPrintFilename(`receipt-${contract.id}-${installment.number}.pdf`);
+    setPrintOpen(true);
+  };
 
   const handlePayment = () => {
     if (!selectedContractId || !selectedInstallmentNumber) return;
@@ -458,6 +480,15 @@ const InstallmentsPage = () => {
                             </>
                           )}
                         </DropdownMenuItem>
+                        {installment.isPaid && (
+                          <DropdownMenuItem
+                            onClick={() => handlePrintReceipt(installment)}
+                            className="cursor-pointer rounded-lg"
+                          >
+                            <Printer className="h-4 w-4 ml-2" />
+                            طباعة إيصال
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() => handleSendWhatsApp(installment)}
                           className="cursor-pointer rounded-lg"
@@ -523,6 +554,15 @@ const InstallmentsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Print Dialog */}
+      <PrintDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        htmlContent={printHtml}
+        title={printTitle}
+        filename={printFilename}
+      />
     </Layout>
   );
 };

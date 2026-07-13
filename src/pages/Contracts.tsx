@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ContractForm from "@/components/ContractForm";
 import InstallmentSchedule from "@/components/InstallmentSchedule";
+import PrintDialog from "@/components/PrintDialog";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { getContractHtml } from "@/utils/pdfExport";
 import { initialCustomers, initialContracts, generateInstallments, initialInstallments, initialProducts } from "@/data/mockData";
 import { Customer, Contract, Installment, Product } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
@@ -45,9 +48,11 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
+  Printer,
 } from "lucide-react";
 
 const Contracts = () => {
+  const { settings } = useAppSettings();
   const [contracts, setContracts] = useState<Contract[]>(initialContracts);
   const [installments, setInstallments] = useState<Installment[]>(initialInstallments);
   const [customers] = useState<Customer[]>(initialCustomers);
@@ -60,14 +65,28 @@ const Contracts = () => {
   const [sendingContract, setSendingContract] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
+  // Print state
+  const [printOpen, setPrintOpen] = useState(false);
+  const [printHtml, setPrintHtml] = useState("");
+  const [printTitle, setPrintTitle] = useState("");
+  const [printFilename, setPrintFilename] = useState("");
+
   const guarantors = customers.filter((c) => c.type === "guarantor");
   const availableProducts = products.filter((p) => p.currentStock > 0);
-
   const contractCustomers = customers.filter((c) => c.type === "customer");
 
   const filteredContracts = contracts.filter((c) =>
     c.customerName.includes(searchQuery) || c.productType.includes(searchQuery)
   );
+
+  const handlePrintContract = (contract: Contract) => {
+    const contractInstallments = installments.filter((i) => i.contractId === contract.id);
+    const html = getContractHtml(contract, contractInstallments, settings);
+    setPrintHtml(html);
+    setPrintTitle(`عقد الأقساط - ${contract.customerName}`);
+    setPrintFilename(`contract-${contract.id}-${contract.customerName}.pdf`);
+    setPrintOpen(true);
+  };
 
   const handleCreateContract = (data: any) => {
     const now = new Date().toISOString().split("T")[0];
@@ -178,7 +197,7 @@ const Contracts = () => {
       MESSAGE_TEMPLATES.newContract(contract.customerName, contract.productType, contract.totalPrice, contract.installmentAmount),
       config
     );
-    if (result.success) showSuccess(`✅ تم إرسال إشعار العقد`);
+    if (result.success) showSuccess("✅ تم إرسال إشعار العقد");
     else showError(result.message);
     setSendingContract(null);
   };
@@ -344,7 +363,7 @@ const Contracts = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5 flex-wrap">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -353,6 +372,15 @@ const Contracts = () => {
                       >
                         <Eye className="h-4 w-4" />
                         <span className="hidden sm:inline">الأقساط</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 rounded-xl gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:scale-90"
+                        onClick={() => handlePrintContract(contract)}
+                      >
+                        <Printer className="h-4 w-4" />
+                        <span className="hidden sm:inline">طباعة</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -428,6 +456,7 @@ const Contracts = () => {
         )}
       </div>
 
+      {/* Installment Schedule Dialog */}
       <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
         <DialogContent className="sm:max-w-[500px] rounded-3xl">
           <DialogHeader>
@@ -478,6 +507,15 @@ const Contracts = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Print Dialog */}
+      <PrintDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        htmlContent={printHtml}
+        title={printTitle}
+        filename={printFilename}
+      />
     </Layout>
   );
 };

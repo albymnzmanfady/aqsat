@@ -59,10 +59,9 @@ const MobileNav = () => {
 
   return (
     <>
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - RTL: icons will appear on the right side due to dir="rtl" */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom shadow-lg shadow-slate-200/50">
         <div className="flex items-center justify-around h-16 px-2">
-          {/* عرض أول 4 عناصر فقط + زر المزيد */}
           {visibleMainItems.slice(0, 4).map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -94,7 +93,6 @@ const MobileNav = () => {
             );
           })}
 
-          {/* زر المزيد */}
           {visibleMoreItems.length > 0 && (
             <button
               onClick={() => setSheetOpen(true)}
@@ -132,7 +130,6 @@ const MobileNav = () => {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              {/* عرض العناصر الرئيسية المتبقية + كل العناصر الإضافية */}
               {visibleMainItems.slice(4).map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
@@ -185,7 +182,7 @@ const MobileNav = () => {
               })}
             </div>
 
-            {/* Logout button in sheet */}
+            {/* Logout button */}
             <div className="mt-6 pt-4 border-t border-slate-100">
               <Button
                 variant="ghost"

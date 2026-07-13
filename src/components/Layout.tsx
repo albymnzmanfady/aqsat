@@ -27,6 +27,9 @@ import {
   Shield,
   UserCog,
   LayoutDashboard,
+  ChevronLeft,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -35,9 +38,22 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
-  const { user, logout, hasPermission, isAdmin } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
+
+  // تذكر حالة التصغير في localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar_collapsed");
+    if (saved === "true") setSidebarCollapsed(true);
+  }, []);
+
+  const toggleCollapse = () => {
+    const next = !sidebarCollapsed;
+    setSidebarCollapsed(next);
+    localStorage.setItem("sidebar_collapsed", next.toString());
+  };
 
   const navItems = [
     { path: "/", label: "الرئيسية", icon: LayoutDashboard, color: "from-violet-500 to-purple-600", permission: null },
@@ -94,11 +110,11 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/10 to-slate-50 flex">
       {/* خلفيات زخرفية */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-72 h-72 bg-purple-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-20 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-200/10 rounded-full blur-3xl" />
       </div>
 
       {/* رأس الموبايل */}
@@ -144,56 +160,84 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* القائمة الجانبية (ديسكتوب) */}
+      {/* القائمة الجانبية - ديسكتوب مع إمكانية التصغير */}
       <aside
         className={cn(
-          "hidden lg:flex fixed top-0 right-0 h-full w-72 z-50 transition-transform duration-300 ease-out lg:translate-x-0 lg:static lg:border-l border-white/20 flex-col",
-          "bg-white/80 backdrop-blur-xl",
-          sidebarOpen ? "translate-x-0 shadow-2xl" : "translate-x-full lg:translate-x-0"
+          "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-white/20 flex-col",
+          "bg-white/80 backdrop-blur-xl transition-all duration-300 ease-out",
+          sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
         {/* رأس القائمة */}
-        <div className="p-5 border-b border-slate-100/80">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden">
-              <Sparkles className="h-6 w-6 text-white relative z-10" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        <div className={cn(
+          "p-5 border-b border-slate-100/80 flex items-center",
+          sidebarCollapsed ? "justify-center" : "justify-between"
+        )}>
+          {sidebarCollapsed ? (
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <h1 className="font-bold text-slate-800 text-lg tracking-tight">أقساط</h1>
-              <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden flex-shrink-0">
+                  <Sparkles className="h-6 w-6 text-white relative z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                </div>
+                <div>
+                  <h1 className="font-bold text-slate-800 text-lg tracking-tight">أقساط</h1>
+                  <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleCollapse}
+                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                title="تصغير القائمة"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
 
-        {/* بطاقة المستخدم */}
-        <div className="p-4">
+        {/* بطاقة المستخدم - مصغرة عند collapse */}
+        <div className={cn("p-4", sidebarCollapsed && "px-2")}>
           <div className={cn(
-            "p-4 rounded-2xl relative overflow-hidden bg-gradient-to-br",
-            roleColors[user?.role || "admin"]
+            "rounded-2xl relative overflow-hidden bg-gradient-to-br",
+            roleColors[user?.role || "admin"],
+            sidebarCollapsed ? "p-2" : "p-4"
           )}>
             <div className="absolute inset-0">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
               <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
             </div>
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30">
+            <div className={cn(
+              "relative z-10 flex items-center",
+              sidebarCollapsed ? "justify-center" : "gap-3"
+            )}>
+              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
                 {user?.name?.charAt(0) || "م"}
               </div>
-              <div className="text-white">
-                <p className="font-semibold text-sm">{user?.name || "محمد أحمد"}</p>
-                <p className="text-xs text-white/80 flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  {user ? roleLabels[user.role] || user.role : ""}
-                </p>
-              </div>
+              {!sidebarCollapsed && (
+                <div className="text-white min-w-0">
+                  <p className="font-semibold text-sm truncate">{user?.name || "محمد أحمد"}</p>
+                  <p className="text-xs text-white/80 flex items-center gap-1">
+                    <Shield className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{user ? roleLabels[user.role] || user.role : ""}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* التنقل */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">القائمة الرئيسية</p>
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
+          {!sidebarCollapsed && (
+            <p className="px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">القائمة الرئيسية</p>
+          )}
 
           {filteredNavItems.map((item) => {
             if (item.subItems) {
@@ -203,9 +247,35 @@ const Layout = ({ children }: LayoutProps) => {
               });
               if (visibleSubs.length === 0) return null;
 
+              if (sidebarCollapsed) {
+                // في وضع التصغير نعرض أول أيقونة فقط
+                return (
+                  <Link key={item.label} to={visibleSubs[0].path!}>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
+                        visibleSubs.some(s => isActive(s.path!))
+                          ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 shadow-sm"
+                          : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-9 h-9 rounded-xl flex items-center justify-center",
+                        visibleSubs.some(s => isActive(s.path!))
+                          ? `bg-gradient-to-br ${item.color} text-white shadow-md`
+                          : "bg-slate-100 text-slate-500"
+                      )}>
+                        <item.icon className="h-4.5 w-4.5" />
+                      </div>
+                    </Button>
+                  </Link>
+                );
+              }
+
               return (
                 <div key={item.label} className="space-y-1">
-                  <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">
                     <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${item.color}`} />
                     <span>{item.label}</span>
                   </div>
@@ -226,14 +296,14 @@ const Layout = ({ children }: LayoutProps) => {
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-rose-500 to-pink-600 rounded-l-full" />
                           )}
                           <div className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
+                            "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
                             subActive
                               ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
                               : "bg-slate-100 text-slate-500"
                           )}>
                             <sub.icon className="h-4 w-4" />
                           </div>
-                          <span className="flex-1 text-right">{sub.label}</span>
+                          <span className="flex-1 text-right truncate">{sub.label}</span>
                         </Button>
                       </Link>
                     );
@@ -243,6 +313,35 @@ const Layout = ({ children }: LayoutProps) => {
             }
 
             const isItemActive = isActive(item.path!);
+
+            if (sidebarCollapsed) {
+              return (
+                <Link key={item.path} to={item.path} title={item.label}>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
+                      isItemActive
+                        ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
+                        : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center",
+                      isItemActive
+                        ? `bg-gradient-to-br ${item.color} text-white shadow-md`
+                        : "bg-slate-100 text-slate-500"
+                    )}>
+                      <item.icon className="h-4.5 w-4.5" />
+                    </div>
+                    {isItemActive && (
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
+                    )}
+                  </Button>
+                </Link>
+              );
+            }
+
             return (
               <Link key={item.path} to={item.path}>
                 <Button
@@ -258,39 +357,80 @@ const Layout = ({ children }: LayoutProps) => {
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
                   )}
                   <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200",
+                    "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
                     isItemActive
                       ? `bg-gradient-to-br ${item.color} text-white shadow-md`
                       : "bg-slate-100 text-slate-500"
                   )}>
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
-                  <span className="flex-1 text-right">{item.label}</span>
+                  <span className="flex-1 text-right truncate">{item.label}</span>
                   {isItemActive && (
-                    <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
+                    <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse flex-shrink-0" />
                   )}
                 </Button>
               </Link>
             );
           })}
+
+          {/* زر توسيع/تصغير في الأسفل */}
+          {!sidebarCollapsed && (
+            <div className="pt-4">
+              <Button
+                variant="ghost"
+                onClick={toggleCollapse}
+                className="w-full justify-start gap-3 h-11 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+                <span>تصغير القائمة</span>
+              </Button>
+            </div>
+          )}
         </nav>
 
         {/* تذييل القائمة */}
-        <div className="p-3 border-t border-slate-100/80 space-y-2">
-          <Button
-            variant="ghost"
-            onClick={logout}
-            className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>تسجيل الخروج</span>
-          </Button>
+        <div className={cn("p-3 border-t border-slate-100/80", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
+          {sidebarCollapsed ? (
+            <Button
+              variant="ghost"
+              onClick={logout}
+              className="h-11 w-11 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+              title="تسجيل الخروج"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              onClick={logout}
+              className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>تسجيل الخروج</span>
+            </Button>
+          )}
         </div>
       </aside>
 
+      {/* زر توسيع القائمة عند التصغير */}
+      {sidebarCollapsed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleCollapse}
+          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white/80 backdrop-blur-sm shadow-md border border-slate-200 text-slate-500 hover:text-slate-700"
+          title="توسيع القائمة"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </Button>
+      )}
+
       {/* المحتوى الرئيسي */}
-      <main className="flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0">
-        <div className="p-4 lg:p-6 xl:p-8">
+      <main className={cn(
+        "flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0 transition-all duration-300",
+        sidebarCollapsed ? "lg:mr-20" : "lg:mr-72"
+      )}>
+        <div className="max-w-7xl mx-auto p-4 lg:p-6 xl:p-8">
           {children}
         </div>
       </main>

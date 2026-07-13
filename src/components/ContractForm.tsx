@@ -98,7 +98,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           value={formData.customerId}
           onValueChange={(val) => setFormData({ ...formData, customerId: val })}
         >
-          <SelectTrigger className={`rounded-xl h-12 bg-white/50 ${errors.customerId ? "border-red-300" : ""}`}>
+          <SelectTrigger className={`rounded-xl h-12 ${errors.customerId ? "border-red-300" : ""}`}>
             <SelectValue placeholder="اختر العميل" />
           </SelectTrigger>
           <SelectContent>
@@ -118,7 +118,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           value={formData.productId}
           onValueChange={(val) => setFormData({ ...formData, productId: val })}
         >
-          <SelectTrigger className={`rounded-xl h-12 bg-white/50 ${errors.productId ? "border-red-300" : ""}`}>
+          <SelectTrigger className={`rounded-xl h-12 ${errors.productId ? "border-red-300" : ""}`}>
             <SelectValue placeholder="اختر المنتج من المخزن" />
           </SelectTrigger>
           <SelectContent>
@@ -154,7 +154,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             type="number"
             value={formData.downPayment}
             onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })}
-            className={`rounded-xl h-12 bg-white/50 ${errors.downPayment ? "border-red-300" : ""}`}
+            className={`rounded-xl h-12 ${errors.downPayment ? "border-red-300" : ""}`}
             placeholder="0"
           />
         </div>
@@ -166,7 +166,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             type="number"
             value={formData.numberOfReceipts}
             onChange={(e) => setFormData({ ...formData, numberOfReceipts: e.target.value })}
-            className={`rounded-xl h-12 bg-white/50 ${errors.numberOfReceipts ? "border-red-300" : ""}`}
+            className={`rounded-xl h-12 ${errors.numberOfReceipts ? "border-red-300" : ""}`}
             placeholder="12"
           />
         </div>
@@ -181,7 +181,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           type="date"
           value={formData.startDate}
           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-          className={`rounded-xl h-12 bg-white/50 ${errors.startDate ? "border-red-300" : ""}`}
+          className={`rounded-xl h-12 ${errors.startDate ? "border-red-300" : ""}`}
         />
       </div>
 
@@ -210,7 +210,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             <Input
               value={formData.guarantorName}
               onChange={(e) => setFormData({ ...formData, guarantorName: e.target.value })}
-              className="rounded-xl h-12 bg-white/50"
+              className="rounded-xl h-12"
               placeholder="الاسم"
             />
           </div>
@@ -219,7 +219,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             <Input
               value={formData.guarantorPhone}
               onChange={(e) => setFormData({ ...formData, guarantorPhone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) })}
-              className="rounded-xl h-12 bg-white/50"
+              className="rounded-xl h-12"
               placeholder="01012345678"
               dir="ltr"
             />

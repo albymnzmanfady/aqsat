@@ -61,7 +61,7 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className={`rounded-xl h-12 bg-white/50 backdrop-blur-sm ${errors.name ? "border-red-300 focus-visible:ring-red-400" : ""}`}
+          className={`rounded-xl h-12 ${errors.name ? "border-red-300 focus-visible:ring-red-400" : ""}`}
           placeholder="الاسم كاملاً"
         />
       </div>
@@ -77,7 +77,7 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
             const val = e.target.value.replace(/[^0-9]/g, "");
             if (val.length <= 11) setFormData({ ...formData, phone: val });
           }}
-          className={`rounded-xl h-12 bg-white/50 backdrop-blur-sm ${errors.phone ? "border-red-300 focus-visible:ring-red-400" : ""}`}
+          className={`rounded-xl h-12 ${errors.phone ? "border-red-300 focus-visible:ring-red-400" : ""}`}
           placeholder="01012345678"
           dir="ltr"
         />
@@ -94,7 +94,7 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
             const val = e.target.value.replace(/[^0-9]/g, "");
             if (val.length <= 14) setFormData({ ...formData, nationalId: val });
           }}
-          className={`rounded-xl h-12 bg-white/50 backdrop-blur-sm ${errors.nationalId ? "border-red-300 focus-visible:ring-red-400" : ""}`}
+          className={`rounded-xl h-12 ${errors.nationalId ? "border-red-300 focus-visible:ring-red-400" : ""}`}
           placeholder="14 رقم"
           dir="ltr"
         />
@@ -108,7 +108,7 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
           id="address"
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          className={`rounded-xl h-12 bg-white/50 backdrop-blur-sm ${errors.address ? "border-red-300 focus-visible:ring-red-400" : ""}`}
+          className={`rounded-xl h-12 ${errors.address ? "border-red-300 focus-visible:ring-red-400" : ""}`}
           placeholder="العنوان بالكامل"
         />
       </div>

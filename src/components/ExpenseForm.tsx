@@ -82,7 +82,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
         <Input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className={`rounded-xl h-12 bg-white/50 backdrop-blur-sm ${errors.description ? "border-red-300 focus-visible:ring-red-400" : ""}`}
+          className={`rounded-xl h-12 ${errors.description ? "border-red-300 focus-visible:ring-red-400" : ""}`}
           placeholder="مثال: إيجار المحل"
         />
       </div>
@@ -92,7 +92,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
           الفئة {errors.category && `* ${errors.category}`}
         </Label>
         <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className={`rounded-xl h-12 bg-white/50 ${errors.category ? "border-red-300" : ""}`}>
+          <SelectTrigger className={`rounded-xl h-12 ${errors.category ? "border-red-300" : ""}`}>
             <SelectValue placeholder="اختر الفئة" />
           </SelectTrigger>
           <SelectContent>
@@ -114,7 +114,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className={`rounded-xl h-12 bg-white/50 ${errors.amount ? "border-red-300" : ""}`}
+            className={`rounded-xl h-12 ${errors.amount ? "border-red-300" : ""}`}
             placeholder="0"
           />
         </div>
@@ -126,7 +126,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className={`rounded-xl h-12 bg-white/50 ${errors.date ? "border-red-300" : ""}`}
+            className={`rounded-xl h-12 ${errors.date ? "border-red-300" : ""}`}
           />
         </div>
       </div>
@@ -136,7 +136,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="rounded-xl bg-white/50 resize-none"
+          className="rounded-xl resize-none"
           rows={2}
           placeholder="ملاحظة اختيارية"
         />

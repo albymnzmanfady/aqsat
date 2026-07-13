@@ -37,6 +37,9 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
     }
   );
 
+  const [customerErrors, setCustomerErrors] = useState<Record<string, string>>({});
+  const [guarantorErrors, setGuarantorErrors] = useState<Record<string, string>>({});
+
   const handleReset = () => {
     setCustomer({
       id: Date.now(),
@@ -52,18 +55,72 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
       address: "",
       phone: "",
     });
+    setCustomerErrors({});
+    setGuarantorErrors({});
+  };
+
+  const validateNationalId = (id: string): boolean => {
+    return /^\d{14}$/.test(id);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    return /^01[0-2,5]\d{8}$/.test(phone);
+  };
+
+  const validateCustomer = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!customer.name || customer.name.trim().length < 3) {
+      errors.name = "اسم العميل يجب أن يكون 3 أحرف على الأقل";
+    }
+
+    if (!customer.nationalId) {
+      errors.nationalId = "الرقم القومي مطلوب";
+    } else if (!validateNationalId(customer.nationalId)) {
+      errors.nationalId = "الرقم القومي يجب أن يكون 14 رقماً";
+    }
+
+    if (!customer.phone) {
+      errors.phone = "رقم الهاتف مطلوب";
+    } else if (!validatePhone(customer.phone)) {
+      errors.phone = "رقم الهاتف غير صحيح (يجب أن يبدأ بـ 01)";
+    }
+
+    setCustomerErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateGuarantor = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!guarantor.name || guarantor.name.trim().length < 3) {
+      errors.name = "اسم الضامن يجب أن يكون 3 أحرف على الأقل";
+    }
+
+    if (!guarantor.nationalId) {
+      errors.nationalId = "الرقم القومي مطلوب";
+    } else if (!validateNationalId(guarantor.nationalId)) {
+      errors.nationalId = "الرقم القومي يجب أن يكون 14 رقماً";
+    }
+
+    if (!guarantor.phone) {
+      errors.phone = "رقم الهاتف مطلوب";
+    } else if (!validatePhone(guarantor.phone)) {
+      errors.phone = "رقم الهاتف غير صحيح (يجب أن يبدأ بـ 01)";
+    }
+
+    setGuarantorErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customer.name || !customer.nationalId || !customer.phone) {
-      showError("يرجى ملء جميع بيانات العميل المطلوبة");
-      return;
-    }
+    const isCustomerValid = validateCustomer();
+    const isGuarantorValid = validateGuarantor();
 
-    if (!guarantor.name || !guarantor.nationalId || !guarantor.phone) {
-      showError("يرجى ملء جميع بيانات الضامن المطلوبة");
+    if (!isCustomerValid || !isGuarantorValid) {
+      showError("يرجى تصحيح الأخطاء في النموذج");
       return;
     }
 
@@ -96,11 +153,19 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
               <Input
                 id="customerName"
                 value={customer.name}
-                onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                onChange={(e) => {
+                  setCustomer({ ...customer, name: e.target.value });
+                  if (customerErrors.name) {
+                    setCustomerErrors({ ...customerErrors, name: "" });
+                  }
+                }}
                 placeholder="أدخل اسم العميل"
-                className="rounded-xl h-11"
+                className={`rounded-xl h-11 ${customerErrors.name ? "border-red-500" : ""}`}
                 required
               />
+              {customerErrors.name && (
+                <p className="text-sm text-red-500">{customerErrors.name}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="customerNationalId" className="text-sm font-medium text-slate-700">
@@ -109,12 +174,21 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
               <Input
                 id="customerNationalId"
                 value={customer.nationalId}
-                onChange={(e) => setCustomer({ ...customer, nationalId: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setCustomer({ ...customer, nationalId: value });
+                  if (customerErrors.nationalId) {
+                    setCustomerErrors({ ...customerErrors, nationalId: "" });
+                  }
+                }}
                 placeholder="14 رقم"
-                className="rounded-xl h-11"
+                className={`rounded-xl h-11 ${customerErrors.nationalId ? "border-red-500" : ""}`}
                 maxLength={14}
                 required
               />
+              {customerErrors.nationalId && (
+                <p className="text-sm text-red-500">{customerErrors.nationalId}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="customerAddress" className="text-sm font-medium text-slate-700">
@@ -135,12 +209,22 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
               <Input
                 id="customerPhone"
                 value={customer.phone}
-                onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setCustomer({ ...customer, phone: value });
+                  if (customerErrors.phone) {
+                    setCustomerErrors({ ...customerErrors, phone: "" });
+                  }
+                }}
                 placeholder="01xxxxxxxxx"
-                className="rounded-xl h-11"
+                className={`rounded-xl h-11 ${customerErrors.phone ? "border-red-500" : ""}`}
                 dir="ltr"
+                maxLength={11}
                 required
               />
+              {customerErrors.phone && (
+                <p className="text-sm text-red-500">{customerErrors.phone}</p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -165,11 +249,19 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
               <Input
                 id="guarantorName"
                 value={guarantor.name}
-                onChange={(e) => setGuarantor({ ...guarantor, name: e.target.value })}
+                onChange={(e) => {
+                  setGuarantor({ ...guarantor, name: e.target.value });
+                  if (guarantorErrors.name) {
+                    setGuarantorErrors({ ...guarantorErrors, name: "" });
+                  }
+                }}
                 placeholder="أدخل اسم الضامن"
-                className="rounded-xl h-11"
+                className={`rounded-xl h-11 ${guarantorErrors.name ? "border-red-500" : ""}`}
                 required
               />
+              {guarantorErrors.name && (
+                <p className="text-sm text-red-500">{guarantorErrors.name}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="guarantorNationalId" className="text-sm font-medium text-slate-700">
@@ -178,12 +270,21 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
               <Input
                 id="guarantorNationalId"
                 value={guarantor.nationalId}
-                onChange={(e) => setGuarantor({ ...guarantor, nationalId: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setGuarantor({ ...guarantor, nationalId: value });
+                  if (guarantorErrors.nationalId) {
+                    setGuarantorErrors({ ...guarantorErrors, nationalId: "" });
+                  }
+                }}
                 placeholder="14 رقم"
-                className="rounded-xl h-11"
+                className={`rounded-xl h-11 ${guarantorErrors.nationalId ? "border-red-500" : ""}`}
                 maxLength={14}
                 required
               />
+              {guarantorErrors.nationalId && (
+                <p className="text-sm text-red-500">{guarantorErrors.nationalId}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="guarantorAddress" className="text-sm font-medium text-slate-700">
@@ -204,12 +305,22 @@ const CustomerForm = ({ onSubmit, initialCustomer, initialGuarantor, isEditing =
               <Input
                 id="guarantorPhone"
                 value={guarantor.phone}
-                onChange={(e) => setGuarantor({ ...guarantor, phone: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setGuarantor({ ...guarantor, phone: value });
+                  if (guarantorErrors.phone) {
+                    setGuarantorErrors({ ...guarantorErrors, phone: "" });
+                  }
+                }}
                 placeholder="01xxxxxxxxx"
-                className="rounded-xl h-11"
+                className={`rounded-xl h-11 ${guarantorErrors.phone ? "border-red-500" : ""}`}
                 dir="ltr"
+                maxLength={11}
                 required
               />
+              {guarantorErrors.phone && (
+                <p className="text-sm text-red-500">{guarantorErrors.phone}</p>
+              )}
             </div>
           </div>
         </CardContent>

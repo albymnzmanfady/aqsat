@@ -28,20 +28,30 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
   const [deliveryDate, setDeliveryDate] = useState(initialContract?.deliveryDate || "");
 
   const [installmentAmount, setInstallmentAmount] = useState(0);
+  const [remainingAmount, setRemainingAmount] = useState(0);
   const [endDate, setEndDate] = useState("");
 
   // Calculate installment amount and end date
   useEffect(() => {
-    if (totalPrice && downPayment && numberOfReceipts) {
-      const remaining = Number(totalPrice) - Number(downPayment);
-      const installment = Math.ceil(remaining / Number(numberOfReceipts));
+    const total = Number(totalPrice) || 0;
+    const down = Number(downPayment) || 0;
+    const receipts = Number(numberOfReceipts) || 0;
+
+    if (total > 0 && down >= 0 && receipts > 0 && total > down) {
+      const remaining = total - down;
+      const installment = Math.ceil(remaining / receipts);
       setInstallmentAmount(installment);
+      setRemainingAmount(remaining);
 
       if (deliveryDate) {
         const end = new Date(deliveryDate);
-        end.setMonth(end.getMonth() + Number(numberOfReceipts) - 1);
+        end.setMonth(end.getMonth() + receipts - 1);
         setEndDate(end.toISOString().split("T")[0]);
       }
+    } else {
+      setInstallmentAmount(0);
+      setRemainingAmount(0);
+      setEndDate("");
     }
   }, [totalPrice, downPayment, numberOfReceipts, deliveryDate]);
 
@@ -54,6 +64,7 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
     setNumberOfReceipts("");
     setDeliveryDate("");
     setInstallmentAmount(0);
+    setRemainingAmount(0);
     setEndDate("");
   };
 
@@ -84,8 +95,55 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerId || !guarantorId || !productType || !totalPrice || !downPayment || !numberOfReceipts || !deliveryDate) {
-      showError("يرجى ملء جميع البيانات المطلوبة");
+    // التحقق من الحقول المطلوبة
+    if (!customerId) {
+      showError("يرجى اختيار العميل");
+      return;
+    }
+
+    if (!guarantorId) {
+      showError("يرجى اختيار الضامن");
+      return;
+    }
+
+    if (!productType || productType.trim().length === 0) {
+      showError("يرجى إدخال نوع السلعة");
+      return;
+    }
+
+    if (!totalPrice || Number(totalPrice) <= 0) {
+      showError("يرجى إدخال سعر صحيح أكبر من صفر");
+      return;
+    }
+
+    if (Number(downPayment) < 0) {
+      showError("قيمة المقدم لا يمكن أن تكون سالبة");
+      return;
+    }
+
+    if (Number(downPayment) >= Number(totalPrice)) {
+      showError("قيمة المقدم يجب أن تكون أقل من الإجمالي");
+      return;
+    }
+
+    if (!numberOfReceipts || Number(numberOfReceipts) <= 0) {
+      showError("يرجى إدخال عدد صحيح من الإيصالات أكبر من صفر");
+      return;
+    }
+
+    if (!Number.isInteger(Number(numberOfReceipts))) {
+      showError("عدد الإيصالات يجب أن يكون عدداً صحيحاً");
+      return;
+    }
+
+    if (!deliveryDate) {
+      showError("يرجى اختيار تاريخ الاستلام");
+      return;
+    }
+
+    // التحقق من أن تاريخ الاستلام ليس في الماضي (عند الإنشاء فقط)
+    if (!isEditing && new Date(deliveryDate) < new Date(new Date().toDateString())) {
+      showError("تاريخ الاستلام لا يمكن أن يكون في الماضي");
       return;
     }
 
@@ -93,12 +151,7 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
     const selectedGuarantor = guarantors.find((g) => g.id === Number(guarantorId));
 
     if (!selectedCustomer || !selectedGuarantor) {
-      showError("يرجى اختيار العميل والضامن");
-      return;
-    }
-
-    if (Number(downPayment) >= Number(totalPrice)) {
-      showError("قيمة المقدم يجب أن تكون أقل من الإجمالي");
+      showError("يرجى اختيار العميل والضامن بشكل صحيح");
       return;
     }
 
@@ -108,7 +161,7 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
       customerName: selectedCustomer.name,
       guarantorId: Number(guarantorId),
       guarantorName: selectedGuarantor.name,
-      productType,
+      productType: productType.trim(),
       totalPrice: Number(totalPrice),
       installmentAmount,
       downPayment: Number(downPayment),
@@ -199,6 +252,7 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
               <Input
                 id="totalPrice"
                 type="number"
+                min="1"
                 value={totalPrice}
                 onChange={(e) => setTotalPrice(e.target.value)}
                 placeholder="0"
@@ -215,6 +269,8 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
               <Input
                 id="downPayment"
                 type="number"
+                min="0"
+                max={totalPrice ? String(Number(totalPrice) - 1) : undefined}
                 value={downPayment}
                 onChange={(e) => setDownPayment(e.target.value)}
                 placeholder="0"
@@ -222,6 +278,9 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
                 dir="ltr"
                 required
               />
+              {Number(downPayment) >= Number(totalPrice) && Number(totalPrice) > 0 && (
+                <p className="text-sm text-red-500">قيمة المقدم يجب أن تكون أقل من الإجمالي</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -231,6 +290,8 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
               <Input
                 id="numberOfReceipts"
                 type="number"
+                min="1"
+                step="1"
                 value={numberOfReceipts}
                 onChange={(e) => setNumberOfReceipts(e.target.value)}
                 placeholder="12"
@@ -278,7 +339,7 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
             <div className="p-4 bg-slate-50 rounded-xl">
               <p className="text-sm text-slate-500 mb-1">المبلغ المتبقي</p>
               <p className="text-2xl font-bold text-blue-600">
-                {totalPrice && downPayment ? (Number(totalPrice) - Number(downPayment)).toLocaleString() : "0"} ج.م
+                {remainingAmount.toLocaleString()} ج.م
               </p>
             </div>
             <div className="p-4 bg-slate-50 rounded-xl">
@@ -288,6 +349,19 @@ const ContractForm = ({ customers, guarantors, onSubmit, initialContract, isEdit
               </p>
             </div>
           </div>
+          
+          {/* ملخص الحسابات */}
+          {installmentAmount > 0 && (
+            <div className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+              <p className="text-sm text-emerald-700 font-medium mb-2">ملخص الحسابات:</p>
+              <div className="text-sm text-emerald-600 space-y-1">
+                <p>• الإجمالي: {Number(totalPrice).toLocaleString()} ج.م</p>
+                <p>• المقدم: {Number(downPayment).toLocaleString()} ج.م</p>
+                <p>• المتبقي: {remainingAmount.toLocaleString()} ج.م ÷ {numberOfReceipts} إيصالات</p>
+                <p className="font-bold">• القسط الشهري: {installmentAmount.toLocaleString()} ج.م</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

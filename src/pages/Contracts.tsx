@@ -6,11 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -226,17 +221,12 @@ const Contracts = () => {
             if (!open) setEditingContract(null);
           }}
         >
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]">
-                <Plus className="h-5 w-5" />
-                {editingContract ? "تعديل العقد" : "عقد جديد"}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="rounded-lg text-xs">
-              إنشاء عقد أقساط جديد
-            </TooltipContent>
-          </Tooltip>
+          <DialogTrigger asChild>
+            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]">
+              <Plus className="h-5 w-5" />
+              {editingContract ? "تعديل العقد" : "عقد جديد"}
+            </Button>
+          </DialogTrigger>
           <DialogContent className="sm:max-w-[550px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
@@ -265,7 +255,7 @@ const Contracts = () => {
         <Input
           type="text"
           placeholder="بحث باسم العميل أو نوع المنتج..."
-          className="pr-12 rounded-2xl bg-white/70 backdrop-blur-sm border-slate-200/50 h-12 shadow-sm focus:shadow-md transition-shadow"
+          className="pr-12 rounded-2xl h-12"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -354,43 +344,29 @@ const Contracts = () => {
                     </div>
 
                     <div className="flex gap-2">
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-9 rounded-xl gap-1.5 text-violet-600 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
-                            onClick={() => { setSelectedContract(contract); setIsScheduleOpen(true); }}
-                          >
-                            <Eye className="h-4 w-4" />
-                            <span className="hidden sm:inline">الأقساط</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="rounded-lg text-xs">
-                          عرض جدول الأقساط
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-9 rounded-xl gap-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 active:scale-90"
-                            onClick={() => handleSendContractNotification(contract)}
-                            disabled={sendingContract === contract.id}
-                          >
-                            {sendingContract === contract.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
-                            <span className="hidden sm:inline">واتساب</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="rounded-lg text-xs">
-                          إرسال تفاصيل العقد عبر واتساب
-                        </TooltipContent>
-                      </Tooltip>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 rounded-xl gap-1.5 text-violet-600 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
+                        onClick={() => { setSelectedContract(contract); setIsScheduleOpen(true); }}
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="hidden sm:inline">الأقساط</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 rounded-xl gap-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 active:scale-90"
+                        onClick={() => handleSendContractNotification(contract)}
+                        disabled={sendingContract === contract.id}
+                      >
+                        {sendingContract === contract.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        <span className="hidden sm:inline">واتساب</span>
+                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">

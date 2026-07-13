@@ -6,11 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -109,6 +104,13 @@ const Products = () => {
       minStock: Number(formData.minStock),
     };
 
+    if (!data.name.trim() || !data.category.trim()) {
+      return;
+    }
+    if (data.costPrice <= 0 || data.sellingPrice <= 0) {
+      return;
+    }
+
     if (editingProduct) {
       setProducts((prev) =>
         prev.map((p) => (p.id === editingProduct.id ? { ...p, ...data } : p))
@@ -164,17 +166,10 @@ const Products = () => {
           }}
         >
           <DialogTrigger asChild>
-            <Tooltip delayDuration={300}>
-              <TooltipTrigger asChild>
-                <Button className="gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-500/30 h-12 px-6 active:scale-[0.97]">
-                  <Plus className="h-5 w-5" />
-                  منتج جديد
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="rounded-lg text-xs">
-                إضافة منتج جديد إلى المخزن
-              </TooltipContent>
-            </Tooltip>
+            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-500/30 h-12 px-6 active:scale-[0.97]">
+              <Plus className="h-5 w-5" />
+              منتج جديد
+            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-3xl">
             <DialogHeader>
@@ -186,14 +181,13 @@ const Products = () => {
                 {editingProduct ? "تعديل بيانات المنتج" : "أدخل بيانات المنتج لإضافته إلى المخزن"}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 px-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">اسم المنتج</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="اسم المنتج"
                   />
                 </div>
@@ -202,7 +196,6 @@ const Products = () => {
                   <Input
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="مثال: أجهزة كهربائية"
                   />
                 </div>
@@ -214,7 +207,6 @@ const Products = () => {
                     type="number"
                     value={formData.costPrice}
                     onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="0"
                   />
                 </div>
@@ -224,7 +216,6 @@ const Products = () => {
                     type="number"
                     value={formData.sellingPrice}
                     onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="0"
                   />
                 </div>
@@ -236,7 +227,6 @@ const Products = () => {
                     type="number"
                     value={formData.currentStock}
                     onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="0"
                   />
                 </div>
@@ -246,7 +236,6 @@ const Products = () => {
                     type="number"
                     value={formData.minStock}
                     onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="0"
                   />
                 </div>
@@ -255,7 +244,6 @@ const Products = () => {
                   <Input
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="قطعة"
                   />
                 </div>
@@ -346,7 +334,7 @@ const Products = () => {
         <Input
           type="text"
           placeholder="بحث باسم المنتج أو التصنيف..."
-          className="pr-12 rounded-2xl bg-white/70 backdrop-blur-sm border-slate-200/50 h-12 shadow-sm focus:shadow-md transition-shadow"
+          className="pr-12 rounded-2xl h-12"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />

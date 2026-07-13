@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 import MobileNav from "@/components/MobileNav";
 import {
   Home,
@@ -23,6 +24,8 @@ import {
   BarChart3,
   Receipt,
   PieChart,
+  LogOut,
+  Shield,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -33,42 +36,56 @@ const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { user, logout, hasPermission, isAdmin } = useAuth();
 
   const navItems = [
-    { path: "/", label: "الرئيسية", icon: Home, color: "from-violet-500 to-purple-600" },
-    { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500" },
-    { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500" },
-    { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500" },
+    { path: "/", label: "الرئيسية", icon: Home, color: "from-violet-500 to-purple-600", permission: null },
+    { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500", permission: "view_customers" as const },
+    { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500", permission: "view_contracts" as const },
+    { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500", permission: "view_installments" as const },
     {
       label: "المخازن",
       icon: Package,
       color: "from-orange-500 to-red-500",
+      permission: "view_products" as const,
       subItems: [
-        { path: "/products", label: "المنتجات", icon: Package },
-        { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp },
-        { path: "/inventory-dashboard", label: "التقارير", icon: BarChart3 },
+        { path: "/products", label: "المنتجات", icon: Package, permission: "view_products" as const },
+        { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp, permission: "view_inventory" as const },
+        { path: "/inventory-dashboard", label: "التقارير", icon: BarChart3, permission: "view_inventory" as const },
       ],
     },
     {
       label: "المصروفات",
       icon: Receipt,
       color: "from-rose-500 to-pink-600",
+      permission: "view_expenses" as const,
       subItems: [
-        { path: "/expenses", label: "المصروفات", icon: Receipt },
-        { path: "/expense-reports", label: "التقارير", icon: PieChart },
+        { path: "/expenses", label: "المصروفات", icon: Receipt, permission: "view_expenses" as const },
+        { path: "/expense-reports", label: "التقارير", icon: PieChart, permission: "view_expense_reports" as const },
       ],
     },
-    { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500" },
+    { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
   ];
+
+  // Filter nav items based on permissions
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.permission === null) return true;
+    return hasPermission(item.permission);
+  });
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Close sidebar on navigation for mobile
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
+
+  const roleLabels: Record<string, string> = {
+    admin: "المدير",
+    supervisor: "مشرف مالي",
+    collector: "محصل",
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex">
@@ -104,7 +121,7 @@ const Layout = ({ children }: LayoutProps) => {
               <span className="absolute top-2 left-2 h-2 w-2 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full animate-pulse" />
             </Button>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-purple-500/30">
-              <User className="h-5 w-5" />
+              {user?.name?.charAt(0) || "م"}
             </div>
           </div>
         </div>
@@ -152,11 +169,14 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             <div className="relative z-10 flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30">
-                م
+                {user?.name?.charAt(0) || "م"}
               </div>
               <div className="text-white">
-                <p className="font-semibold text-sm">محمد أحمد</p>
-                <p className="text-xs text-white/80">مدير النظام</p>
+                <p className="font-semibold text-sm">{user?.name || "محمد أحمد"}</p>
+                <p className="text-xs text-white/80 flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  {user ? roleLabels[user.role] || user.role : ""}
+                </p>
               </div>
             </div>
           </div>
@@ -166,15 +186,22 @@ const Layout = ({ children }: LayoutProps) => {
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">القائمة الرئيسية</p>
 
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             if (item.subItems) {
+              // Check if any sub item is visible based on permission
+              const visibleSubs = item.subItems.filter((sub) => {
+                if (!sub.permission) return true;
+                return hasPermission(sub.permission);
+              });
+              if (visibleSubs.length === 0) return null;
+
               return (
                 <div key={item.label} className="space-y-1">
                   <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${item.color}`} />
                     <span>{item.label}</span>
                   </div>
-                  {item.subItems.map((sub) => {
+                  {visibleSubs.map((sub) => {
                     const subActive = sub.path ? isActive(sub.path) : false;
                     return (
                       <Link key={sub.path} to={sub.path}>
@@ -241,7 +268,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-slate-100/80">
+        <div className="p-3 border-t border-slate-100/80 space-y-2">
           <div className="p-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -253,6 +280,14 @@ const Layout = ({ children }: LayoutProps) => {
               </div>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            onClick={logout}
+            className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>تسجيل الخروج</span>
+          </Button>
         </div>
       </aside>
 

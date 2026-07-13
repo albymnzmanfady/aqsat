@@ -18,6 +18,7 @@ const ProtectedRoute = ({ children, requiredPermission }: ProtectedRouteProps) =
   }
 
   if (requiredPermission && !hasPermission(requiredPermission)) {
+    // Redirect to home with a message (could use toast)
     return <Navigate to="/" replace />;
   }
 

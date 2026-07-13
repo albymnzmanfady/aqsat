@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Home,
   Users,
@@ -15,6 +16,7 @@ import {
   BarChart3,
   Receipt,
   PieChart,
+  LogOut,
 } from "lucide-react";
 import {
   Sheet,
@@ -24,31 +26,40 @@ import {
 import { Button } from "@/components/ui/button";
 
 const mainNavItems = [
-  { path: "/", label: "الرئيسية", icon: Home },
-  { path: "/customers", label: "العملاء", icon: Users },
-  { path: "/contracts", label: "العقود", icon: FileText },
-  { path: "/installments", label: "الأقساط", icon: CreditCard },
+  { path: "/", label: "الرئيسية", icon: Home, permission: null },
+  { path: "/customers", label: "العملاء", icon: Users, permission: "view_customers" as const },
+  { path: "/contracts", label: "العقود", icon: FileText, permission: "view_contracts" as const },
+  { path: "/installments", label: "الأقساط", icon: CreditCard, permission: "view_installments" as const },
 ];
 
 const moreItems = [
-  { path: "/products", label: "المنتجات", icon: Package, color: "from-orange-500 to-red-500" },
-  { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp, color: "from-teal-500 to-emerald-600" },
-  { path: "/inventory-dashboard", label: "تقارير المخزون", icon: BarChart3, color: "from-cyan-500 to-blue-600" },
-  { path: "/expenses", label: "المصروفات", icon: Receipt, color: "from-rose-500 to-pink-600" },
-  { path: "/expense-reports", label: "تقارير المصروفات", icon: PieChart, color: "from-emerald-500 to-teal-500" },
-  { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500" },
+  { path: "/products", label: "المنتجات", icon: Package, color: "from-orange-500 to-red-500", permission: "view_products" as const },
+  { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp, color: "from-teal-500 to-emerald-600", permission: "view_inventory" as const },
+  { path: "/inventory-dashboard", label: "تقارير المخزون", icon: BarChart3, color: "from-cyan-500 to-blue-600", permission: "view_inventory" as const },
+  { path: "/expenses", label: "المصروفات", icon: Receipt, color: "from-rose-500 to-pink-600", permission: "view_expenses" as const },
+  { path: "/expense-reports", label: "تقارير المصروفات", icon: PieChart, color: "from-emerald-500 to-teal-500", permission: "view_expense_reports" as const },
+  { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
 ];
 
 const MobileNav = () => {
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const { hasPermission, logout } = useAuth();
+
+  const visibleMainItems = mainNavItems.filter(
+    (item) => !item.permission || hasPermission(item.permission)
+  );
+
+  const visibleMoreItems = moreItems.filter(
+    (item) => hasPermission(item.permission)
+  );
 
   return (
     <>
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-2">
-          {mainNavItems.map((item) => {
+          {visibleMainItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -79,24 +90,26 @@ const MobileNav = () => {
             );
           })}
 
-          {/* المزيد */}
-          <button
-            onClick={() => setSheetOpen(true)}
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all duration-200 w-16",
-              sheetOpen ? "text-violet-600" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-              sheetOpen
-                ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/25"
-                : "text-slate-400"
-            )}>
-              <Grid3X3 className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-medium leading-tight text-slate-400">المزيد</span>
-          </button>
+          {/* المزيد - يظهر فقط إذا كان فيه عناصر */}
+          {visibleMoreItems.length > 0 && (
+            <button
+              onClick={() => setSheetOpen(true)}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all duration-200 w-16",
+                sheetOpen ? "text-violet-600" : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                sheetOpen
+                  ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/25"
+                  : "text-slate-400"
+              )}>
+                <Grid3X3 className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-medium leading-tight text-slate-400">المزيد</span>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -111,7 +124,7 @@ const MobileNav = () => {
               <h2 className="text-lg font-bold text-slate-800">القائمة الكاملة</h2>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {moreItems.map((item) => {
+              {visibleMoreItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
@@ -137,6 +150,18 @@ const MobileNav = () => {
                   </Link>
                 );
               })}
+            </div>
+
+            {/* Logout button in sheet */}
+            <div className="mt-6 pt-4 border-t border-slate-100">
+              <Button
+                variant="ghost"
+                onClick={() => { logout(); setSheetOpen(false); }}
+                className="w-full justify-center gap-2 h-12 rounded-xl text-rose-600 hover:bg-rose-50"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>تسجيل الخروج</span>
+              </Button>
             </div>
           </div>
         </SheetContent>

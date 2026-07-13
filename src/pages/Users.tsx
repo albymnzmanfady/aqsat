@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { mockUsers } from "@/data/mockUsers";
-import { User, UserRole } from "@/types";
+import { User, UserRole, ROLE_PERMISSIONS } from "@/types";
 import { showSuccess } from "@/utils/toast";
 import {
   UserCog,
@@ -21,26 +21,25 @@ import {
   XCircle,
   Sparkles,
   Mail,
-  Calendar,
 } from "lucide-react";
 
-const roleConfig: Record<UserRole, { label: string; color: string; icon: any; description: string }> = {
+const roleConfig: Record<UserRole, { label: string; color: string; Icon: React.ElementType; description: string }> = {
   admin: {
     label: "مدير النظام",
     color: "from-amber-500 to-orange-500",
-    icon: ShieldAlert,
+    Icon: ShieldAlert,
     description: "جميع الصلاحيات - إدارة كاملة",
   },
   supervisor: {
     label: "مشرف مالي",
     color: "from-blue-500 to-cyan-500",
-    icon: ShieldCheck,
+    Icon: ShieldCheck,
     description: "إدارة الأقساط والمصروفات والتقارير",
   },
   collector: {
     label: "محصل",
     color: "from-emerald-500 to-teal-500",
-    icon: Shield,
+    Icon: Shield,
     description: "إدارة العملاء والعقود والأقساط فقط",
   },
 };
@@ -50,11 +49,6 @@ const Users = () => {
   const [users] = useState<User[]>(mockUsers);
 
   const canManageUsers = hasPermission("manage_users");
-
-  const getPermissionsCount = (role: UserRole) => {
-    const { ROLE_PERMISSIONS } = require("@/types");
-    return ROLE_PERMISSIONS[role]?.length || 0;
-  };
 
   return (
     <Layout>
@@ -86,10 +80,8 @@ const Users = () => {
             <div className="flex-1">
               <h2 className="text-xl font-bold">{currentUser?.name}</h2>
               <p className="text-white/80 text-sm">{currentUser?.email}</p>
-              <Badge className={cn(
-                "mt-2 rounded-lg border-0 text-white bg-white/20",
-              )}>
-                {roleConfig[currentUser?.role || "admin"].icon({ className: "h-3 w-3 ml-1" })}
+              <Badge className="mt-2 rounded-lg border-0 text-white bg-white/20">
+                {React.createElement(roleConfig[currentUser?.role || "admin"].Icon, { className: "h-3 w-3 ml-1" })}
                 {roleConfig[currentUser?.role || "admin"].label}
               </Badge>
             </div>
@@ -101,7 +93,6 @@ const Users = () => {
       <div className="grid gap-4">
         {users.map((user) => {
           const config = roleConfig[user.role];
-          const RoleIcon = config.icon;
           const isCurrentUser = user.id === currentUser?.id;
 
           return (
@@ -125,11 +116,8 @@ const Users = () => {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-slate-800">{user.name}</h3>
-                        <Badge className={cn(
-                          "rounded-lg border-0 text-white bg-gradient-to-r",
-                          config.color
-                        )}>
-                          <RoleIcon className="h-3 w-3 ml-1" />
+                        <Badge className={cn("rounded-lg border-0 text-white bg-gradient-to-r", config.color)}>
+                          {React.createElement(config.Icon, { className: "h-3 w-3 ml-1" })}
                           {config.label}
                         </Badge>
                         {isCurrentUser && (
@@ -190,7 +178,7 @@ const Users = () => {
                   {(["admin", "supervisor", "collector"] as UserRole[]).map((role) => (
                     <th key={role} className="text-center py-3 px-4">
                       <Badge className={cn("rounded-lg border-0 text-white bg-gradient-to-r", roleConfig[role].color)}>
-                        {roleConfig[role].icon({ className: "h-3 w-3 ml-1" })}
+                        {React.createElement(roleConfig[role].Icon, { className: "h-3 w-3 ml-1" })}
                         {roleConfig[role].label}
                       </Badge>
                     </th>
@@ -199,39 +187,36 @@ const Users = () => {
               </thead>
               <tbody>
                 {[
-                  { key: "العملاء", perms: ["view_customers", "manage_customers"] },
-                  { key: "العقود", perms: ["view_contracts", "manage_contracts"] },
-                  { key: "الأقساط", perms: ["view_installments", "manage_installments"] },
-                  { key: "المنتجات", perms: ["view_products", "manage_products"] },
-                  { key: "المخزون", perms: ["view_inventory", "manage_inventory"] },
-                  { key: "المصروفات", perms: ["view_expenses", "manage_expenses"] },
-                  { key: "تقارير المصروفات", perms: ["view_expense_reports"] },
-                  { key: "الإعدادات", perms: ["view_settings"] },
-                  { key: "المستخدمين", perms: ["view_users", "manage_users"] },
-                ].map((row) => {
-                  const { ROLE_PERMISSIONS } = require("@/types");
-                  return (
-                    <tr key={row.key} className="border-b border-slate-100/80 hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-medium text-slate-700">{row.key}</td>
-                      {(["admin", "supervisor", "collector"] as UserRole[]).map((role) => {
-                        const rolePerms = ROLE_PERMISSIONS[role] || [];
-                        const hasAll = row.perms.every((p) => rolePerms.includes(p));
-                        const hasSome = row.perms.some((p) => rolePerms.includes(p));
-                        return (
-                          <td key={role} className="text-center py-3 px-4">
-                            {hasAll ? (
-                              <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
-                            ) : hasSome ? (
-                              <Shield className="h-5 w-5 text-amber-500 mx-auto" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-slate-300 mx-auto" />
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
+                  { key: "العملاء", perms: ["view_customers", "manage_customers"] as const },
+                  { key: "العقود", perms: ["view_contracts", "manage_contracts"] as const },
+                  { key: "الأقساط", perms: ["view_installments", "manage_installments"] as const },
+                  { key: "المنتجات", perms: ["view_products", "manage_products"] as const },
+                  { key: "المخزون", perms: ["view_inventory", "manage_inventory"] as const },
+                  { key: "المصروفات", perms: ["view_expenses", "manage_expenses"] as const },
+                  { key: "تقارير المصروفات", perms: ["view_expense_reports"] as const },
+                  { key: "الإعدادات", perms: ["view_settings"] as const },
+                  { key: "المستخدمين", perms: ["view_users", "manage_users"] as const },
+                ].map((row) => (
+                  <tr key={row.key} className="border-b border-slate-100/80 hover:bg-slate-50/50">
+                    <td className="py-3 px-4 font-medium text-slate-700">{row.key}</td>
+                    {(["admin", "supervisor", "collector"] as UserRole[]).map((role) => {
+                      const rolePerms = ROLE_PERMISSIONS[role] || [];
+                      const hasAll = row.perms.every((p) => rolePerms.includes(p));
+                      const hasSome = row.perms.some((p) => rolePerms.includes(p));
+                      return (
+                        <td key={role} className="text-center py-3 px-4">
+                          {hasAll ? (
+                            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
+                          ) : hasSome ? (
+                            <Shield className="h-5 w-5 text-amber-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-slate-300 mx-auto" />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

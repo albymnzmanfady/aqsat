@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Lock, Mail, Eye, EyeOff, LogIn } from "lucide-react";
+import { Sparkles, Lock, Mail, Eye, EyeOff, LogIn, Code, Phone, Heart } from "lucide-react";
 import { showError } from "@/utils/toast";
 
 const Login = () => {
@@ -16,6 +17,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { settings } = useAppSettings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,25 +38,42 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex flex-col items-center justify-center p-4 relative">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-200/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Header */}
+      <div className="w-full max-w-md relative z-10 flex flex-col items-center">
+        {/* Header / Logo */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-purple-500/30 mx-auto mb-4">
-            <Sparkles className="h-10 w-10 text-white" />
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl shadow-purple-500/30 mx-auto mb-4 overflow-hidden">
+            {settings.logoUrl ? (
+              <img
+                src={settings.logoUrl}
+                alt={settings.appName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center">
+                <Sparkles className="h-10 w-10 text-white" />
+              </div>
+            )}
           </div>
-          <h1 className="text-3xl font-bold text-slate-800">أقساط</h1>
+          <h1 className="text-3xl font-bold text-slate-800">{settings.appName || "أقساط"}</h1>
           <p className="text-slate-500 mt-1">نظام إدارة الأقساط والتحصيل</p>
+          {settings.companyName && (
+            <p className="text-sm text-slate-400 mt-2 font-medium">{settings.companyName}</p>
+          )}
+          {settings.companyPhone && (
+            <p className="text-xs text-slate-400 mt-1" dir="ltr">{settings.companyPhone}</p>
+          )}
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/20 p-8">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white/20 p-8 w-full">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-slate-700">
@@ -134,6 +153,24 @@ const Login = () => {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Developer Credit */}
+        <div className="mt-8 text-center space-y-3">
+          <div className="flex items-center justify-center gap-2 text-slate-400">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
+              <Code className="h-4 w-4 text-white" />
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-slate-600">Alaa Ali</p>
+              <p className="text-xs text-slate-400" dir="ltr">01016087027</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-1 text-xs text-slate-400">
+            <span>صُنع بـ</span>
+            <Heart className="h-3 w-3 text-rose-400 fill-rose-400" />
+            <span>© {new Date().getFullYear()} {settings.appName || "أقساط"}</span>
           </div>
         </div>
       </div>

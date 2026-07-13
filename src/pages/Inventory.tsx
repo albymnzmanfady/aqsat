@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { initialProducts, initialTransactions } from "@/data/mockData";
-import { Product, InventoryTransaction, InventoryTransactionType } from "@/types";
-import { showSuccess } from "@/utils/toast";
+import { api, ApiProduct, ApiInventoryTransaction } from "@/lib/api";
+import { showSuccess, showError } from "@/utils/toast";
 import {
   ArrowDownUp,
   Plus,
@@ -39,9 +38,12 @@ import {
   Calendar,
   FileText,
   ClipboardList,
+  Loader2,
 } from "lucide-react";
 
-const typeConfig: Record<InventoryTransactionType, { label: string; icon: any; color: string }> = {
+type TxnType = "purchase" | "sale" | "adjustment" | "return";
+
+const typeConfig: Record<string, { label: string; icon: any; color: string }> = {
   purchase: { label: "مشتريات", icon: TrendingDown, color: "bg-blue-100 text-blue-700" },
   sale: { label: "مبيعات", icon: TrendingUp, color: "bg-emerald-100 text-emerald-700" },
   adjustment: { label: "تسوية", icon: RefreshCw, color: "bg-amber-100 text-amber-700" },
@@ -49,71 +51,70 @@ const typeConfig: Record<InventoryTransactionType, { label: string; icon: any; c
 };
 
 const Inventory = () => {
-  const [transactions, setTransactions] = useState<InventoryTransaction[]>(initialTransactions);
-  const [products] = useState<Product[]>(initialProducts);
+  const [transactions, setTransactions] = useState<ApiInventoryTransaction[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [filterType, setFilterType] = useState<"all" | InventoryTransactionType>("all");
+  const [filterType, setFilterType] = useState<"all" | TxnType>("all");
 
   const [formData, setFormData] = useState({
     productId: "",
-    type: "purchase" as InventoryTransactionType,
+    type: "purchase" as TxnType,
     quantity: "",
     unitPrice: "",
     reference: "",
     notes: "",
   });
 
+  const fetchData = async () => {
+    try {
+      const [t, p] = await Promise.all([api.inventory.list(), api.products.list()]);
+      setTransactions(t);
+      setProducts(p);
+    } catch (e: any) {
+      showError("خطأ: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const resetForm = () => {
-    setFormData({
-      productId: "",
-      type: "purchase",
-      quantity: "",
-      unitPrice: "",
-      reference: "",
-      notes: "",
-    });
+    setFormData({ productId: "", type: "purchase", quantity: "", unitPrice: "", reference: "", notes: "" });
   };
 
   const getProductName = (id: number) => products.find((p) => p.id === id)?.name || "غير معروف";
 
   const filteredTransactions = transactions.filter((t) => {
-    const product = products.find((p) => p.id === t.productId);
-    const productName = product?.name || "";
+    const productName = t.product_name || getProductName(t.product_id);
     const matchesSearch = productName.includes(searchQuery) || t.reference.includes(searchQuery);
     const matchesType = filterType === "all" || t.type === filterType;
     return matchesSearch && matchesType;
   });
 
-  const handleAddTransaction = () => {
+  const handleAddTransaction = async () => {
+    if (!formData.productId || !formData.quantity) return;
     const product = products.find((p) => p.id === Number(formData.productId));
     if (!product) return;
-
-    const quantity = Number(formData.quantity);
-    const unitPrice = Number(formData.unitPrice) || product.costPrice;
-
-    const newTransaction: InventoryTransaction = {
-      id: Math.max(0, ...transactions.map((t) => t.id)) + 1,
-      productId: Number(formData.productId),
-      type: formData.type,
-      quantity: formData.type === "purchase" ? quantity : -quantity,
-      unitPrice,
-      total: formData.type === "purchase" ? quantity * unitPrice : -(quantity * unitPrice),
-      date: new Date().toISOString().split("T")[0],
-      reference: formData.reference || `TXN-${Date.now()}`,
-      notes: formData.notes,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-
-    setTransactions((prev) => [newTransaction, ...prev]);
-
-    const stockChange = formData.type === "purchase" ? quantity : -quantity;
-    const productIndex = products.findIndex((p) => p.id === Number(formData.productId));
-    if (productIndex !== -1) {
-      products[productIndex].currentStock += stockChange;
+    const unitPrice = Number(formData.unitPrice) || product.cost_price;
+    try {
+      await api.inventory.create({
+        productId: Number(formData.productId),
+        type: formData.type,
+        quantity: Number(formData.quantity),
+        unitPrice,
+        reference: formData.reference,
+        notes: formData.notes,
+      });
+      showSuccess("✅ تم تسجيل الحركة بنجاح");
+      fetchData();
+    } catch (e: any) {
+      showError("خطأ: " + e.message);
     }
-
-    showSuccess("✅ تم تسجيل الحركة بنجاح");
     setIsDialogOpen(false);
     resetForm();
   };
@@ -123,6 +124,15 @@ const Inventory = () => {
     totalSales: transactions.filter((t) => t.type === "sale").reduce((s, t) => s + Math.abs(t.total), 0),
     totalTransactions: transactions.length,
   };
+
+  if (loading)
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+        </div>
+      </Layout>
+    );
 
   return (
     <Layout>
@@ -168,7 +178,7 @@ const Inventory = () => {
                 <Label className="text-sm font-medium text-slate-600">نوع الحركة</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(val: InventoryTransactionType) =>
+                  onValueChange={(val: TxnType) =>
                     setFormData({ ...formData, type: val, unitPrice: "" })
                   }
                 >
@@ -196,7 +206,7 @@ const Inventory = () => {
                   <SelectContent>
                     {products.map((p) => (
                       <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.name} (الرصيد: {p.currentStock})
+                        {p.name} (الرصيد: {p.current_stock})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -245,7 +255,14 @@ const Inventory = () => {
             </div>
 
             <DialogFooter className="px-8">
-              <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  resetForm();
+                }}
+                className="rounded-xl h-11"
+              >
                 إلغاء
               </Button>
               <Button
@@ -284,7 +301,9 @@ const Inventory = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">إجمالي المشتريات</p>
-                <p className="font-bold text-xl text-slate-800">{stats.totalPurchases.toLocaleString()} ج.م</p>
+                <p className="font-bold text-xl text-slate-800">
+                  {stats.totalPurchases.toLocaleString()} ج.م
+                </p>
               </div>
             </div>
           </CardContent>
@@ -297,7 +316,9 @@ const Inventory = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">إجمالي المبيعات</p>
-                <p className="font-bold text-xl text-slate-800">{stats.totalSales.toLocaleString()} ج.م</p>
+                <p className="font-bold text-xl text-slate-800">
+                  {stats.totalSales.toLocaleString()} ج.م
+                </p>
               </div>
             </div>
           </CardContent>
@@ -325,13 +346,14 @@ const Inventory = () => {
               onClick={() => setFilterType(type)}
               className={cn(
                 "rounded-xl h-10 px-4",
-                filterType === type && {
-                  all: "bg-gradient-to-r from-slate-700 to-slate-800 text-white",
-                  purchase: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white",
-                  sale: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
-                  adjustment: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
-                  return: "bg-gradient-to-r from-purple-500 to-violet-500 text-white",
-                }[type]
+                filterType === type &&
+                  ({
+                    all: "bg-gradient-to-r from-slate-700 to-slate-800 text-white",
+                    purchase: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white",
+                    sale: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
+                    adjustment: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
+                    return: "bg-gradient-to-r from-purple-500 to-violet-500 text-white",
+                  }[type])
               )}
             >
               {type === "all" ? "الكل" : typeConfig[type]?.label || type}
@@ -344,21 +366,29 @@ const Inventory = () => {
       <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
         <div className="divide-y divide-slate-100/80">
           {filteredTransactions.map((transaction) => {
-            const config = typeConfig[transaction.type];
+            const config = typeConfig[transaction.type] || typeConfig.purchase;
             const Icon = config.icon;
-            const productName = getProductName(transaction.productId);
+            const productName = transaction.product_name || getProductName(transaction.product_id);
 
             return (
-              <div key={transaction.id} className="p-4 hover:bg-slate-50/50 transition-colors">
+              <div
+                key={transaction.id}
+                className="p-4 hover:bg-slate-50/50 transition-colors"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center shadow-md",
-                      transaction.type === "purchase" ? "bg-gradient-to-br from-blue-500 to-cyan-500" :
-                      transaction.type === "sale" ? "bg-gradient-to-br from-emerald-500 to-teal-500" :
-                      transaction.type === "adjustment" ? "bg-gradient-to-br from-amber-500 to-orange-500" :
-                      "bg-gradient-to-br from-purple-500 to-violet-500"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center shadow-md",
+                        transaction.type === "purchase"
+                          ? "bg-gradient-to-br from-blue-500 to-cyan-500"
+                          : transaction.type === "sale"
+                          ? "bg-gradient-to-br from-emerald-500 to-teal-500"
+                          : transaction.type === "adjustment"
+                          ? "bg-gradient-to-br from-amber-500 to-orange-500"
+                          : "bg-gradient-to-br from-purple-500 to-violet-500"
+                      )}
+                    >
                       <Icon className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -370,7 +400,7 @@ const Inventory = () => {
                       </div>
                       <div className="flex flex-wrap gap-2 mt-1">
                         <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                          الكمية: {Math.abs(transaction.quantity)} {products.find(p => p.id === transaction.productId)?.unit || "وحدة"}
+                          الكمية: {Math.abs(transaction.quantity)}
                         </span>
                         <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <FileText className="h-3 w-3" />
@@ -388,17 +418,21 @@ const Inventory = () => {
                   </div>
 
                   <div className="text-left">
-                    <p className={cn(
-                      "font-bold",
-                      transaction.type === "purchase" ? "text-blue-600" :
-                      transaction.type === "sale" ? "text-emerald-600" :
-                      "text-slate-800"
-                    )}>
+                    <p
+                      className={cn(
+                        "font-bold",
+                        transaction.type === "purchase"
+                          ? "text-blue-600"
+                          : transaction.type === "sale"
+                          ? "text-emerald-600"
+                          : "text-slate-800"
+                      )}
+                    >
                       {transaction.type === "purchase" ? "+" : ""}
                       {transaction.total.toLocaleString()} ج.م
                     </p>
                     <p className="text-xs text-slate-400">
-                      {transaction.unitPrice.toLocaleString()} ج.م / للوحدة
+                      {transaction.unit_price.toLocaleString()} ج.م / للوحدة
                     </p>
                   </div>
                 </div>

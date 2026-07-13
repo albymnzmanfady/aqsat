@@ -1,26 +1,28 @@
-# Stage 1: Build the app
+# Stage 1: Build the frontend
 FROM node:20-alpine AS build
-
 WORKDIR /app
-
-# Copy package files and install dependencies
 COPY package.json package-lock.json* ./
 RUN npm ci
-
-# Copy source code and build
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
+# Stage 2: Production server
+FROM node:20-alpine
+WORKDIR /app
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev
 
-# Copy built files from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy server code and built frontend
+COPY server ./server
+COPY --from=build /app/dist ./dist
 
-# Expose port 80
-EXPOSE 80
+# Create data directory for SQLite
+RUN mkdir -p /app/data
 
-CMD ["nginx", "-g", "daemon off;"]
+ENV NODE_ENV=production
+ENV PORT=3001
+
+EXPOSE 3001
+
+CMD ["node", "--import", "tsx", "server/index.ts"]

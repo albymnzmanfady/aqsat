@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Permission, ROLE_PERMISSIONS } from "@/types";
-import { checkCredentials } from "@/data/mockUsers";
 
 interface AuthContextType {
   user: User | null;
@@ -38,14 +37,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const login = async (email: string, password: string) => {
-    // محاكاة تأخير
-    await new Promise((r) => setTimeout(r, 300));
-    const foundUser = checkCredentials(email, password);
-    if (foundUser) {
-      setUser(foundUser);
-      return { success: true };
+    // Use API for login
+    try {
+      const res = await fetch("/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const foundUser = await res.json();
+        setUser(foundUser);
+        return { success: true };
+      }
+      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
+    } catch {
+      return { success: false, error: "خطأ في الاتصال بالخادم" };
     }
-    return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
   };
 
   const logout = () => {

@@ -1,442 +1,187 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ContractForm from "@/components/ContractForm";
 import InstallmentSchedule from "@/components/InstallmentSchedule";
 import PrintDialog from "@/components/PrintDialog";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { getContractHtml } from "@/utils/pdfExport";
-import { initialCustomers, initialContracts, generateInstallments, initialInstallments, initialProducts } from "@/data/mockData";
-import { Customer, Contract, Installment, Product } from "@/types";
+import { api, ApiContract, ApiInstallment, ApiCustomer, ApiProduct } from "@/lib/api";
 import { showSuccess, showError } from "@/utils/toast";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
-import {
-  FileText,
-  Plus,
-  Search,
-  Sparkles,
-  Calendar,
-  Send,
-  Loader2,
-  Eye,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Package,
-  X,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Printer,
-} from "lucide-react";
+import { FileText, Plus, Search, Sparkles, Calendar, Send, Loader2, Eye, CheckCircle2, Clock, AlertTriangle, Package, X, MoreHorizontal, Edit, Trash2, Printer } from "lucide-react";
 
 const Contracts = () => {
   const { settings } = useAppSettings();
-  const [contracts, setContracts] = useState<Contract[]>(initialContracts);
-  const [installments, setInstallments] = useState<Installment[]>(initialInstallments);
-  const [customers] = useState<Customer[]>(initialCustomers);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [contracts, setContracts] = useState<ApiContract[]>([]);
+  const [installments, setInstallments] = useState<ApiInstallment[]>([]);
+  const [customers, setCustomers] = useState<ApiCustomer[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingContract, setEditingContract] = useState<Contract | null>(null);
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [editingContract, setEditingContract] = useState<ApiContract | null>(null);
+  const [selectedContract, setSelectedContract] = useState<ApiContract | null>(null);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [sendingContract, setSendingContract] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-
-  // Print state
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
   const [printTitle, setPrintTitle] = useState("");
   const [printFilename, setPrintFilename] = useState("");
 
+  const fetchData = async () => {
+    try {
+      const [c, i, cu, p] = await Promise.all([
+        api.contracts.list(searchQuery || undefined),
+        api.installments.list(),
+        api.customers.list(),
+        api.products.list(),
+      ]);
+      setContracts(c); setInstallments(i); setCustomers(cu); setProducts(p);
+    } catch (e: any) { showError("خطأ: " + e.message); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchData(); }, [searchQuery]);
+
   const guarantors = customers.filter((c) => c.type === "guarantor");
-  const availableProducts = products.filter((p) => p.currentStock > 0);
   const contractCustomers = customers.filter((c) => c.type === "customer");
+  const availableProducts = products.filter((p) => p.current_stock > 0);
 
-  const filteredContracts = contracts.filter((c) =>
-    c.customerName.includes(searchQuery) || c.productType.includes(searchQuery)
-  );
-
-  const handlePrintContract = (contract: Contract) => {
-    const contractInstallments = installments.filter((i) => i.contractId === contract.id);
-    const html = getContractHtml(contract, contractInstallments, settings);
+  const handlePrintContract = (contract: ApiContract) => {
+    const contractInstallments = installments.filter((i) => i.contract_id === contract.id);
+    const html = getContractHtml({
+      id: contract.id, customerName: contract.customer_name, customerPhone: contract.customer_phone,
+      productType: contract.product_type, totalPrice: contract.total_price, downPayment: contract.down_payment,
+      numberOfReceipts: contract.number_of_receipts, installmentAmount: contract.installment_amount,
+      startDate: contract.start_date, endDate: contract.end_date, guarantorName: contract.guarantor_name,
+      guarantorPhone: contract.guarantor_phone, createdAt: contract.created_at,
+    }, contractInstallments.map(i => ({
+      id: i.id, contractId: i.contract_id, number: i.number, amount: i.amount, dueDate: i.due_date,
+      isPaid: !!i.is_paid, paidDate: i.paid_date || undefined, day: i.day, month: i.month, year: i.year,
+    })), settings);
     setPrintHtml(html);
-    setPrintTitle(`عقد الأقساط - ${contract.customerName}`);
-    setPrintFilename(`contract-${contract.id}-${contract.customerName}.pdf`);
+    setPrintTitle(`عقد الأقساط - ${contract.customer_name}`);
+    setPrintFilename(`contract-${contract.id}.pdf`);
     setPrintOpen(true);
   };
 
-  const handleCreateContract = (data: any) => {
-    const now = new Date().toISOString().split("T")[0];
-
-    if (editingContract) {
-      setContracts((prev) =>
-        prev.map((c) =>
-          c.id === editingContract.id
-            ? { ...c, ...data, id: editingContract.id, createdAt: editingContract.createdAt }
-            : c
-        )
-      );
-      showSuccess("✅ تم تعديل العقد بنجاح");
-    } else {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === data.productId ? { ...p, currentStock: p.currentStock - 1 } : p
-        )
-      );
-
-      const newContract: Contract = {
-        id: contracts.length + 1,
-        ...data,
-        createdAt: now,
-      };
-
-      const newInstallments = generateInstallments(newContract);
-
-      setContracts((prev) => [...prev, newContract]);
-      setInstallments((prev) => [...prev, ...newInstallments]);
-
-      const config = getWhatsAppConfig();
-      if (config.endpoint) {
-        sendWhatsAppMessage(
-          data.customerPhone,
-          MESSAGE_TEMPLATES.newContract(data.customerName, data.productType, data.totalPrice, data.installmentAmount),
-          config
-        ).then((result) => {
-          if (result.success) showSuccess("✅ تم إنشاء العقد وإرسال الإشعار للعميل");
-          else showSuccess("✅ تم إنشاء العقد بنجاح");
-        });
+  const handleCreateContract = async (data: any) => {
+    try {
+      if (editingContract) {
+        await api.contracts.update(editingContract.id, data);
+        showSuccess("✅ تم تعديل العقد بنجاح");
       } else {
+        await api.contracts.create(data);
         showSuccess("✅ تم إنشاء العقد بنجاح");
+        const config = getWhatsAppConfig();
+        if (config.endpoint) {
+          sendWhatsAppMessage(data.customerPhone, MESSAGE_TEMPLATES.newContract(data.customerName, data.productType, data.totalPrice, data.installmentAmount), config);
+        }
       }
-    }
-
+      fetchData();
+    } catch (e: any) { showError("خطأ: " + e.message); }
     setIsDialogOpen(false);
     setEditingContract(null);
   };
 
-  const handleEdit = (contract: Contract) => {
-    setEditingContract(contract);
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = (id: number) => {
-    const contract = contracts.find((c) => c.id === id);
-    if (contract && contract.productId) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === contract.productId ? { ...p, currentStock: p.currentStock + 1 } : p
-        )
-      );
-    }
-    setContracts((prev) => prev.filter((c) => c.id !== id));
-    setInstallments((prev) => prev.filter((i) => i.contractId !== id));
-    showSuccess("✅ تم حذف العقد");
+  const handleDelete = async (id: number) => {
+    try { await api.contracts.delete(id); showSuccess("✅ تم حذف العقد"); fetchData(); }
+    catch (e: any) { showError("خطأ: " + e.message); }
     setDeleteConfirmId(null);
   };
 
-  const handleMarkInstallmentPaid = (installmentId: number) => {
-    setInstallments((prev) =>
-      prev.map((inst) =>
-        inst.id === installmentId
-          ? { ...inst, isPaid: true, paidDate: new Date().toISOString().split("T")[0] }
-          : inst
-      )
-    );
-
-    const paidInstallment = installments.find((i) => i.id === installmentId);
-    if (paidInstallment) {
-      const contract = contracts.find((c) => c.id === paidInstallment.contractId);
-      if (contract) {
-        const config = getWhatsAppConfig();
-        if (config.endpoint) {
-          const dueDate = `${paidInstallment.day}/${paidInstallment.month}/${paidInstallment.year}`;
-          sendWhatsAppMessage(
-            contract.customerPhone,
-            MESSAGE_TEMPLATES.installmentPaid(contract.customerName, paidInstallment.amount, dueDate, paidInstallment.number),
-            config
-          );
-        }
-        showSuccess("✅ تم تسديد القسط بنجاح");
-      }
-    }
+  const handleMarkInstallmentPaid = async (installmentId: number) => {
+    try {
+      await api.installments.update(installmentId, { isPaid: true, paidDate: new Date().toISOString().split("T")[0] });
+      fetchData();
+      showSuccess("✅ تم تسديد القسط بنجاح");
+    } catch (e: any) { showError("خطأ: " + e.message); }
   };
 
-  const handleSendContractNotification = async (contract: Contract) => {
-    const config = getWhatsAppConfig();
-    if (!config.endpoint) {
-      showError("يرجى إعداد واتساب أولاً من صفحة الإعدادات");
-      return;
-    }
+  const contractInstallments = (contractId: number) => installments.filter((i) => i.contract_id === contractId);
 
-    setSendingContract(contract.id);
-    const result = await sendWhatsAppMessage(
-      contract.customerPhone,
-      MESSAGE_TEMPLATES.newContract(contract.customerName, contract.productType, contract.totalPrice, contract.installmentAmount),
-      config
-    );
-    if (result.success) showSuccess("✅ تم إرسال إشعار العقد");
-    else showError(result.message);
-    setSendingContract(null);
-  };
-
-  const contractInstallments = (contractId: number) =>
-    installments.filter((i) => i.contractId === contractId);
-
-  const statusStyles = {
-    active: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
-    completed: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white",
-    defaulted: "bg-gradient-to-r from-rose-500 to-pink-500 text-white",
-  };
-
-  const statusIcons = {
-    active: CheckCircle2,
-    completed: Clock,
-    defaulted: AlertTriangle,
-  };
+  if (loading) return <Layout><div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 text-violet-500 animate-spin" /></div></Layout>;
 
   return (
     <Layout>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="relative">
           <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full opacity-20 blur-xl" />
           <div className="relative flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <FileText className="h-7 w-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">العقود</h1>
-              <p className="text-slate-500 mt-1">إدارة عقود الأقساط</p>
-            </div>
+            <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30"><FileText className="h-7 w-7 text-white" /></div>
+            <div><h1 className="text-2xl lg:text-3xl font-bold text-slate-800">العقود</h1><p className="text-slate-500 mt-1">إدارة عقود الأقساط</p></div>
           </div>
         </div>
-
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) setEditingContract(null);
-          }}
-        >
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingContract(null); }}>
           <DialogTrigger asChild>
-            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]">
-              <Plus className="h-5 w-5" />
-              {editingContract ? "تعديل العقد" : "عقد جديد"}
-            </Button>
+            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]"><Plus className="h-5 w-5" />عقد جديد</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px] rounded-3xl">
-            <DialogHeader>
-              <DialogTitle className="text-xl flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-emerald-500" />
-                {editingContract ? "تعديل العقد" : "إنشاء عقد جديد"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingContract ? "تعديل بيانات العقد" : "اختر العميل والمنتج من المخزن"}
-              </DialogDescription>
-            </DialogHeader>
-            <ContractForm
-              key={editingContract?.id || "new"}
-              customers={contractCustomers}
-              guarantors={guarantors}
-              products={editingContract ? products : availableProducts}
-              onSave={handleCreateContract}
-              onCancel={() => { setIsDialogOpen(false); setEditingContract(null); }}
-            />
+            <DialogHeader><DialogTitle className="text-xl flex items-center gap-2"><Sparkles className="h-5 w-5 text-emerald-500" />{editingContract ? "تعديل العقد" : "إنشاء عقد جديد"}</DialogTitle><DialogDescription>{editingContract ? "تعديل بيانات العقد" : "اختر العميل والمنتج من المخزن"}</DialogDescription></DialogHeader>
+            <ContractForm key={editingContract?.id || "new"} customers={contractCustomers} guarantors={guarantors} products={editingContract ? products : availableProducts} onSave={handleCreateContract} onCancel={() => { setIsDialogOpen(false); setEditingContract(null); }} />
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-        <Input
-          type="text"
-          placeholder="بحث باسم العميل أو نوع المنتج..."
-          className="pr-12 rounded-2xl h-12"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors text-slate-500"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+        <Input type="text" placeholder="بحث باسم العميل أو نوع المنتج..." className="pr-12 rounded-2xl h-12" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-500"><X className="h-4 w-4" /></button>}
       </div>
 
-      {/* Contracts Grid */}
       <div className="grid gap-4">
-        {filteredContracts.map((contract, index) => {
+        {contracts.map((contract, index) => {
           const insts = contractInstallments(contract.id);
-          const paidCount = insts.filter((i) => i.isPaid).length;
+          const paidCount = insts.filter((i) => i.is_paid).length;
           const progress = insts.length > 0 ? Math.round((paidCount / insts.length) * 100) : 0;
-          const StatusIcon = statusIcons[contract.status];
+          const statusStyles = { active: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white", completed: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white", defaulted: "bg-gradient-to-r from-rose-500 to-pink-500 text-white" };
+          const statusIcons = { active: CheckCircle2, completed: Clock, defaulted: AlertTriangle };
+          const StatusIcon = statusIcons[contract.status] || CheckCircle2;
 
           return (
-            <Card
-              key={contract.id}
-              className="stagger-item border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <div
-                className={cn(
-                  "h-1.5 w-full",
-                  contract.status === "active"
-                    ? "bg-gradient-to-l from-emerald-400 to-teal-500"
-                    : contract.status === "completed"
-                    ? "bg-gradient-to-l from-blue-400 to-cyan-500"
-                    : "bg-gradient-to-l from-rose-400 to-pink-500"
-                )}
-              />
-
+            <Card key={contract.id} className="stagger-item border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift" style={{ animationDelay: `${index * 0.05}s` }}>
+              <div className={cn("h-1.5 w-full", contract.status === "active" ? "bg-gradient-to-l from-emerald-400 to-teal-500" : contract.status === "completed" ? "bg-gradient-to-l from-blue-400 to-cyan-500" : "bg-gradient-to-l from-rose-400 to-pink-500")} />
               <CardContent className="p-5">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">
-                      {contract.customerName.charAt(0)}
-                    </div>
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">{contract.customer_name.charAt(0)}</div>
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-slate-800">{contract.customerName}</h3>
-                        <Badge className={cn("rounded-lg border-0", statusStyles[contract.status])}>
-                          <StatusIcon className="h-3 w-3 ml-1" />
-                          {contract.status === "active" ? "نشط" : contract.status === "completed" ? "مكتمل" : "متأخر"}
-                        </Badge>
-                      </div>
+                      <div className="flex items-center gap-2 flex-wrap"><h3 className="font-bold text-slate-800">{contract.customer_name}</h3><Badge className={cn("rounded-lg border-0", statusStyles[contract.status])}><StatusIcon className="h-3 w-3 ml-1" />{contract.status === "active" ? "نشط" : contract.status === "completed" ? "مكتمل" : "متأخر"}</Badge></div>
                       <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
-                          <Package className="h-3.5 w-3.5" />
-                          {contract.productType}
-                        </span>
-                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg">{contract.totalPrice.toLocaleString()} ج.م</span>
-                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {contract.startDate}
-                        </span>
+                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg flex items-center gap-1"><Package className="h-3.5 w-3.5" />{contract.product_type}</span>
+                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg">{contract.total_price.toLocaleString()} ج.م</span>
+                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{contract.start_date}</span>
                       </div>
                     </div>
                   </div>
-
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="w-full sm:w-32">
-                      <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                        <span>{paidCount}/{insts.length}</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-500",
-                            contract.status === "active"
-                              ? "bg-gradient-to-l from-emerald-400 to-teal-500"
-                              : contract.status === "completed"
-                              ? "bg-gradient-to-l from-blue-400 to-cyan-500"
-                              : "bg-gradient-to-l from-rose-400 to-pink-500"
-                          )}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
+                      <div className="flex items-center justify-between text-xs text-slate-500 mb-1"><span>{paidCount}/{insts.length}</span><span>{progress}%</span></div>
+                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden"><div className={cn("h-full rounded-full transition-all duration-500", contract.status === "active" ? "bg-gradient-to-l from-emerald-400 to-teal-500" : "bg-gradient-to-l from-rose-400 to-pink-500")} style={{ width: `${progress}%` }} /></div>
                     </div>
-
                     <div className="flex gap-1.5 flex-wrap">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 rounded-xl gap-1.5 text-violet-600 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
-                        onClick={() => { setSelectedContract(contract); setIsScheduleOpen(true); }}
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="hidden sm:inline">الأقساط</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 rounded-xl gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:scale-90"
-                        onClick={() => handlePrintContract(contract)}
-                      >
-                        <Printer className="h-4 w-4" />
-                        <span className="hidden sm:inline">طباعة</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 rounded-xl gap-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 active:scale-90"
-                        onClick={() => handleSendContractNotification(contract)}
-                        disabled={sendingContract === contract.id}
-                      >
-                        {sendingContract === contract.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                        <span className="hidden sm:inline">واتساب</span>
+                      <Button variant="ghost" size="sm" className="h-9 rounded-xl gap-1.5 text-violet-600 hover:bg-violet-50 active:scale-90" onClick={() => { setSelectedContract(contract); setIsScheduleOpen(true); }}><Eye className="h-4 w-4" /><span className="hidden sm:inline">الأقساط</span></Button>
+                      <Button variant="ghost" size="sm" className="h-9 rounded-xl gap-1.5 text-blue-600 hover:bg-blue-50 active:scale-90" onClick={() => handlePrintContract(contract)}><Printer className="h-4 w-4" /><span className="hidden sm:inline">طباعة</span></Button>
+                      <Button variant="ghost" size="sm" className="h-9 rounded-xl gap-1.5 text-emerald-600 hover:bg-emerald-50 active:scale-90" onClick={async () => { const config = getWhatsAppConfig(); if (!config.endpoint) { showError("إعداد واتساب مطلوب"); return; } setSendingContract(contract.id); const r = await sendWhatsAppMessage(contract.customer_phone, MESSAGE_TEMPLATES.newContract(contract.customer_name, contract.product_type, contract.total_price, contract.installment_amount), config); if (r.success) showSuccess("✅ تم إرسال الإشعار"); setSendingContract(null); }} disabled={sendingContract === contract.id}>
+                        {sendingContract === contract.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}<span className="hidden sm:inline">واتساب</span>
                       </Button>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
-                            <MoreHorizontal className="h-5 w-5 text-slate-500" />
-                          </Button>
-                        </DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90"><MoreHorizontal className="h-5 w-5 text-slate-500" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem onClick={() => handleEdit(contract)} className="cursor-pointer rounded-lg">
-                            <Edit className="h-4 w-4 ml-2" />
-                            تعديل
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeleteConfirmId(contract.id)}
-                            className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4 ml-2" />
-                            حذف
-                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setEditingContract(contract); setIsDialogOpen(true); }} className="cursor-pointer rounded-lg"><Edit className="h-4 w-4 ml-2" />تعديل</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteConfirmId(contract.id)} className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"><Trash2 className="h-4 w-4 ml-2" />حذف</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-slate-100/80">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-500">المبلغ</p>
-                      <p className="font-semibold text-slate-700">{contract.totalPrice.toLocaleString()} ج.م</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">المقدّم</p>
-                      <p className="font-semibold text-slate-700">{contract.downPayment.toLocaleString()} ج.م</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">القسط</p>
-                      <p className="font-semibold text-slate-700">{contract.installmentAmount.toLocaleString()} ج.م</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">الاستحقاق</p>
-                      <p className="font-semibold text-slate-700">{contract.endDate}</p>
                     </div>
                   </div>
                 </div>
@@ -444,78 +189,27 @@ const Contracts = () => {
             </Card>
           );
         })}
-
-        {filteredContracts.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-10 w-10 text-slate-300" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-600 mb-2">لا توجد عقود</h3>
-            <p className="text-slate-500">لم يتم العثور على عقود مطابقة</p>
-          </div>
-        )}
+        {contracts.length === 0 && <div className="text-center py-16"><div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4"><FileText className="h-10 w-10 text-slate-300" /></div><h3 className="text-lg font-bold text-slate-600 mb-2">لا توجد عقود</h3></div>}
       </div>
 
-      {/* Installment Schedule Dialog */}
       <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
         <DialogContent className="sm:max-w-[500px] rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-emerald-500" />
-              جدول الأقساط - {selectedContract?.customerName}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedContract?.productType} - {selectedContract?.installmentAmount.toLocaleString()} ج.م شهرياً
-            </DialogDescription>
-          </DialogHeader>
-          {selectedContract && (
-            <div className="max-h-[50vh] overflow-y-auto px-8">
-              <InstallmentSchedule
-                installments={contractInstallments(selectedContract.id)}
-                customerName={selectedContract.customerName}
-                customerPhone={selectedContract.customerPhone}
-                onMarkPaid={handleMarkInstallmentPaid}
-              />
-            </div>
-          )}
+          <DialogHeader><DialogTitle className="text-xl flex items-center gap-2"><Calendar className="h-5 w-5 text-emerald-500" />جدول الأقساط - {selectedContract?.customer_name}</DialogTitle><DialogDescription>{selectedContract?.product_type} - {selectedContract?.installment_amount.toLocaleString()} ج.م شهرياً</DialogDescription></DialogHeader>
+          {selectedContract && <div className="max-h-[50vh] overflow-y-auto px-8"><InstallmentSchedule installments={contractInstallments(selectedContract.id).map(i => ({ id: i.id, contractId: i.contract_id, number: i.number, amount: i.amount, dueDate: i.due_date, isPaid: !!i.is_paid, paidDate: i.paid_date || undefined, day: i.day, month: i.month, year: i.year }))} customerName={selectedContract.customer_name} customerPhone={selectedContract.customer_phone} onMarkPaid={handleMarkInstallmentPaid} /></div>}
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
         <DialogContent className="sm:max-w-[350px] rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2 text-red-600">
-              <Trash2 className="h-5 w-5" />
-              تأكيد الحذف
-            </DialogTitle>
-            <DialogDescription>
-              هل أنت متأكد من حذف هذا العقد؟ سيتم أيضاً حذف جميع الأقساط المرتبطة به. لا يمكن التراجع عن هذا الإجراء.
-            </DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl flex items-center gap-2 text-red-600"><Trash2 className="h-5 w-5" />تأكيد الحذف</DialogTitle><DialogDescription>هل أنت متأكد من حذف هذا العقد؟</DialogDescription></DialogHeader>
           <DialogFooter className="px-8">
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
-              إلغاء
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteConfirmId !== null && handleDelete(deleteConfirmId)}
-              className="rounded-xl h-11 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700"
-            >
-              حذف
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">إلغاء</Button>
+            <Button variant="destructive" onClick={() => deleteConfirmId !== null && handleDelete(deleteConfirmId)} className="rounded-xl h-11 bg-gradient-to-r from-rose-500 to-pink-600">حذف</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Print Dialog */}
-      <PrintDialog
-        open={printOpen}
-        onOpenChange={setPrintOpen}
-        htmlContent={printHtml}
-        title={printTitle}
-        filename={printFilename}
-      />
+      <PrintDialog open={printOpen} onOpenChange={setPrintOpen} htmlContent={printHtml} title={printTitle} filename={printFilename} />
     </Layout>
   );
 };

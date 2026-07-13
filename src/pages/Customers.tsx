@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,9 +34,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import CustomerForm from "@/components/CustomerForm";
-import { initialCustomers } from "@/data/mockData";
-import { Customer } from "@/types";
-import { showSuccess } from "@/utils/toast";
+import { api, ApiCustomer } from "@/lib/api";
+import { showSuccess, showError } from "@/utils/toast";
 import {
   Users,
   Search,
@@ -49,56 +48,68 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 const Customers = () => {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [customers, setCustomers] = useState<ApiCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"customer" | "guarantor">("customer");
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<ApiCustomer | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  const filteredCustomers = customers.filter((c) => {
-    const matchesSearch = c.name.includes(searchQuery) || c.phone.includes(searchQuery);
-    return matchesSearch;
-  });
+  const fetchCustomers = async () => {
+    try {
+      const data = await api.customers.list(searchQuery || undefined);
+      setCustomers(data);
+    } catch (e: any) {
+      showError("خطأ في تحميل البيانات: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchCustomers();
+  }, [searchQuery]);
+
+  const filteredCustomers = customers;
   const realCustomers = filteredCustomers.filter((c) => c.type === "customer");
   const guarantors = filteredCustomers.filter((c) => c.type === "guarantor");
 
-  const handleAddCustomer = (data: any) => {
-    if (editingCustomer) {
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.id === editingCustomer.id
-            ? { ...c, ...data, id: editingCustomer.id, createdAt: editingCustomer.createdAt }
-            : c
-        )
-      );
-      showSuccess(data.type === "customer" ? "تم تعديل العميل بنجاح" : "تم تعديل الضامن بنجاح");
-    } else {
-      const newCustomer: Customer = {
-        id: customers.length + 1,
-        ...data,
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setCustomers((prev) => [...prev, newCustomer]);
-      showSuccess(data.type === "customer" ? "تم إضافة العميل بنجاح" : "تم إضافة الضامن بنجاح");
+  const handleAddCustomer = async (data: any) => {
+    try {
+      if (editingCustomer) {
+        await api.customers.update(editingCustomer.id, data);
+        showSuccess(data.type === "customer" ? "تم تعديل العميل بنجاح" : "تم تعديل الضامن بنجاح");
+      } else {
+        await api.customers.create(data);
+        showSuccess(data.type === "customer" ? "تم إضافة العميل بنجاح" : "تم إضافة الضامن بنجاح");
+      }
+      fetchCustomers();
+    } catch (e: any) {
+      showError("خطأ: " + e.message);
     }
     setIsDialogOpen(false);
     setEditingCustomer(null);
   };
 
-  const handleEdit = (customer: Customer) => {
+  const handleEdit = (customer: ApiCustomer) => {
     setEditingCustomer(customer);
     setDialogType(customer.type);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setCustomers((prev) => prev.filter((c) => c.id !== id));
-    showSuccess("✅ تم الحذف بنجاح");
+  const handleDelete = async (id: number) => {
+    try {
+      await api.customers.delete(id);
+      showSuccess("✅ تم الحذف بنجاح");
+      fetchCustomers();
+    } catch (e: any) {
+      showError("خطأ: " + e.message);
+    }
     setDeleteConfirmId(null);
   };
 
@@ -108,7 +119,7 @@ const Customers = () => {
     setIsDialogOpen(true);
   };
 
-  const renderCustomerCard = (customer: Customer, index: number) => (
+  const renderCustomerCard = (customer: ApiCustomer, index: number) => (
     <Card
       key={customer.id}
       className="stagger-item border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden"
@@ -317,53 +328,62 @@ const Customers = () => {
         )}
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+        </div>
+      )}
+
       {/* Tabs */}
-      <Tabs defaultValue="customers" className="w-full" dir="rtl">
-        <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-100 p-1 rounded-2xl mb-6">
-          <TabsTrigger
-            value="customers"
-            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white"
-          >
-            العملاء
-          </TabsTrigger>
-          <TabsTrigger
-            value="guarantors"
-            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white"
-          >
-            الضامنون
-          </TabsTrigger>
-        </TabsList>
+      {!loading && (
+        <Tabs defaultValue="customers" className="w-full" dir="rtl">
+          <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-100 p-1 rounded-2xl mb-6">
+            <TabsTrigger
+              value="customers"
+              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white"
+            >
+              العملاء
+            </TabsTrigger>
+            <TabsTrigger
+              value="guarantors"
+              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white"
+            >
+              الضامنون
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="customers" className="mt-0">
-          <div className="grid gap-4">
-            {realCustomers.map((customer, index) => renderCustomerCard(customer, index))}
-            {realCustomers.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <Users className="h-10 w-10 text-slate-300" />
+          <TabsContent value="customers" className="mt-0">
+            <div className="grid gap-4">
+              {realCustomers.map((customer, index) => renderCustomerCard(customer, index))}
+              {realCustomers.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-10 w-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-600 mb-2">لا يوجد عملاء</h3>
+                  <p className="text-slate-500">لم يتم العثور على عملاء</p>
                 </div>
-                <h3 className="text-lg font-bold text-slate-600 mb-2">لا يوجد عملاء</h3>
-                <p className="text-slate-500">لم يتم العثور على عملاء</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
+              )}
+            </div>
+          </TabsContent>
 
-        <TabsContent value="guarantors" className="mt-0">
-          <div className="grid gap-4">
-            {guarantors.map((guarantor, index) => renderCustomerCard(guarantor, index))}
-            {guarantors.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                  <UserCheck className="h-10 w-10 text-slate-300" />
+          <TabsContent value="guarantors" className="mt-0">
+            <div className="grid gap-4">
+              {guarantors.map((guarantor, index) => renderCustomerCard(guarantor, index))}
+              {guarantors.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                    <UserCheck className="h-10 w-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-600 mb-2">لا يوجد ضامنين</h3>
+                  <p className="text-slate-500">لم يتم العثور على ضامنين</p>
                 </div>
-                <h3 className="text-lg font-bold text-slate-600 mb-2">لا يوجد ضامنين</h3>
-                <p className="text-slate-500">لم يتم العثور على ضامنين</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>

@@ -42,19 +42,21 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
     e.preventDefault();
     if (validate()) {
       onSave({
-        ...formData,
+        name: formData.name.trim(),
         phone: formData.phone.replace(/\s/g, ""),
         nationalId: formData.nationalId.replace(/\s/g, ""),
+        address: formData.address.trim(),
+        type: formData.type,
       });
     }
   };
 
   const fields = [
-    { key: "name", label: "الاسم الكامل", icon: User, placeholder: "أدخل الاسم الكامل", type: "text", maxLength: undefined, ltr: false },
-    { key: "phone", label: "رقم الهاتف", icon: Phone, placeholder: "01012345678", type: "text", maxLength: 11, ltr: true },
-    { key: "nationalId", label: "الرقم القومي", icon: CreditCard, placeholder: "14 رقم", type: "text", maxLength: 14, ltr: true },
-    { key: "address", label: "العنوان", icon: MapPin, placeholder: "العنوان بالكامل", type: "text", maxLength: undefined, ltr: false },
-  ] as const;
+    { key: "name" as const, label: "الاسم الكامل", icon: User, placeholder: "أدخل الاسم الكامل", maxLength: undefined, ltr: false },
+    { key: "phone" as const, label: "رقم الهاتف", icon: Phone, placeholder: "01012345678", maxLength: 11, ltr: true },
+    { key: "nationalId" as const, label: "الرقم القومي", icon: CreditCard, placeholder: "14 رقم", maxLength: 14, ltr: true },
+    { key: "address" as const, label: "العنوان", icon: MapPin, placeholder: "العنوان بالكامل", maxLength: undefined, ltr: false },
+  ];
 
   return (
     <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-5">
@@ -81,9 +83,7 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
               placeholder={field.placeholder}
               dir={field.ltr ? "ltr" : "rtl"}
             />
-            {error && (
-              <p className="text-xs text-red-500 mt-0.5">{error}</p>
-            )}
+            {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
           </div>
         );
       })}

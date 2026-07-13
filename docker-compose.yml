@@ -4,5 +4,13 @@ services:
   app:
     build: .
     ports:
-      - "80:80"
+      - "80:3001"
+    volumes:
+      - app-data:/app/data
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+
+volumes:
+  app-data:

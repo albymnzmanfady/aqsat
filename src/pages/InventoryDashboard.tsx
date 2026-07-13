@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { initialProducts, initialTransactions } from "@/data/mockData";
+import { api, ApiProduct, ApiInventoryTransaction } from "@/lib/api";
+import { showError } from "@/utils/toast";
 import {
   Package,
   ArrowDownUp,
@@ -19,9 +20,9 @@ import {
   PieChart,
   Layers,
   Box,
-  ShoppingCart,
   ClipboardList,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 
 interface CategoryData {
@@ -32,14 +33,25 @@ interface CategoryData {
 }
 
 const InventoryDashboard = () => {
-  const [products] = useState(initialProducts);
-  const [transactions] = useState(initialTransactions);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [transactions, setTransactions] = useState<ApiInventoryTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const totalStockValueCost = products.reduce((sum, p) => sum + p.currentStock * p.costPrice, 0);
-  const totalStockValueSell = products.reduce((sum, p) => sum + p.currentStock * p.sellingPrice, 0);
+  useEffect(() => {
+    Promise.all([api.products.list(), api.inventory.list()])
+      .then(([p, t]) => {
+        setProducts(p);
+        setTransactions(t);
+      })
+      .catch((e) => showError("خطأ: " + e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalStockValueCost = products.reduce((sum, p) => sum + p.current_stock * p.cost_price, 0);
+  const totalStockValueSell = products.reduce((sum, p) => sum + p.current_stock * p.selling_price, 0);
   const totalProducts = products.length;
-  const lowStockProducts = products.filter((p) => p.currentStock <= p.minStock);
-  const outOfStockProducts = products.filter((p) => p.currentStock <= 0);
+  const lowStockProducts = products.filter((p) => p.current_stock <= p.min_stock);
+  const outOfStockProducts = products.filter((p) => p.current_stock <= 0);
 
   const totalPurchaseCost = transactions
     .filter((t) => t.type === "purchase")
@@ -49,14 +61,19 @@ const InventoryDashboard = () => {
     .reduce((s, t) => s + Math.abs(t.total), 0);
   const potentialProfit = totalStockValueSell - totalStockValueCost;
 
-  // Group by category
+  const totalSalesUnits = Math.abs(
+    transactions.filter((t) => t.type === "sale").reduce((s, t) => s + t.quantity, 0)
+  );
+
   const categories = [...new Set(products.map((p) => p.category))];
   const categoryData: CategoryData[] = categories.map((cat) => ({
     name: cat,
     count: products.filter((p) => p.category === cat).length,
-    stock: products.filter((p) => p.category === cat).reduce((s, p) => s + p.currentStock, 0),
-    value: products.filter((p) => p.category === cat).reduce((s, p) => s + p.currentStock * p.sellingPrice, 0),
+    stock: products.filter((p) => p.category === cat).reduce((s, p) => s + p.current_stock, 0),
+    value: products.filter((p) => p.category === cat).reduce((s, p) => s + p.current_stock * p.selling_price, 0),
   }));
+
+  if (loading) return <Layout><div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 text-violet-500 animate-spin" /></div></Layout>;
 
   return (
     <Layout>
@@ -139,11 +156,11 @@ const InventoryDashboard = () => {
               <div key={p.id} className="stagger-item flex items-center justify-between bg-white/60 rounded-xl p-3 hover-lift" style={{ animationDelay: `${index * 0.04}s` }}>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-slate-700">{p.name}</span>
-                  <Badge className={cn("rounded-lg", p.currentStock <= 0 ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700")}>
-                    {p.currentStock <= 0 ? "نفذ بالكامل" : `متبقي ${p.currentStock}`}
+                  <Badge className={cn("rounded-lg", p.current_stock <= 0 ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700")}>
+                    {p.current_stock <= 0 ? "نفذ بالكامل" : `متبقي ${p.current_stock}`}
                   </Badge>
                 </div>
-                <span className="text-sm text-slate-500">الحد الأدنى: {p.minStock}</span>
+                <span className="text-sm text-slate-500">الحد الأدنى: {p.min_stock}</span>
               </div>
             ))}
           </div>
@@ -175,9 +192,7 @@ const InventoryDashboard = () => {
               </div>
               <div className="flex items-center justify-between p-3 bg-violet-50/50 rounded-xl hover-lift">
                 <span className="text-sm text-slate-600">عدد المنتجات المباعة</span>
-                <span className="font-bold text-violet-600">
-                  {Math.abs(transactions.filter(t => t.type === "sale").reduce((s, t) => s + t.quantity, 0))} وحدة
-                </span>
+                <span className="font-bold text-violet-600">{totalSalesUnits} وحدة</span>
               </div>
             </div>
           </CardContent>
@@ -206,15 +221,66 @@ const InventoryDashboard = () => {
                   <div className="h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-l from-cyan-500 to-blue-600 rounded-full"
-                      style={{ width: `${(cat.value / totalStockValueSell) * 100}%` }}
+                      style={{ width: `${totalStockValueSell > 0 ? (cat.value / totalStockValueSell) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
               ))}
+              {categoryData.length === 0 && (
+                <p className="text-center text-slate-500 py-4 text-sm">لا توجد تصنيفات</p>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Products Table */}
+      <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+              <Package className="h-4 w-4 text-white" />
+            </div>
+            <h3 className="font-bold text-slate-800">تفاصيل المنتجات</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-right py-3 px-3 text-slate-600 font-semibold">المنتج</th>
+                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">التصنيف</th>
+                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">التكلفة</th>
+                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">البيع</th>
+                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">الرصيد</th>
+                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p) => {
+                  const profit = p.selling_price - p.cost_price;
+                  const profitPercent = p.cost_price > 0 ? Math.round((profit / p.cost_price) * 100) : 0;
+                  const stockStatus = p.current_stock <= 0
+                    ? { label: "نفذ", color: "bg-rose-100 text-rose-700" }
+                    : p.current_stock <= p.min_stock
+                    ? { label: "منخفض", color: "bg-amber-100 text-amber-700" }
+                    : { label: "متوفر", color: "bg-emerald-100 text-emerald-700" };
+
+                  return (
+                    <tr key={p.id} className="border-b border-slate-100/80 hover:bg-slate-50/50">
+                      <td className="py-3 px-3 font-medium text-slate-700">{p.name}</td>
+                      <td className="py-3 px-3 text-center text-slate-500">{p.category}</td>
+                      <td className="py-3 px-3 text-center">{p.cost_price.toLocaleString()} ج.م</td>
+                      <td className="py-3 px-3 text-center text-emerald-600 font-semibold">{p.selling_price.toLocaleString()} ج.م</td>
+                      <td className="py-3 px-3 text-center font-bold">{p.current_stock} {p.unit}</td>
+                      <td className="py-3 px-3 text-center"><Badge className={cn("rounded-lg border-0 text-xs", stockStatus.color)}>{stockStatus.label}</Badge></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Links */}
       <div className="grid sm:grid-cols-3 gap-4">

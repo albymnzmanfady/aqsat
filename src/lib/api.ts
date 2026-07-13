@@ -12,7 +12,6 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ============ Types ============
 export interface ApiCustomer {
   id: number;
   name: string;
@@ -108,10 +107,7 @@ export interface ApiUser {
   avatar?: string;
 }
 
-// ============ API Functions ============
-
 export const api = {
-  // ---- Customers ----
   customers: {
     list: (search?: string, type?: string) => {
       const params = new URLSearchParams();
@@ -128,7 +124,6 @@ export const api = {
       fetchJson<{ success: boolean }>(`/customers/${id}`, { method: "DELETE" }),
   },
 
-  // ---- Contracts ----
   contracts: {
     list: (search?: string, status?: string) => {
       const params = new URLSearchParams();
@@ -145,7 +140,6 @@ export const api = {
       fetchJson<{ success: boolean }>(`/contracts/${id}`, { method: "DELETE" }),
   },
 
-  // ---- Installments ----
   installments: {
     list: (contractId?: number, isPaid?: boolean) => {
       const params = new URLSearchParams();
@@ -162,7 +156,6 @@ export const api = {
       fetchJson<{ success: boolean }>(`/installments/${id}`, { method: "DELETE" }),
   },
 
-  // ---- Products ----
   products: {
     list: (search?: string) => {
       const params = new URLSearchParams();
@@ -177,7 +170,6 @@ export const api = {
       fetchJson<{ success: boolean }>(`/products/${id}`, { method: "DELETE" }),
   },
 
-  // ---- Inventory ----
   inventory: {
     list: (search?: string, type?: string) => {
       const params = new URLSearchParams();
@@ -189,12 +181,10 @@ export const api = {
       fetchJson<ApiInventoryTransaction>("/inventory", { method: "POST", body: JSON.stringify(data) }),
   },
 
-  // ---- Expense Categories ----
   expenseCategories: {
     list: () => fetchJson<ApiExpenseCategory[]>("/expense-categories"),
   },
 
-  // ---- Expenses ----
   expenses: {
     list: (search?: string, categoryId?: number) => {
       const params = new URLSearchParams();
@@ -210,7 +200,6 @@ export const api = {
       fetchJson<{ success: boolean }>(`/expenses/${id}`, { method: "DELETE" }),
   },
 
-  // ---- Users ----
   users: {
     list: () => fetchJson<ApiUser[]>("/users"),
     login: (email: string, password: string) =>
@@ -219,7 +208,15 @@ export const api = {
       fetchJson<ApiUser>("/users", { method: "POST", body: JSON.stringify(data) }),
     update: (id: number, data: any) =>
       fetchJson<ApiUser>(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    changePassword: (id: number, currentPassword: string, newPassword: string) =>
+      fetchJson<{ success: boolean }>(`/users/${id}/password`, { method: "PUT", body: JSON.stringify({ currentPassword, newPassword }) }),
     delete: (id: number) =>
       fetchJson<{ success: boolean }>(`/users/${id}`, { method: "DELETE" }),
+  },
+
+  settings: {
+    get: (key: string) => fetchJson<any>(`/settings/${key}`),
+    set: (key: string, value: any) =>
+      fetchJson<{ success: boolean }>(`/settings/${key}`, { method: "PUT", body: JSON.stringify(value) }),
   },
 };

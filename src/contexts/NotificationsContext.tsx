@@ -1,16 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { initialInstallments, initialContracts, initialProducts } from "@/data/mockData";
+import { api, ApiInstallment, ApiContract, ApiProduct } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 
-export type NotificationType =
-  | "overdue_installment"
-  | "upcoming_installment"
-  | "low_stock"
-  | "out_of_stock"
-  | "new_contract"
-  | "payment_received";
+export type NotificationType = "overdue_installment" | "upcoming_installment" | "low_stock" | "out_of_stock";
 
 export interface Notification {
   id: string;
@@ -36,188 +30,76 @@ interface NotificationsContextType {
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
-
 const STORAGE_KEY = "app_notifications_read";
 
 const getReadIds = (): Set<string> => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return new Set(JSON.parse(stored));
-  } catch {}
+  try { const stored = localStorage.getItem(STORAGE_KEY); if (stored) return new Set(JSON.parse(stored)); } catch {}
   return new Set();
 };
 
-const saveReadIds = (ids: Set<string>) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
-};
+const saveReadIds = (ids: Set<string>) => { localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids])); };
 
 export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(getReadIds);
+  const [installments, setInstallments] = useState<ApiInstallment[]>([]);
+  const [contracts, setContracts] = useState<ApiContract[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
 
-  const generateNotifications = useCallback((): Notification[] => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const result: Notification[] = [];
+  const loadData = useCallback(async () => {
+    try {
+      const [inst, cont, prod] = await Promise.all([
+        api.installments.list(), api.contracts.list(), api.products.list(),
+      ]);
+      setInstallments(inst); setContracts(cont); setProducts(prod);
+    } catch {}
+  }, []);
 
-    // 1. Overdue installments
-    const overdueInstallments = initialInstallments.filter((inst) => {
-      if (inst.isPaid) return false;
-      const dueDate = new Date(inst.year, inst.month - 1, inst.day);
-      return dueDate < today;
-    });
-
-    overdueInstallments.forEach((inst) => {
-      const contract = initialContracts.find((c) => c.id === inst.contractId);
-      if (!contract) return;
-      const dueDate = new Date(inst.year, inst.month - 1, inst.day);
-      const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-      const notifId = `overdue-${inst.id}`;
-      result.push({
-        id: notifId,
-        type: "overdue_installment",
-        title: "قسط متأخر",
-        message: `العميل ${contract.customerName} - القسط رقم ${inst.number} متأخر منذ ${daysOverdue} يوم (${inst.amount.toLocaleString()} ج.م)`,
-        link: "/installments",
-        read: readIds.has(notifId),
-        createdAt: dueDate.toISOString(),
-        priority: daysOverdue > 7 ? "high" : "medium",
-        icon: "⚠️",
-      });
-    });
-
-    // 2. Upcoming installments (within 3 days)
-    const upcomingInstallments = initialInstallments.filter((inst) => {
-      if (inst.isPaid) return false;
-      const dueDate = new Date(inst.year, inst.month - 1, inst.day);
-      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 && diffDays <= 3;
-    });
-
-    upcomingInstallments.forEach((inst) => {
-      const contract = initialContracts.find((c) => c.id === inst.contractId);
-      if (!contract) return;
-      const dueDate = new Date(inst.year, inst.month - 1, inst.day);
-      const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      const notifId = `upcoming-${inst.id}`;
-      result.push({
-        id: notifId,
-        type: "upcoming_installment",
-        title: "قسط قريباً",
-        message: `العميل ${contract.customerName} - القسط رقم ${inst.number} يستحق خلال ${daysUntil === 0 ? "اليوم" : daysUntil + " يوم"} (${inst.amount.toLocaleString()} ج.م)`,
-        link: "/installments",
-        read: readIds.has(notifId),
-        createdAt: today.toISOString(),
-        priority: daysUntil === 0 ? "high" : "low",
-        icon: "📅",
-      });
-    });
-
-    // 3. Low stock products
-    initialProducts.forEach((product) => {
-      if (product.currentStock <= 0) {
-        const notifId = `out-of-stock-${product.id}`;
-        result.push({
-          id: notifId,
-          type: "out_of_stock",
-          title: " produkt نفذ من المخزون",
-          message: `${product.name} نفذ بالكامل من المخزن - يجب إعادة الطلب فوراً`,
-          link: "/products",
-          read: readIds.has(notifId),
-          createdAt: today.toISOString(),
-          priority: "high",
-          icon: "🚫",
-        });
-      } else if (product.currentStock <= product.minStock) {
-        const notifId = `low-stock-${product.id}`;
-        result.push({
-          id: notifId,
-          type: "low_stock",
-          title: "مخزون منخفض",
-          message: `${product.name} - متبقي ${product.currentStock} ${product.unit} فقط (الحد الأدنى: ${product.minStock})`,
-          link: "/products",
-          read: readIds.has(notifId),
-          createdAt: today.toISOString(),
-          priority: "medium",
-          icon: "📦",
-        });
-      }
-    });
-
-    // Sort: unread first, then by priority, then by date
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    result.sort((a, b) => {
-      if (a.read !== b.read) return a.read ? 1 : -1;
-      if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return result;
-  }, [readIds]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    setNotifications(generateNotifications());
-  }, [generateNotifications]);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const result: Notification[] = [];
+
+    // Overdue installments
+    installments.filter((i) => !i.is_paid && new Date(i.year, i.month - 1, i.day) < today).forEach((inst) => {
+      const contract = contracts.find((c) => c.id === inst.contract_id);
+      if (!contract) return;
+      const daysOverdue = Math.floor((today.getTime() - new Date(inst.year, inst.month - 1, inst.day).getTime()) / 86400000);
+      const notifId = `overdue-${inst.id}`;
+      result.push({ id: notifId, type: "overdue_installment", title: "قسط متأخر", message: `${contract.customer_name} - القسط ${inst.number} متأخر ${daysOverdue} يوم`, link: "/installments", read: readIds.has(notifId), createdAt: today.toISOString(), priority: daysOverdue > 7 ? "high" : "medium", icon: "⚠️" });
+    });
+
+    // Upcoming (3 days)
+    installments.filter((i) => { if (i.is_paid) return false; const d = new Date(i.year, i.month - 1, i.day); const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000); return diff >= 0 && diff <= 3; }).forEach((inst) => {
+      const contract = contracts.find((c) => c.id === inst.contract_id);
+      if (!contract) return;
+      const daysUntil = Math.ceil((new Date(inst.year, inst.month - 1, inst.day).getTime() - today.getTime()) / 86400000);
+      const notifId = `upcoming-${inst.id}`;
+      result.push({ id: notifId, type: "upcoming_installment", title: "قسط قريب", message: `${contract.customer_name} - القسط ${inst.number} يستحق خلال ${daysUntil === 0 ? "اليوم" : daysUntil + " يوم"}`, link: "/installments", read: readIds.has(notifId), createdAt: today.toISOString(), priority: daysUntil === 0 ? "high" : "low", icon: "📅" });
+    });
+
+    // Low stock
+    products.forEach((p) => {
+      if (p.current_stock <= 0) { const n = `out-${p.id}`; result.push({ id: n, type: "out_of_stock", title: "نفذ من المخزون", message: `${p.name} نفذ بالكامل`, link: "/products", read: readIds.has(n), createdAt: today.toISOString(), priority: "high", icon: "🚫" }); }
+      else if (p.current_stock <= p.min_stock) { const n = `low-${p.id}`; result.push({ id: n, type: "low_stock", title: "مخزون منخفض", message: `${p.name} - متبقي ${p.current_stock}`, link: "/products", read: readIds.has(n), createdAt: today.toISOString(), priority: "medium", icon: "📦" }); }
+    });
+
+    result.sort((a, b) => { if (a.read !== b.read) return a.read ? 1 : -1; const po = { high: 0, medium: 1, low: 2 }; return (po[a.priority] || 0) - (po[b.priority] || 0); });
+    setNotifications(result);
+  }, [installments, contracts, products, readIds]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAsRead = useCallback((id: string) => {
-    setReadIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      saveReadIds(next);
-      return next;
-    });
-  }, []);
-
-  const markAllAsRead = useCallback(() => {
-    setReadIds((prev) => {
-      const next = new Set(prev);
-      notifications.forEach((n) => next.add(n.id));
-      saveReadIds(next);
-      return next;
-    });
-  }, [notifications]);
-
-  const clearAll = useCallback(() => {
-    setReadIds((prev) => {
-      const next = new Set(prev);
-      notifications.forEach((n) => next.add(n.id));
-      saveReadIds(next);
-      return next;
-    });
-  }, [notifications]);
-
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
-
-  const refreshNotifications = useCallback(() => {
-    setNotifications(generateNotifications());
-  }, [generateNotifications]);
-
+  const markAsRead = useCallback((id: string) => { setReadIds((prev) => { const next = new Set(prev); next.add(id); saveReadIds(next); return next; }); }, []);
+  const markAllAsRead = useCallback(() => { setReadIds((prev) => { const next = new Set(prev); notifications.forEach((n) => next.add(n.id)); saveReadIds(next); return next; }); }, [notifications]);
+  const clearAll = markAllAsRead;
+  const removeNotification = useCallback((id: string) => { setNotifications((prev) => prev.filter((n) => n.id !== id)); }, []);
+  const refreshNotifications = useCallback(async () => { await loadData(); }, [loadData]);
   const navigate = useNavigate();
-
-  const navigateToNotification = useCallback((notification: Notification) => {
-    markAsRead(notification.id);
-    navigate(notification.link);
-  }, [markAsRead, navigate]);
+  const navigateToNotification = useCallback((notification: Notification) => { markAsRead(notification.id); navigate(notification.link); }, [markAsRead, navigate]);
 
   return (
-    <NotificationsContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        markAsRead,
-        markAllAsRead,
-        clearAll,
-        removeNotification,
-        refreshNotifications,
-        navigateToNotification,
-      }}
-    >
+    <NotificationsContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, clearAll, removeNotification, refreshNotifications, navigateToNotification }}>
       {children}
     </NotificationsContext.Provider>
   );
@@ -225,8 +107,6 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
 
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (!context) {
-    throw new Error("useNotifications must be used within a NotificationsProvider");
-  }
+  if (!context) throw new Error("useNotifications must be used within NotificationsProvider");
   return context;
 };

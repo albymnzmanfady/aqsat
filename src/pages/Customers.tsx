@@ -319,7 +319,7 @@ const Customers = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="customers" className="w-full">
+      <Tabs defaultValue="customers" className="w-full" dir="rtl">
         <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-100 p-1 rounded-2xl mb-6">
           <TabsTrigger
             value="customers"

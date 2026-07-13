@@ -8,6 +8,9 @@ import Customers from "./pages/Customers";
 import Contracts from "./pages/Contracts";
 import Installments from "./pages/Installments";
 import Settings from "./pages/Settings";
+import Products from "./pages/Products";
+import Inventory from "./pages/Inventory";
+import InventoryDashboard from "./pages/InventoryDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +27,9 @@ const App = () => (
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/installments" element={<Installments />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/inventory-dashboard" element={<InventoryDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

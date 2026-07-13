@@ -14,6 +14,7 @@ export interface Contract {
   customerName: string;
   customerPhone: string;
   productType: string;
+  productId?: number;
   totalPrice: number;
   downPayment: number;
   numberOfReceipts: number;
@@ -37,4 +38,31 @@ export interface Installment {
   day: number;
   month: number;
   year: number;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  category: string;
+  unit: string;
+  costPrice: number;
+  sellingPrice: number;
+  currentStock: number;
+  minStock: number;
+  createdAt: string;
+}
+
+export type InventoryTransactionType = "purchase" | "sale" | "adjustment" | "return";
+
+export interface InventoryTransaction {
+  id: number;
+  productId: number;
+  type: InventoryTransactionType;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  date: string;
+  reference: string;
+  notes: string;
+  createdAt: string;
 }

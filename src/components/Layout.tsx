@@ -17,6 +17,9 @@ import {
   Sparkles,
   User,
   MessageSquareText,
+  Package,
+  ArrowDownUp,
+  BarChart3,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -32,11 +35,27 @@ const Layout = ({ children }: LayoutProps) => {
     { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500" },
     { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500" },
     { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500" },
+    {
+      label: "المخازن",
+      icon: Package,
+      color: "from-orange-500 to-red-500",
+      subItems: [
+        { path: "/products", label: "المنتجات", icon: Package },
+        { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp },
+        { path: "/inventory-dashboard", label: "التقارير", icon: BarChart3 },
+      ],
+    },
     { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Group items with subItems
+  const flatItems = navItems.flatMap((item) =>
+    item.subItems ? [item, ...item.subItems] : [item]
+  );
+
+  // Close sidebar on navigation
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
@@ -144,32 +163,69 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">القائمة الرئيسية</p>
+
           {navItems.map((item) => {
-            const active = isActive(item.path);
+            if (item.subItems) {
+              return (
+                <div key={item.label} className="space-y-1">
+                  <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <div className="w-1 h-4 bg-gradient-to-b from-orange-500 to-red-500 rounded-full" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.subItems.map((sub) => (
+                    <Link key={sub.path} to={sub.path}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
+                          isActive(sub.path!)
+                            ? "bg-gradient-to-l from-orange-500/10 to-red-500/10 text-orange-600 font-semibold shadow-sm"
+                            : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                        )}
+                      >
+                        {isActive(sub.path!) && (
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-orange-500 to-red-600 rounded-l-full" />
+                        )}
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
+                          isActive(sub.path!)
+                            ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md"
+                            : "bg-slate-100 text-slate-500"
+                        )}>
+                          <sub.icon className="h-4 w-4" />
+                        </div>
+                        <span className="flex-1 text-right">{sub.label}</span>
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+              );
+            }
+
             return (
               <Link key={item.path} to={item.path}>
                 <Button
                   variant="ghost"
                   className={cn(
                     "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative",
-                    active
+                    isActive(item.path!)
                       ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
                       : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
                   )}
                 >
-                  {active && (
+                  {isActive(item.path!) && (
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
                   )}
                   <div className={cn(
                     "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200",
-                    active
+                    isActive(item.path!)
                       ? `bg-gradient-to-br ${item.color} text-white shadow-md`
                       : "bg-slate-100 text-slate-500"
                   )}>
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
                   <span className="flex-1 text-right">{item.label}</span>
-                  {active && (
+                  {isActive(item.path!) && (
                     <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
                   )}
                 </Button>

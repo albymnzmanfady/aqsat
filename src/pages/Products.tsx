@@ -1,0 +1,452 @@
+"use client";
+
+import { useState } from "react";
+import Layout from "@/components/Layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertTriangle,
+  Package,
+  Plus,
+  Search,
+  Sparkles,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Box,
+  TrendingUp,
+  DollarSign,
+  AlertCircle,
+  Layers,
+  Warehouse,
+} from "lucide-react";
+import { initialProducts } from "@/data/mockData";
+import { Product } from "@/types";
+import { showSuccess } from "@/utils/toast";
+
+const Products = () => {
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    unit: "قطعة",
+    costPrice: "",
+    sellingPrice: "",
+    currentStock: "",
+    minStock: "",
+  });
+
+  const filteredProducts = products.filter((p) =>
+    p.name.includes(searchQuery) || p.category.includes(searchQuery)
+  );
+
+  const lowStockProducts = products.filter((p) => p.currentStock <= p.minStock);
+  const totalStockValue = products.reduce((sum, p) => sum + p.currentStock * p.costPrice, 0);
+  const totalSellingValue = products.reduce((sum, p) => sum + p.currentStock * p.sellingPrice, 0);
+  const totalProducts = products.length;
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      category: "",
+      unit: "قطعة",
+      costPrice: "",
+      sellingPrice: "",
+      currentStock: "",
+      minStock: "",
+    });
+    setEditingProduct(null);
+  };
+
+  const openEdit = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      category: product.category,
+      unit: product.unit,
+      costPrice: product.costPrice.toString(),
+      sellingPrice: product.sellingPrice.toString(),
+      currentStock: product.currentStock.toString(),
+      minStock: product.minStock.toString(),
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = () => {
+    const data = {
+      name: formData.name,
+      category: formData.category,
+      unit: formData.unit,
+      costPrice: Number(formData.costPrice),
+      sellingPrice: Number(formData.sellingPrice),
+      currentStock: Number(formData.currentStock),
+      minStock: Number(formData.minStock),
+    };
+
+    if (editingProduct) {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingProduct.id ? { ...p, ...data } : p))
+      );
+      showSuccess("✅ تم تعديل المنتج بنجاح");
+    } else {
+      const newProduct: Product = {
+        id: Math.max(0, ...products.map((p) => p.id)) + 1,
+        ...data,
+        createdAt: new Date().toISOString().split("T")[0],
+      };
+      setProducts((prev) => [...prev, newProduct]);
+      showSuccess("✅ تم إضافة المنتج بنجاح");
+    }
+
+    setIsDialogOpen(false);
+    resetForm();
+  };
+
+  const handleDelete = (id: number) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    showSuccess("✅ تم حذف المنتج");
+  };
+
+  const stockLevel = (product: Product) => {
+    if (product.currentStock <= 0) return { label: "نفذ", color: "bg-rose-100 text-rose-700" };
+    if (product.currentStock <= product.minStock) return { label: "منخفض", color: "bg-amber-100 text-amber-700" };
+    return { label: "متوفر", color: "bg-emerald-100 text-emerald-700" };
+  };
+
+  return (
+    <Layout>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="relative">
+          <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-full opacity-20 blur-xl" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <Package className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">المنتجات</h1>
+              <p className="text-slate-500 mt-1">إدارة المخازن والمنتجات</p>
+            </div>
+          </div>
+        </div>
+
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-500/30 h-12 px-6">
+              <Plus className="h-5 w-5" />
+              منتج جديد
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px] rounded-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-orange-500" />
+                {editingProduct ? "تعديل المنتج" : "إضافة منتج جديد"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingProduct ? "تعديل بيانات المنتج" : "أدخل بيانات المنتج لإضافته إلى المخزن"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اسم المنتج</label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="اسم المنتج"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">التصنيف</label>
+                  <Input
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="مثال: أجهزة كهربائية"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">سعر التكلفة</label>
+                  <Input
+                    type="number"
+                    value={formData.costPrice}
+                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">سعر البيع</label>
+                  <Input
+                    type="number"
+                    value={formData.sellingPrice}
+                    onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">الرصيد الحالي</label>
+                  <Input
+                    type="number"
+                    value={formData.currentStock}
+                    onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">الحد الأدنى</label>
+                  <Input
+                    type="number"
+                    value={formData.minStock}
+                    onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">الوحدة</label>
+                  <Input
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    className="rounded-xl h-12 bg-white/50"
+                    placeholder="قطعة"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4 justify-end">
+                <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">
+                  إلغاء
+                </Button>
+                <Button onClick={handleSave} className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-11 gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  {editingProduct ? "تحديث" : "حفظ"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-md flex items-center justify-center">
+                <Box className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">إجمالي المنتجات</p>
+                <p className="font-bold text-xl text-slate-800">{totalProducts}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center">
+                <Warehouse className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">رصيد المخزن (تكلفة)</p>
+                <p className="font-bold text-xl text-slate-800">{totalStockValue.toLocaleString()} ج.م</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">قيمة المبيعات المحتملة</p>
+                <p className="font-bold text-xl text-slate-800">{totalSellingValue.toLocaleString()} ج.م</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">منتجات منخفضة</p>
+                <p className="font-bold text-xl text-amber-600">{lowStockProducts.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Low Stock Alert */}
+      {lowStockProducts.length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-800">
+            <strong>تنبيه:</strong> هناك {lowStockProducts.length} منتجات وصلت للحد الأدنى أو أقل. يُرجى إعادة الطلب.
+          </p>
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+        <Input
+          type="text"
+          placeholder="بحث باسم المنتج أو التصنيف..."
+          className="pr-12 rounded-2xl bg-white/70 backdrop-blur-sm border-slate-200/50 h-12 shadow-sm focus:shadow-md transition-shadow"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {/* Products Grid */}
+      <div className="grid gap-4">
+        {filteredProducts.map((product) => {
+          const level = stockLevel(product);
+          const profit = product.sellingPrice - product.costPrice;
+          const profitPercent = product.costPrice > 0 ? Math.round((profit / product.costPrice) * 100) : 0;
+
+          return (
+            <Card key={product.id} className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white shadow-md flex-shrink-0">
+                      <Package className="h-7 w-7" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-slate-800">{product.name}</h3>
+                        <Badge className={cn("rounded-lg border-0", level.color)}>{level.label}</Badge>
+                      </div>
+                      <p className="text-sm text-slate-500 mt-1">{product.category}</p>
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        <span className="text-xs bg-slate-100 px-2 py-1 rounded-md">
+                          التكلفة: {product.costPrice.toLocaleString()} ج.م
+                        </span>
+                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md">
+                          البيع: {product.sellingPrice.toLocaleString()} ج.م
+                        </span>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md">
+                          الربح: {profit.toLocaleString()} ج.م ({profitPercent}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-left">
+                      <p className="text-sm text-slate-500">الرصيد</p>
+                      <p className={cn(
+                        "text-xl font-bold",
+                        product.currentStock <= product.minStock ? "text-amber-600" : "text-slate-800"
+                      )}>
+                        {product.currentStock} <span className="text-sm font-normal text-slate-500">{product.unit}</span>
+                      </p>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl">
+                          <MoreHorizontal className="h-5 w-5 text-slate-500" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-xl">
+                        <DropdownMenuItem onClick={() => openEdit(product)} className="cursor-pointer rounded-lg">
+                          <Edit className="h-4 w-4 ml-2" />
+                          تعديل
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(product.id)}
+                          className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 ml-2" />
+                          حذف
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* Progress bar for stock level */}
+                <div className="mt-4 pt-3 border-t border-slate-100/80">
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <span>الحد الأدنى: {product.minStock}</span>
+                    <span>الرصيد الحالي: {product.currentStock}</span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        product.currentStock <= 0
+                          ? "bg-rose-500"
+                          : product.currentStock <= product.minStock
+                          ? "bg-amber-500"
+                          : "bg-emerald-500"
+                      )}
+                      style={{
+                        width: `${Math.min(100, (product.currentStock / (product.minStock * 2 || 1)) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
+              <Package className="h-10 w-10 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-600 mb-2">لا توجد منتجات</h3>
+            <p className="text-slate-500">لم يتم العثور على منتجات مطابقة</p>
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+export default Products;

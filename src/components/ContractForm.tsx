@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, Calculator, Package, User, Calendar, CreditCard, Shield, Plus } from "lucide-react";
+import { Sparkles, Calculator, Package, User, Calendar, CreditCard, Shield, Plus, MapPin } from "lucide-react";
 import { Customer, Product } from "@/types";
 
 interface ContractFormProps {
@@ -25,9 +25,23 @@ interface ContractFormProps {
 
 const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: ContractFormProps) => {
   const [localGuarantors, setLocalGuarantors] = useState<Customer[]>(guarantors);
+  const [localCustomers, setLocalCustomers] = useState<Customer[]>(customers);
   const [showNewGuarantorDialog, setShowNewGuarantorDialog] = useState(false);
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+
+  // New guarantor form
   const [newGuarantorName, setNewGuarantorName] = useState("");
   const [newGuarantorPhone, setNewGuarantorPhone] = useState("");
+  const [newGuarantorNationalId, setNewGuarantorNationalId] = useState("");
+  const [newGuarantorAddress, setNewGuarantorAddress] = useState("");
+  const [guarantorErrors, setGuarantorErrors] = useState<Record<string, string>>({});
+
+  // New customer form
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerNationalId, setNewCustomerNationalId] = useState("");
+  const [newCustomerAddress, setNewCustomerAddress] = useState("");
+  const [customerErrors, setCustomerErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     customerId: "",
@@ -49,6 +63,64 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
   const receipts = Number(formData.numberOfReceipts) || 1;
   const installmentAmount = receipts > 0 ? Math.ceil((total - down) / receipts) : 0;
 
+  // === Customer handlers ===
+  const handleCustomerSelect = (value: string) => {
+    if (value === "new") {
+      setShowNewCustomerDialog(true);
+      return;
+    }
+    const customer = localCustomers.find((c) => c.id === Number(value));
+    if (customer) {
+      setFormData({
+        ...formData,
+        customerId: value,
+      });
+    }
+  };
+
+  const validateNewCustomer = () => {
+    const errs: Record<string, string> = {};
+    if (!newCustomerName.trim()) errs.name = "الاسم مطلوب";
+    if (!newCustomerPhone.trim()) errs.phone = "رقم الهاتف مطلوب";
+    else if (!/^01[0-9]{9}$/.test(newCustomerPhone.replace(/\s/g, "")))
+      errs.phone = "رقم غير صحيح";
+    if (!newCustomerNationalId.trim()) errs.nationalId = "الرقم القومي مطلوب";
+    else if (!/^[0-9]{14}$/.test(newCustomerNationalId.replace(/\s/g, "")))
+      errs.nationalId = "يجب أن يتكون من 14 رقماً";
+    if (!newCustomerAddress.trim()) errs.address = "العنوان مطلوب";
+    setCustomerErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleAddNewCustomer = () => {
+    if (!validateNewCustomer()) return;
+
+    const newCustomer: Customer = {
+      id: Math.max(0, ...localCustomers.map((c) => c.id)) + 1,
+      name: newCustomerName.trim(),
+      phone: newCustomerPhone.trim(),
+      nationalId: newCustomerNationalId.trim(),
+      address: newCustomerAddress.trim(),
+      type: "customer",
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+
+    setLocalCustomers((prev) => [...prev, newCustomer]);
+    setFormData({ ...formData, customerId: newCustomer.id.toString() });
+
+    resetNewCustomerForm();
+    setShowNewCustomerDialog(false);
+  };
+
+  const resetNewCustomerForm = () => {
+    setNewCustomerName("");
+    setNewCustomerPhone("");
+    setNewCustomerNationalId("");
+    setNewCustomerAddress("");
+    setCustomerErrors({});
+  };
+
+  // === Guarantor handlers ===
   const handleGuarantorSelect = (value: string) => {
     if (value === "new") {
       setShowNewGuarantorDialog(true);
@@ -65,16 +137,28 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
     }
   };
 
+  const validateNewGuarantor = () => {
+    const errs: Record<string, string> = {};
+    if (!newGuarantorName.trim()) errs.name = "الاسم مطلوب";
+    if (!newGuarantorPhone.trim()) errs.phone = "رقم الهاتف مطلوب";
+    else if (!/^01[0-9]{9}$/.test(newGuarantorPhone.replace(/\s/g, "")))
+      errs.phone = "رقم غير صحيح";
+    if (!newGuarantorNationalId.trim()) errs.nationalId = "رقم البطاقة مطلوب";
+    else if (!/^[0-9]{14}$/.test(newGuarantorNationalId.replace(/\s/g, "")))
+      errs.nationalId = "يجب أن يتكون من 14 رقماً";
+    setGuarantorErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleAddNewGuarantor = () => {
-    if (!newGuarantorName.trim()) return;
-    if (!newGuarantorPhone.trim() || newGuarantorPhone.length < 11) return;
+    if (!validateNewGuarantor()) return;
 
     const newGuarantor: Customer = {
       id: Math.max(0, ...localGuarantors.map((g) => g.id)) + 1,
       name: newGuarantorName.trim(),
       phone: newGuarantorPhone.trim(),
-      nationalId: "",
-      address: "",
+      nationalId: newGuarantorNationalId.trim(),
+      address: newGuarantorAddress.trim() || "",
       type: "guarantor",
       createdAt: new Date().toISOString().split("T")[0],
     };
@@ -87,11 +171,19 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
       guarantorPhone: newGuarantor.phone,
     });
 
-    setNewGuarantorName("");
-    setNewGuarantorPhone("");
+    resetNewGuarantorForm();
     setShowNewGuarantorDialog(false);
   };
 
+  const resetNewGuarantorForm = () => {
+    setNewGuarantorName("");
+    setNewGuarantorPhone("");
+    setNewGuarantorNationalId("");
+    setNewGuarantorAddress("");
+    setGuarantorErrors({});
+  };
+
+  // === Main form ===
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.customerId) newErrors.customerId = "اختر العميل";
@@ -109,7 +201,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
     e.preventDefault();
     if (!selectedProduct) return;
     if (validate()) {
-      const customer = customers.find((c) => c.id === Number(formData.customerId));
+      const customer = localCustomers.find((c) => c.id === Number(formData.customerId));
       const startDate = new Date(formData.startDate);
       startDate.setMonth(startDate.getMonth() + Number(formData.numberOfReceipts));
       const endDate = startDate.toISOString().split("T")[0];
@@ -144,18 +236,43 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           </Label>
           <Select
             value={formData.customerId}
-            onValueChange={(val) => setFormData({ ...formData, customerId: val })}
+            onValueChange={handleCustomerSelect}
           >
             <SelectTrigger className={errors.customerId ? "border-red-300" : ""}>
               <SelectValue placeholder="اختر العميل" />
             </SelectTrigger>
             <SelectContent>
-              {customers.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>{c.name} - {c.phone}</SelectItem>
+              {localCustomers.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  {c.name} - {c.phone}
+                </SelectItem>
               ))}
+              <SelectItem value="new">
+                <div className="flex items-center gap-2 text-violet-600 font-semibold">
+                  <Plus className="h-3.5 w-3.5" />
+                  إضافة عميل جديد
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
           {errors.customerId && <p className="text-xs text-red-500">{errors.customerId}</p>}
+          {formData.customerId && formData.customerId !== "new" && (
+            <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                  {localCustomers.find(c => c.id === Number(formData.customerId))?.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-slate-700">
+                    {localCustomers.find(c => c.id === Number(formData.customerId))?.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {localCustomers.find(c => c.id === Number(formData.customerId))?.phone}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* المنتج */}
@@ -274,14 +391,11 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
 
         {/* الضامن */}
         <div className="border-t border-slate-100 pt-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-600">بيانات الضامن</p>
-            </div>
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-600">بيانات الضامن</p>
           </div>
 
-          {/* اختيار الضامن */}
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-slate-600">اختر الضامن</Label>
@@ -322,52 +436,6 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
                 </div>
               </div>
             )}
-
-            {/* تعديل يدوي (اختياري) */}
-            {formData.guarantorId && formData.guarantorId !== "new" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">اسم الضامن</Label>
-                  <Input
-                    value={formData.guarantorName}
-                    onChange={(e) => setFormData({ ...formData, guarantorName: e.target.value })}
-                    placeholder="الاسم"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">رقم الضامن</Label>
-                  <Input
-                    value={formData.guarantorPhone}
-                    onChange={(e) => setFormData({ ...formData, guarantorPhone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) })}
-                    placeholder="01012345678"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* إذا لم يُختار ضامن - حقول يدوية */}
-            {!formData.guarantorId && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">اسم الضامن</Label>
-                  <Input
-                    value={formData.guarantorName}
-                    onChange={(e) => setFormData({ ...formData, guarantorName: e.target.value })}
-                    placeholder="الاسم (اختياري)"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">رقم الضامن</Label>
-                  <Input
-                    value={formData.guarantorPhone}
-                    onChange={(e) => setFormData({ ...formData, guarantorPhone: e.target.value.replace(/[^0-9]/g, "").slice(0, 11) })}
-                    placeholder="01012345678"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -382,9 +450,99 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
         </DialogFooter>
       </form>
 
-      {/* Dialog إضافة ضامن جديد */}
-      <Dialog open={showNewGuarantorDialog} onOpenChange={setShowNewGuarantorDialog}>
-        <DialogContent className="sm:max-w-[400px] rounded-3xl">
+      {/* ===== Dialog إضافة عميل جديد ===== */}
+      <Dialog open={showNewCustomerDialog} onOpenChange={(open) => { setShowNewCustomerDialog(open); if (!open) resetNewCustomerForm(); }}>
+        <DialogContent className="sm:max-w-[450px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Plus className="h-5 w-5 text-blue-500" />
+              إضافة عميل جديد
+            </DialogTitle>
+            <DialogDescription>
+              أدخل بيانات العميل الجديد
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 px-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-slate-400" />
+                اسم العميل
+              </Label>
+              <Input
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                placeholder="الاسم الكامل"
+                className={customerErrors.name ? "border-red-300" : ""}
+              />
+              {customerErrors.name && <p className="text-xs text-red-500">{customerErrors.name}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                رقم الهاتف
+              </Label>
+              <Input
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
+                placeholder="01012345678"
+                dir="ltr"
+                className={customerErrors.phone ? "border-red-300" : ""}
+              />
+              {customerErrors.phone && <p className="text-xs text-red-500">{customerErrors.phone}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                الرقم القومي
+              </Label>
+              <Input
+                value={newCustomerNationalId}
+                onChange={(e) => setNewCustomerNationalId(e.target.value.replace(/[^0-9]/g, "").slice(0, 14))}
+                placeholder="14 رقماً"
+                dir="ltr"
+                className={customerErrors.nationalId ? "border-red-300" : ""}
+              />
+              {customerErrors.nationalId && <p className="text-xs text-red-500">{customerErrors.nationalId}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                العنوان
+              </Label>
+              <Input
+                value={newCustomerAddress}
+                onChange={(e) => setNewCustomerAddress(e.target.value)}
+                placeholder="العنوان بالكامل"
+                className={customerErrors.address ? "border-red-300" : ""}
+              />
+              {customerErrors.address && <p className="text-xs text-red-500">{customerErrors.address}</p>}
+            </div>
+          </div>
+
+          <DialogFooter className="px-2">
+            <Button
+              variant="outline"
+              onClick={() => { setShowNewCustomerDialog(false); resetNewCustomerForm(); }}
+              className="rounded-xl h-11"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleAddNewCustomer}
+              className="rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 h-11 gap-2"
+              disabled={!newCustomerName.trim() || !newCustomerPhone.trim() || !newCustomerNationalId.trim() || !newCustomerAddress.trim()}
+            >
+              <Plus className="h-4 w-4" />
+              إضافة واختيار
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== Dialog إضافة ضامن جديد ===== */}
+      <Dialog open={showNewGuarantorDialog} onOpenChange={(open) => { setShowNewGuarantorDialog(open); if (!open) resetNewGuarantorForm(); }}>
+        <DialogContent className="sm:max-w-[450px] rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl flex items-center gap-2">
               <Plus className="h-5 w-5 text-emerald-500" />
@@ -405,7 +563,9 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
                 value={newGuarantorName}
                 onChange={(e) => setNewGuarantorName(e.target.value)}
                 placeholder="الاسم الكامل"
+                className={guarantorErrors.name ? "border-red-300" : ""}
               />
+              {guarantorErrors.name && <p className="text-xs text-red-500">{guarantorErrors.name}</p>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
@@ -417,6 +577,33 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
                 onChange={(e) => setNewGuarantorPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
                 placeholder="01012345678"
                 dir="ltr"
+                className={guarantorErrors.phone ? "border-red-300" : ""}
+              />
+              {guarantorErrors.phone && <p className="text-xs text-red-500">{guarantorErrors.phone}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                رقم البطاقة الشخصية <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={newGuarantorNationalId}
+                onChange={(e) => setNewGuarantorNationalId(e.target.value.replace(/[^0-9]/g, "").slice(0, 14))}
+                placeholder="14 رقماً"
+                dir="ltr"
+                className={guarantorErrors.nationalId ? "border-red-300" : ""}
+              />
+              {guarantorErrors.nationalId && <p className="text-xs text-red-500">{guarantorErrors.nationalId}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                العنوان (اختياري)
+              </Label>
+              <Input
+                value={newGuarantorAddress}
+                onChange={(e) => setNewGuarantorAddress(e.target.value)}
+                placeholder="العنوان"
               />
             </div>
           </div>
@@ -424,11 +611,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           <DialogFooter className="px-2">
             <Button
               variant="outline"
-              onClick={() => {
-                setShowNewGuarantorDialog(false);
-                setNewGuarantorName("");
-                setNewGuarantorPhone("");
-              }}
+              onClick={() => { setShowNewGuarantorDialog(false); resetNewGuarantorForm(); }}
               className="rounded-xl h-11"
             >
               إلغاء
@@ -436,7 +619,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             <Button
               onClick={handleAddNewGuarantor}
               className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 h-11 gap-2"
-              disabled={!newGuarantorName.trim() || newGuarantorPhone.length < 11}
+              disabled={!newGuarantorName.trim() || !newGuarantorPhone.trim() || !newGuarantorNationalId.trim()}
             >
               <Plus className="h-4 w-4" />
               إضافة واختيار

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Permission, ROLE_PERMISSIONS } from "@/types";
-import { mockCredentials } from "@/data/mockUsers";
+import { checkCredentials } from "@/data/mockUsers";
 
 interface AuthContextType {
   user: User | null;
@@ -38,12 +38,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const login = async (email: string, password: string) => {
-    await new Promise((r) => setTimeout(r, 500));
-    const found = mockCredentials.find(
-      (c) => c.email === email && c.password === password
-    );
-    if (found) {
-      setUser(found.user);
+    // محاكاة تأخير
+    await new Promise((r) => setTimeout(r, 300));
+    const foundUser = checkCredentials(email, password);
+    if (foundUser) {
+      setUser(foundUser);
       return { success: true };
     }
     return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };

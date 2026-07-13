@@ -16,6 +16,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -49,8 +50,6 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-
-const emptyForm = { name: "", phone: "", nationalId: "", address: "", type: "customer" as const };
 
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
@@ -378,7 +377,7 @@ const Customers = () => {
               هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2 justify-end pt-2">
+          <DialogFooter className="px-8">
             <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
               إلغاء
             </Button>
@@ -389,7 +388,7 @@ const Customers = () => {
             >
               حذف
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>

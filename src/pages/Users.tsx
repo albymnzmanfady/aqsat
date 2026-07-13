@@ -16,9 +16,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
@@ -39,7 +39,6 @@ import {
   Shield,
   ShieldCheck,
   ShieldAlert,
-  Key,
   RefreshCw,
   CheckCircle2,
   XCircle,
@@ -118,7 +117,6 @@ const Users = () => {
   };
 
   const handleSave = () => {
-    // Validation
     if (!formData.name.trim() || !formData.email.trim()) {
       showError("الاسم والبريد الإلكتروني مطلوبان");
       return;
@@ -131,7 +129,6 @@ const Users = () => {
       showError("كلمتا المرور غير متطابقتين");
       return;
     }
-    // التحقق من عدم تكرار البريد
     const existing = users.find(u => u.email === formData.email && u.id !== editingUser?.id);
     if (existing) {
       showError("البريد الإلكتروني مستخدم بالفعل");
@@ -217,34 +214,32 @@ const Users = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>الاسم</Label>
+              <div className="space-y-4 px-8">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الاسم</Label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="الاسم الكامل"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>البريد الإلكتروني</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">البريد الإلكتروني</Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="user@example.com"
                     dir="ltr"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>الدور</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الدور</Label>
                   <Select
                     value={formData.role}
                     onValueChange={(val: UserRole) => setFormData({ ...formData, role: val })}
                   >
-                    <SelectTrigger className="rounded-xl h-12 bg-white/50">
+                    <SelectTrigger className="h-12">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -260,14 +255,14 @@ const Users = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>{editingUser ? "كلمة المرور الجديدة (اختياري)" : "كلمة المرور"}</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">{editingUser ? "كلمة المرور الجديدة (اختياري)" : "كلمة المرور"}</Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="rounded-xl h-12 bg-white/50 pl-10"
+                      className="pl-10"
                       placeholder={editingUser ? "اتركه فارغاً إذا لم ترد التغيير" : "6 أحرف على الأقل"}
                       dir="ltr"
                     />
@@ -281,13 +276,12 @@ const Users = () => {
                   </div>
                 </div>
                 {formData.password && (
-                  <div className="space-y-2">
-                    <Label>تأكيد كلمة المرور</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">تأكيد كلمة المرور</Label>
                     <Input
                       type="password"
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="rounded-xl h-12 bg-white/50"
                       placeholder="أعد كتابة كلمة المرور"
                       dir="ltr"
                     />
@@ -295,7 +289,7 @@ const Users = () => {
                 )}
               </div>
 
-              <DialogFooter className="gap-2 pt-4">
+              <DialogFooter className="px-8">
                 <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">
                   إلغاء
                 </Button>
@@ -425,7 +419,7 @@ const Users = () => {
               هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="px-8">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="rounded-xl h-11">
               إلغاء
             </Button>

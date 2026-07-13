@@ -234,9 +234,10 @@ const InstallmentsPage = () => {
               </DialogTitle>
               <DialogDescription>سجّل دفعة قسط جديدة لعميل</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label className="font-medium">العقد</Label>
+
+            <div className="grid gap-4 px-8">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">العقد</Label>
                 <Select
                   value={selectedContractId}
                   onValueChange={(value) => {
@@ -244,7 +245,7 @@ const InstallmentsPage = () => {
                     setSelectedInstallmentNumber("");
                   }}
                 >
-                  <SelectTrigger className="rounded-xl h-12">
+                  <SelectTrigger className="h-12">
                     <SelectValue placeholder="اختر العقد" />
                   </SelectTrigger>
                   <SelectContent>
@@ -257,10 +258,10 @@ const InstallmentsPage = () => {
                 </Select>
               </div>
               {selectedContractId && (
-                <div className="grid gap-2">
-                  <Label className="font-medium">رقم القسط</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">رقم القسط</Label>
                   <Select value={selectedInstallmentNumber} onValueChange={setSelectedInstallmentNumber}>
-                    <SelectTrigger className="rounded-xl h-12">
+                    <SelectTrigger className="h-12">
                       <SelectValue placeholder="اختر القسط" />
                     </SelectTrigger>
                     <SelectContent>
@@ -274,7 +275,8 @@ const InstallmentsPage = () => {
                 </div>
               )}
             </div>
-            <DialogFooter className="gap-2">
+
+            <DialogFooter className="px-8">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl h-11">
                 إلغاء
               </Button>
@@ -507,7 +509,7 @@ const InstallmentsPage = () => {
               هل أنت متأكد من حذف هذا القسط؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2 justify-end pt-2">
+          <DialogFooter className="px-8">
             <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
               إلغاء
             </Button>
@@ -518,7 +520,7 @@ const InstallmentsPage = () => {
             >
               حذف
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>

@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -22,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { initialProducts, initialTransactions } from "@/data/mockData";
 import { Product, InventoryTransaction, InventoryTransactionType } from "@/types";
 import { showSuccess } from "@/utils/toast";
@@ -37,7 +38,6 @@ import {
   RotateCcw,
   Calendar,
   FileText,
-  Filter,
   ClipboardList,
 } from "lucide-react";
 
@@ -107,7 +107,6 @@ const Inventory = () => {
 
     setTransactions((prev) => [newTransaction, ...prev]);
 
-    // Update product stock
     const stockChange = formData.type === "purchase" ? quantity : -quantity;
     const productIndex = products.findIndex((p) => p.id === Number(formData.productId));
     if (productIndex !== -1) {
@@ -163,16 +162,17 @@ const Inventory = () => {
               </DialogTitle>
               <DialogDescription>إضافة مشتريات أو مبيعات أو تسوية للمخزون</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>نوع الحركة</Label>
+
+            <div className="space-y-4 px-8">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">نوع الحركة</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(val: InventoryTransactionType) =>
                     setFormData({ ...formData, type: val, unitPrice: "" })
                   }
                 >
-                  <SelectTrigger className="rounded-xl h-12 bg-white/50">
+                  <SelectTrigger className="h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -184,13 +184,13 @@ const Inventory = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>المنتج</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">المنتج</Label>
                 <Select
                   value={formData.productId}
                   onValueChange={(val) => setFormData({ ...formData, productId: val })}
                 >
-                  <SelectTrigger className="rounded-xl h-12 bg-white/50">
+                  <SelectTrigger className="h-12">
                     <SelectValue placeholder="اختر المنتج" />
                   </SelectTrigger>
                   <SelectContent>
@@ -204,63 +204,59 @@ const Inventory = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>الكمية</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الكمية</Label>
                   <Input
                     type="number"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="0"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>سعر الوحدة</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">سعر الوحدة</Label>
                   <Input
                     type="number"
                     value={formData.unitPrice}
                     onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="سعر التكلفة الافتراضي"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>رقم المرجع</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">رقم المرجع</Label>
                   <Input
                     value={formData.reference}
                     onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="رقم الفاتورة أو أمر الشراء"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>ملاحظات</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">ملاحظات</Label>
                   <Input
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="rounded-xl h-12 bg-white/50"
                     placeholder="ملاحظة (اختياري)"
                   />
                 </div>
               </div>
-
-              <div className="flex gap-2 pt-4 justify-end">
-                <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">
-                  إلغاء
-                </Button>
-                <Button
-                  onClick={handleAddTransaction}
-                  className="rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 h-11 gap-2"
-                  disabled={!formData.productId || !formData.quantity}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  تسجيل الحركة
-                </Button>
-              </div>
             </div>
+
+            <DialogFooter className="px-8">
+              <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">
+                إلغاء
+              </Button>
+              <Button
+                onClick={handleAddTransaction}
+                className="rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 h-11 gap-2"
+                disabled={!formData.productId || !formData.quantity}
+              >
+                <Sparkles className="h-4 w-4" />
+                تسجيل الحركة
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

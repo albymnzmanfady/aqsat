@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -439,7 +440,7 @@ const Contracts = () => {
             </DialogDescription>
           </DialogHeader>
           {selectedContract && (
-            <div className="max-h-[50vh] overflow-y-auto px-1">
+            <div className="max-h-[50vh] overflow-y-auto px-8">
               <InstallmentSchedule
                 installments={contractInstallments(selectedContract.id)}
                 customerName={selectedContract.customerName}
@@ -463,7 +464,7 @@ const Contracts = () => {
               هل أنت متأكد من حذف هذا العقد؟ سيتم أيضاً حذف جميع الأقساط المرتبطة به. لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2 justify-end pt-2">
+          <DialogFooter className="px-8">
             <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">
               إلغاء
             </Button>
@@ -474,7 +475,7 @@ const Contracts = () => {
             >
               حذف
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>

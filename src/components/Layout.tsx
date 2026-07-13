@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import MobileNav from "@/components/MobileNav";
 import ScrollToTop from "@/components/ScrollToTop";
+import TopBar from "@/components/TopBar";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import {
   Tooltip,
@@ -16,16 +17,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Home,
   Users,
   CreditCard,
   FileText,
   Settings,
-  Bell,
   Menu,
   Sparkles,
-  User,
-  MessageSquareText,
   Package,
   ArrowDownUp,
   BarChart3,
@@ -38,8 +35,6 @@ import {
   ChevronLeft,
   PanelLeftOpen,
   PanelLeftClose,
-  ChevronDown,
-  RefreshCw,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -105,18 +100,6 @@ const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
-
-  const roleLabels: Record<string, string> = {
-    admin: "مدير النظام",
-    supervisor: "مشرف مالي",
-    collector: "محصل",
-  };
-
-  const roleColors: Record<string, string> = {
-    admin: "from-amber-500 to-orange-500",
-    supervisor: "from-blue-500 to-cyan-500",
-    collector: "from-emerald-500 to-teal-500",
-  };
 
   const renderNavItem = (item: typeof navItems[number]) => {
     if (item.subItems) {
@@ -277,7 +260,7 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200/80 z-40 shadow-sm">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 z-40 shadow-sm">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
             <Button
@@ -305,7 +288,7 @@ const Layout = ({ children }: LayoutProps) => {
             <NotificationsDropdown />
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br",
-              roleColors[user?.role || "admin"]
+              "from-amber-500 to-orange-500"
             )}>
               {user?.name?.charAt(0) || "م"}
             </div>
@@ -376,46 +359,46 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* Notifications in sidebar */}
-        <div className={cn("px-3 pt-3", sidebarCollapsed && "flex justify-center px-2")}>
-          {sidebarCollapsed ? (
-            <div className="flex justify-center">
-              <NotificationsDropdown />
-            </div>
-          ) : (
-            <NotificationsDropdown triggerClassName="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-violet-50 hover:text-violet-600" />
-          )}
-        </div>
-
         {/* User Card */}
-        <div className={cn("p-4", sidebarCollapsed && "px-2")}>
-          <div className={cn(
-            "rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500",
-            sidebarCollapsed ? "p-2" : "p-4"
-          )}>
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
-              <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
-            </div>
-            <div className={cn(
-              "relative z-10 flex items-center",
-              sidebarCollapsed ? "justify-center" : "gap-3"
-            )}>
-              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
-                {user?.name?.charAt(0) || "م"}
+        {!sidebarCollapsed && (
+          <div className="p-4">
+            <div className="rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 p-4">
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
+                <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
               </div>
-              {!sidebarCollapsed && (
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
+                  {user?.name?.charAt(0) || "م"}
+                </div>
                 <div className="text-white min-w-0">
-                  <p className="font-semibold text-sm truncate">{user?.name || "محمد أحمد"}</p>
+                  <p className="font-semibold text-sm truncate">{user?.name || "مستخدم"}</p>
                   <p className="text-xs text-white/80 flex items-center gap-1">
                     <Shield className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{user ? roleLabels[user.role] || user.role : ""}</span>
+                    <span className="truncate">
+                      {user ? (user.role === "admin" ? "مدير النظام" : user.role === "supervisor" ? "مشرف مالي" : "محصل") : ""}
+                    </span>
                   </p>
                 </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {sidebarCollapsed && (
+          <div className="p-3 flex justify-center">
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-md cursor-default">
+                  {user?.name?.charAt(0) || "م"}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="rounded-xl text-sm">
+                <p>{user?.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden scroll-smooth">
@@ -439,8 +422,8 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div className={cn("p-3 border-t border-slate-100", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
+        {/* Sidebar Footer - Logout only */}
+        <div className={cn("p-3 border-t border-slate-100", sidebarCollapsed ? "flex justify-center" : "")}>
           {sidebarCollapsed ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
@@ -482,9 +465,12 @@ const Layout = ({ children }: LayoutProps) => {
         </Button>
       )}
 
+      {/* Desktop TopBar */}
+      <TopBar />
+
       {/* Main Content */}
       <main className={cn(
-        "flex-1 min-h-screen pt-16 lg:pt-0 relative z-10 pb-20 lg:pb-0 transition-all duration-300",
+        "flex-1 min-h-screen pt-16 lg:pt-16 relative z-10 pb-20 lg:pb-0 transition-all duration-300",
         sidebarCollapsed ? "lg:mr-20" : "lg:mr-72"
       )}>
         <div

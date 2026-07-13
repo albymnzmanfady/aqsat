@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -23,6 +21,7 @@ import {
   FileText,
   CreditCard,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
 
 const priorityStyles = {
@@ -95,14 +94,17 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        align="end"
-        className="w-[380px] max-h-[70vh] overflow-hidden rounded-2xl p-0 shadow-2xl shadow-slate-200/50 border border-slate-100"
+        align="start"
+        side="bottom"
+        className="w-[380px] max-h-[70vh] overflow-hidden rounded-2xl p-0 shadow-2xl border border-slate-200 bg-white"
         sideOffset={8}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-l from-violet-50 to-purple-50/50">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-purple-50">
           <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-violet-600" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Bell className="h-4 w-4 text-white" />
+            </div>
             <h3 className="font-bold text-slate-800 text-sm">الإشعارات</h3>
             {unreadCount > 0 && (
               <Badge className="bg-gradient-to-r from-rose-500 to-pink-500 text-white border-0 rounded-lg text-[10px] px-1.5 py-0">
@@ -114,7 +116,7 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 rounded-lg text-xs gap-1 text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+              className="h-7 rounded-lg text-xs gap-1 text-slate-500 hover:text-violet-600 hover:bg-violet-50"
               onClick={() => { refreshNotifications(); }}
             >
               <RefreshCw className="h-3 w-3" />
@@ -136,9 +138,11 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
         {/* Notifications List */}
         <div className="overflow-y-auto max-h-[55vh]">
           {notifications.length === 0 ? (
-            <div className="py-12 text-center">
-              <Bell className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 font-medium">لا توجد إشعارات</p>
+            <div className="py-12 text-center bg-white">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                <Bell className="h-8 w-8 text-slate-300" />
+              </div>
+              <p className="text-sm text-slate-600 font-medium">لا توجد إشعارات</p>
               <p className="text-xs text-slate-400 mt-1">كل شيء يعمل بشكل طبيعي ✅</p>
             </div>
           ) : (
@@ -151,14 +155,14 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={cn(
-                    "flex items-start gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-slate-50/80 border-b border-slate-50",
-                    !notification.read && "bg-violet-50/30",
+                    "group flex items-start gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-violet-50/50 border-b border-slate-100 last:border-b-0",
+                    !notification.read && "bg-violet-50/40",
                     priorityStyles[notification.priority]
                   )}
                 >
                   {/* Icon */}
                   <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br shadow-sm text-sm",
+                    "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br shadow-sm",
                     gradientColor
                   )}>
                     <Icon className="h-4 w-4 text-white" />
@@ -169,7 +173,7 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="text-sm">{notification.icon}</span>
                       <p className={cn(
-                        "text-sm truncate",
+                        "text-sm",
                         !notification.read ? "font-bold text-slate-800" : "font-medium text-slate-600"
                       )}>
                         {notification.title}
@@ -181,19 +185,23 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
                     <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
                       {notification.message}
                     </p>
+                    <div className="flex items-center gap-1 mt-1.5 text-[10px] text-violet-500 font-medium">
+                      <ArrowLeft className="h-3 w-3" />
+                      <span>اضغط للعرض</span>
+                    </div>
                   </div>
 
                   {/* Remove button */}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 rounded-lg flex-shrink-0 opacity-0 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500 transition-opacity"
+                    className="h-7 w-7 p-0 rounded-lg flex-shrink-0 opacity-0 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500 transition-all text-slate-400"
                     onClick={(e) => {
                       e.stopPropagation();
                       removeNotification(notification.id);
                     }}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               );
@@ -203,7 +211,7 @@ const NotificationsDropdown = ({ triggerClassName }: NotificationsDropdownProps)
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400">
                 {notifications.filter(n => !n.read).length} غير مقروء من {notifications.length}

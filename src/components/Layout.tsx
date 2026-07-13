@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import MobileNav from "@/components/MobileNav";
 import ScrollToTop from "@/components/ScrollToTop";
 import {
@@ -50,6 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { user, logout, hasPermission } = useAuth();
+  const { settings } = useAppSettings();
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar_collapsed");
@@ -287,10 +289,16 @@ const Layout = ({ children }: LayoutProps) => {
               <Menu className="h-5 w-5 text-slate-600" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <Sparkles className="h-5 w-5 text-white" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0 overflow-hidden">
+                {settings.logoUrl ? (
+                  <img src={settings.logoUrl} alt={settings.appName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                )}
               </div>
-              <span className="font-bold text-slate-800">أقساط</span>
+              <span className="font-bold text-slate-800">{settings.appName}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -331,18 +339,30 @@ const Layout = ({ children }: LayoutProps) => {
           sidebarCollapsed ? "justify-center" : "justify-between"
         )}>
           {sidebarCollapsed ? (
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <Sparkles className="h-6 w-6 text-white" />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 overflow-hidden flex-shrink-0">
+              {settings.logoUrl ? (
+                <img src={settings.logoUrl} alt={settings.appName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+              )}
             </div>
           ) : (
             <>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden flex-shrink-0">
-                  <Sparkles className="h-6 w-6 text-white relative z-10" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 overflow-hidden flex-shrink-0 relative">
+                  {settings.logoUrl ? (
+                    <img src={settings.logoUrl} alt={settings.appName} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center relative">
+                      <Sparkles className="h-6 w-6 text-white relative z-10" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <h1 className="font-bold text-slate-800 text-lg tracking-tight">أقساط</h1>
+                  <h1 className="font-bold text-slate-800 text-lg tracking-tight">{settings.appName}</h1>
                   <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
                 </div>
               </div>

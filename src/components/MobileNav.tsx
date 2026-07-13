@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import {
   Home,
   Users,
@@ -48,6 +49,8 @@ const MobileNav = () => {
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { hasPermission, logout } = useAuth();
+  // We don't directly display app name in bottom nav, but keep the hook for consistency
+  const { settings } = useAppSettings();
 
   const visibleMainItems = mainNavItems.filter(
     (item) => !item.permission || hasPermission(item.permission)
@@ -59,7 +62,7 @@ const MobileNav = () => {
 
   return (
     <>
-      {/* Bottom Navigation - RTL: icons will appear on the right side due to dir="rtl" */}
+      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom shadow-lg shadow-slate-200/50">
         <div className="flex items-center justify-around h-16 px-2">
           {visibleMainItems.slice(0, 4).map((item) => {
@@ -125,7 +128,7 @@ const MobileNav = () => {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-800">القائمة الكاملة</h2>
-                <p className="text-xs text-slate-500">جميع صفحات النظام</p>
+                <p className="text-xs text-slate-500">{settings.appName} - جميع الصفحات</p>
               </div>
             </div>
 

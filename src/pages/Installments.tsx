@@ -16,92 +16,84 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CreditCard, Plus, Search, CheckCircle, Clock, AlertCircle, Calendar } from "lucide-react";
+import { initialInstallments, initialContracts } from "@/data/mockData";
+import { Installment, Contract } from "@/types";
 import { showSuccess } from "@/utils/toast";
 
-interface Installment {
-  id: number;
-  customerId: number;
-  customerName: string;
-  amount: number;
-  dueDate: string;
-  paidDate: string | null;
-  status: "paid" | "pending" | "overdue";
-  installmentNumber: number;
-  totalInstallments: number;
-}
-
-const initialInstallments: Installment[] = [
-  { id: 1, customerId: 1, customerName: "أحمد محمد", amount: 500, dueDate: "2024-01-15", paidDate: "2024-01-15", status: "paid", installmentNumber: 8, totalInstallments: 12 },
-  { id: 2, customerId: 1, customerName: "أحمد محمد", amount: 500, dueDate: "2024-02-15", paidDate: null, status: "pending", installmentNumber: 9, totalInstallments: 12 },
-  { id: 3, customerId: 2, customerName: "سارة علي", amount: 500, dueDate: "2024-01-20", paidDate: "2024-01-20", status: "paid", installmentNumber: 12, totalInstallments: 24 },
-  { id: 4, customerId: 2, customerName: "سارة علي", amount: 500, dueDate: "2024-02-20", paidDate: null, status: "pending", installmentNumber: 13, totalInstallments: 24 },
-  { id: 5, customerId: 4, customerName: "فاطمة أحمد", amount: 500, dueDate: "2024-01-10", paidDate: null, status: "overdue", installmentNumber: 5, totalInstallments: 18 },
-  { id: 6, customerId: 5, customerName: "عمر خالد", amount: 500, dueDate: "2024-01-25", paidDate: "2024-01-24", status: "paid", installmentNumber: 10, totalInstallments: 12 },
-  { id: 7, customerId: 6, customerName: "نورا سعيد", amount: 500, dueDate: "2024-01-18", paidDate: null, status: "pending", installmentNumber: 24, totalInstallments: 36 },
-  { id: 8, customerId: 6, customerName: "نورا سعيد", amount: 500, dueDate: "2023-12-18", paidDate: null, status: "overdue", installmentNumber: 23, totalInstallments: 36 },
+const monthNames = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
 ];
 
 const Installments = () => {
-  const [installments] = useState<Installment[]>(initialInstallments);
+  const [installments, setInstallments] = useState<Installment[]>(initialInstallments);
+  const [contracts] = useState<Contract[]>(initialContracts);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "pending" | "overdue">("all");
+  const [selectedContractId, setSelectedContractId] = useState<string>("");
+  const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState<string>("");
 
   const filteredInstallments = installments.filter((installment) => {
-    const matchesSearch = installment.customerName.includes(searchQuery);
-    const matchesFilter = filterStatus === "all" || installment.status === filterStatus;
+    const contract = contracts.find((c) => c.id === installment.contractId);
+    const customerName = contract?.customerName || "";
+    const matchesSearch = customerName.includes(searchQuery);
+    const matchesFilter = filterStatus === "all" || 
+      (filterStatus === "paid" && installment.isPaid) ||
+      (filterStatus === "pending" && !installment.isPaid);
     return matchesSearch && matchesFilter;
   });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "paid":
-        return <CheckCircle className="h-5 w-5 text-emerald-500" />;
-      case "pending":
-        return <Clock className="h-5 w-5 text-amber-500" />;
-      case "overdue":
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return null;
+  const getStatusIcon = (isPaid: boolean) => {
+    if (isPaid) {
+      return <CheckCircle className="h-5 w-5 text-emerald-500" />;
     }
+    return <Clock className="h-5 w-5 text-amber-500" />;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "bg-emerald-100 text-emerald-700";
-      case "pending":
-        return "bg-amber-100 text-amber-700";
-      case "overdue":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
+  const getStatusColor = (isPaid: boolean) => {
+    return isPaid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700";
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "مدفوع";
-      case "pending":
-        return "قيد الانتظار";
-      case "overdue":
-        return "متأخر";
-      default:
-        return status;
-    }
+  const getStatusText = (isPaid: boolean) => {
+    return isPaid ? "مدفوع" : "قيد الانتظار";
   };
 
-  const paidCount = installments.filter((i) => i.status === "paid").length;
-  const pendingCount = installments.filter((i) => i.status === "pending").length;
-  const overdueCount = installments.filter((i) => i.status === "overdue").length;
+  const paidCount = installments.filter((i) => i.isPaid).length;
+  const pendingCount = installments.filter((i) => !i.isPaid).length;
   const totalAmount = installments.reduce((sum, i) => sum + i.amount, 0);
-  const paidAmount = installments.filter((i) => i.status === "paid").reduce((sum, i) => sum + i.amount, 0);
+  const paidAmount = installments.filter((i) => i.isPaid).reduce((sum, i) => sum + i.amount, 0);
 
-  const handleAddInstallment = () => {
+  const activeContracts = contracts.filter((c) => c.status === "active");
+
+  const handlePayment = () => {
+    if (!selectedContractId || !selectedInstallmentNumber) {
+      return;
+    }
+
+    setInstallments((prev) =>
+      prev.map((inst) => {
+        if (inst.contractId === Number(selectedContractId) && inst.number === Number(selectedInstallmentNumber)) {
+          return {
+            ...inst,
+            isPaid: true,
+            paidDate: new Date().toISOString().split("T")[0],
+          };
+        }
+        return inst;
+      })
+    );
+
     showSuccess("تم تسجيل القسط بنجاح");
     setIsDialogOpen(false);
+    setSelectedContractId("");
+    setSelectedInstallmentNumber("");
+  };
+
+  const getContractInstallments = (contractId: number) => {
+    return installments.filter((i) => i.contractId === contractId && !i.isPaid);
   };
 
   return (
@@ -113,9 +105,9 @@ const Installments = () => {
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
               <CreditCard className="h-5 w-5 text-white" />
             </div>
-            إدارة الأقساط
+            تسجيل الأقساط
           </h1>
-          <p className="text-slate-500 mt-2 mr-13">تتبع وإدارة جميع أقساط العملاء</p>
+          <p className="text-slate-500 mt-2 mr-13">تسجيل ومتابعة سداد أقساط العملاء</p>
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -132,29 +124,50 @@ const Installments = () => {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="customer">العميل</Label>
-                <Input id="customer" placeholder="اختر العميل" className="rounded-xl" />
+                <Label>العقد</Label>
+                <Select value={selectedContractId} onValueChange={(value) => {
+                  setSelectedContractId(value);
+                  setSelectedInstallmentNumber("");
+                }}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="اختر العقد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeContracts.map((contract) => (
+                      <SelectItem key={contract.id} value={contract.id.toString()}>
+                        {contract.customerName} - {contract.productType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              {selectedContractId && (
                 <div className="grid gap-2">
-                  <Label htmlFor="amount">المبلغ</Label>
-                  <Input id="amount" type="number" placeholder="0" className="rounded-xl" />
+                  <Label>رقم القسط</Label>
+                  <Select value={selectedInstallmentNumber} onValueChange={setSelectedInstallmentNumber}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="اختر القسط" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getContractInstallments(Number(selectedContractId)).map((inst) => (
+                        <SelectItem key={inst.number} value={inst.number.toString()}>
+                          القسط {inst.number} - {inst.day}/{inst.month}/{inst.year} - {inst.amount} ج.م
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="date">تاريخ الدفع</Label>
-                  <Input id="date" type="date" className="rounded-xl" />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="notes">ملاحظات</Label>
-                <Input id="notes" placeholder="ملاحظات إضافية (اختياري)" className="rounded-xl" />
-              </div>
+              )}
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl">
                 إلغاء
               </Button>
-              <Button onClick={handleAddInstallment} className="rounded-xl bg-emerald-600 hover:bg-emerald-700">
+              <Button 
+                onClick={handlePayment} 
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-700"
+                disabled={!selectedContractId || !selectedInstallmentNumber}
+              >
                 تسجيل القسط
               </Button>
             </DialogFooter>
@@ -206,15 +219,17 @@ const Installments = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200 bg-red-50/50">
+        <Card className="border-blue-200 bg-blue-50/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-red-100 rounded-xl flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+              <div className="w-11 h-11 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-red-600">متأخرة</p>
-                <p className="font-bold text-xl text-red-700">{overdueCount}</p>
+                <p className="text-sm text-blue-600">نسبة التحصيل</p>
+                <p className="font-bold text-xl text-blue-700">
+                  {totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0}%
+                </p>
               </div>
             </div>
           </CardContent>
@@ -236,8 +251,8 @@ const Installments = () => {
             </div>
             <div className="hidden sm:block w-px h-12 bg-slate-200" />
             <div className="text-center sm:text-right">
-              <p className="text-sm text-slate-500 mb-1">نسبة التحصيل</p>
-              <p className="text-2xl font-bold text-blue-600">{Math.round((paidAmount / totalAmount) * 100)}%</p>
+              <p className="text-sm text-slate-500 mb-1">المتبقي</p>
+              <p className="text-2xl font-bold text-amber-600">{(totalAmount - paidAmount).toLocaleString()} ج.م</p>
             </div>
           </div>
         </CardContent>
@@ -280,55 +295,49 @@ const Installments = () => {
           >
             قيد الانتظار
           </Button>
-          <Button
-            variant={filterStatus === "overdue" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilterStatus("overdue")}
-            className={`rounded-xl ${filterStatus === "overdue" ? "bg-red-600 hover:bg-red-700" : "border-slate-200"}`}
-          >
-            متأخر
-          </Button>
         </div>
       </div>
 
       {/* Installments List */}
       <Card className="border-slate-200 bg-white">
         <div className="divide-y divide-slate-100">
-          {filteredInstallments.map((installment) => (
-            <div key={installment.id} className="p-4 hover:bg-slate-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      installment.status === "paid"
-                        ? "bg-emerald-100"
-                        : installment.status === "pending"
-                        ? "bg-amber-100"
-                        : "bg-red-100"
-                    }`}
-                  >
-                    {getStatusIcon(installment.status)}
+          {filteredInstallments.map((installment) => {
+            const contract = contracts.find((c) => c.id === installment.contractId);
+            return (
+              <div key={installment.id} className="p-4 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        installment.isPaid ? "bg-emerald-100" : "bg-amber-100"
+                      }`}
+                    >
+                      {getStatusIcon(installment.isPaid)}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-slate-800">{contract?.customerName || "عميل"}</h3>
+                      <p className="text-sm text-slate-500">
+                        القسط {installment.number} من {contract?.numberOfReceipts || "?"}
+                        {contract && ` - ${contract.productType}`}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-slate-800">{installment.customerName}</h3>
-                    <p className="text-sm text-slate-500">
-                      القسط {installment.installmentNumber} من {installment.totalInstallments}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-slate-800">{installment.amount.toLocaleString()} ج.م</p>
-                  <div className="flex items-center gap-2 justify-end">
-                    <Calendar className="h-3 w-3 text-slate-400" />
-                    <span className="text-xs text-slate-500">{installment.paidDate || installment.dueDate}</span>
-                    <Badge className={`${getStatusColor(installment.status)} text-xs`}>
-                      {getStatusText(installment.status)}
-                    </Badge>
+                  <div className="text-left">
+                    <p className="font-bold text-slate-800">{installment.amount.toLocaleString()} ج.م</p>
+                    <div className="flex items-center gap-2 justify-end">
+                      <Calendar className="h-3 w-3 text-slate-400" />
+                      <span className="text-xs text-slate-500">
+                        {installment.day}/{installment.month}/{installment.year}
+                      </span>
+                      <Badge className={`${getStatusColor(installment.isPaid)} text-xs`}>
+                        {getStatusText(installment.isPaid)}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {filteredInstallments.length === 0 && (

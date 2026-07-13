@@ -26,9 +26,9 @@ const Layout = ({ children }: LayoutProps) => {
 
   const navItems = [
     { path: "/", label: "الرئيسية", icon: Home },
-    { path: "/customers", label: "العملاء", icon: Users },
+    { path: "/customers", label: "العملاء والضامنين", icon: Users },
+    { path: "/contracts", label: "العقود", icon: FileText },
     { path: "/installments", label: "الأقساط", icon: CreditCard },
-    { path: "/reports", label: "التقارير", icon: FileText },
     { path: "/settings", label: "الإعدادات", icon: Settings },
   ];
 

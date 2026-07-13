@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import AnimatedCounter from "@/components/AnimatedCounter";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -60,12 +61,10 @@ const InstallmentsPage = () => {
     const contract = contracts.find((c) => c.id === installment.contractId);
     const customerName = contract?.customerName || "";
 
-    // Search filter
     if (searchQuery && !customerName.includes(searchQuery) && !contract?.productType.includes(searchQuery)) {
       return false;
     }
 
-    // Status filter
     const dueDate = new Date(installment.year, installment.month - 1, installment.day);
     const isOverdue = !installment.isPaid && dueDate < today;
 
@@ -106,7 +105,6 @@ const InstallmentsPage = () => {
       })
     );
 
-    // Send WhatsApp notification
     if (installmentToPay) {
       const contract = contracts.find((c) => c.id === installmentToPay.contractId);
       if (contract) {
@@ -153,7 +151,6 @@ const InstallmentsPage = () => {
     setSendingId(installment.id);
     const dueDate = `${installment.day}/${installment.month}/${installment.year}`;
 
-    // Check if overdue
     const dueDt = new Date(installment.year, installment.month - 1, installment.day);
     const daysOverdue = Math.floor((today.getTime() - dueDt.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -231,7 +228,7 @@ const InstallmentsPage = () => {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/30 h-12 px-6">
+            <Button className="gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/30 h-12 px-6 active:scale-[0.97]">
               <Plus className="h-5 w-5" />
               تسجيل قسط
             </Button>
@@ -290,7 +287,7 @@ const InstallmentsPage = () => {
               </Button>
               <Button
                 onClick={handlePayment}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 h-11"
+                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 h-11 active:scale-[0.97]"
                 disabled={!selectedContractId || !selectedInstallmentNumber}
               >
                 تسجيل القسط
@@ -303,7 +300,7 @@ const InstallmentsPage = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => (
-          <Card key={index} className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+          <Card key={index} className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-md", stat.color)}>
@@ -320,7 +317,7 @@ const InstallmentsPage = () => {
       </div>
 
       {/* Financial Summary */}
-      <Card className="mb-8 border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative">
+      <Card className="mb-8 border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative hover-lift">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
         <CardContent className="p-6 relative z-10">
@@ -333,15 +330,15 @@ const InstallmentsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <p className="text-sm text-white/80 mb-1">المبلغ المحصّل</p>
-              <p className="text-2xl font-bold">{paidAmount.toLocaleString()} ج.م</p>
+              <p className="text-2xl font-bold"><AnimatedCounter value={paidAmount} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <p className="text-sm text-white/80 mb-1">إجمالي المبالغ</p>
-              <p className="text-2xl font-bold">{totalAmount.toLocaleString()} ج.م</p>
+              <p className="text-2xl font-bold"><AnimatedCounter value={totalAmount} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <p className="text-sm text-white/80 mb-1">المتبقي</p>
-              <p className="text-2xl font-bold">{(totalAmount - paidAmount).toLocaleString()} ج.م</p>
+              <p className="text-2xl font-bold"><AnimatedCounter value={totalAmount - paidAmount} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م</p>
             </div>
           </div>
         </CardContent>
@@ -367,7 +364,7 @@ const InstallmentsPage = () => {
               size="sm"
               onClick={() => setFilterStatus(status)}
               className={cn(
-                "rounded-xl h-10 px-4",
+                "rounded-xl h-10 px-4 active:scale-[0.97]",
                 filterStatus === status && {
                   all: "bg-gradient-to-r from-slate-700 to-slate-800 text-white",
                   paid: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
@@ -385,14 +382,18 @@ const InstallmentsPage = () => {
       {/* Installments List */}
       <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
         <div className="divide-y divide-slate-100/80">
-          {filteredInstallments.map((installment) => {
+          {filteredInstallments.map((installment, index) => {
             const contract = contracts.find((c) => c.id === installment.contractId);
             const dueDate = `${installment.day}/${installment.month}/${installment.year}`;
             const dueDt = new Date(installment.year, installment.month - 1, installment.day);
             const isOverdue = !installment.isPaid && dueDt < today;
 
             return (
-              <div key={installment.id} className="p-4 hover:bg-slate-50/50 transition-colors">
+              <div
+                key={installment.id}
+                className="stagger-item p-4 hover:bg-slate-50/50 transition-all hover-lift"
+                style={{ animationDelay: `${index * 0.04}s` }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={cn(
@@ -439,7 +440,7 @@ const InstallmentsPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50"
+                          className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
                           onClick={() => handleSendWhatsApp(installment)}
                           disabled={sendingId === installment.id}
                           title="إرسال تذكير واتساب"

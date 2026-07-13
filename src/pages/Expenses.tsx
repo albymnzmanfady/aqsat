@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import AnimatedCounter from "@/components/AnimatedCounter";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -68,7 +69,6 @@ const Expenses = () => {
     return matchesSearch && matchesCategory;
   });
 
-  // Stats
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -133,7 +133,7 @@ const Expenses = () => {
 
         <div className="flex gap-2">
           <Link to="/expense-reports">
-            <Button variant="outline" className="rounded-2xl h-12 px-6 gap-2 border-rose-200 hover:bg-rose-50">
+            <Button variant="outline" className="rounded-2xl h-12 px-6 gap-2 border-rose-200 hover:bg-rose-50 active:scale-[0.97]">
               <PieChart className="h-5 w-5 text-rose-500" />
               التقارير
             </Button>
@@ -146,7 +146,7 @@ const Expenses = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg shadow-rose-500/30 h-12 px-6">
+              <Button className="gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg shadow-rose-500/30 h-12 px-6 active:scale-[0.97]">
                 <Plus className="h-5 w-5" />
                 مصروف جديد
               </Button>
@@ -174,7 +174,7 @@ const Expenses = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 shadow-md flex items-center justify-center">
@@ -182,12 +182,14 @@ const Expenses = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">إجمالي المصروفات</p>
-                <p className="font-bold text-xl text-slate-800">{totalExpenses.toLocaleString()} ج.م</p>
+                <p className="font-bold text-xl text-slate-800">
+                  <AnimatedCounter value={totalExpenses} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md flex items-center justify-center">
@@ -195,12 +197,14 @@ const Expenses = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">هذا الشهر</p>
-                <p className="font-bold text-xl text-slate-800">{monthTotal.toLocaleString()} ج.م</p>
+                <p className="font-bold text-xl text-slate-800">
+                  <AnimatedCounter value={monthTotal} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center">
@@ -208,12 +212,14 @@ const Expenses = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500">عدد العمليات</p>
-                <p className="font-bold text-xl text-slate-800">{expenses.length}</p>
+                <p className="font-bold text-xl text-slate-800">
+                  <AnimatedCounter value={expenses.length} duration={800} />
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md flex items-center justify-center">
@@ -222,7 +228,9 @@ const Expenses = () => {
               <div>
                 <p className="text-sm text-slate-500">متوسط المصروف</p>
                 <p className="font-bold text-xl text-slate-800">
-                  {expenses.length > 0 ? Math.round(totalExpenses / expenses.length).toLocaleString() : 0} ج.م
+                  {expenses.length > 0 ? (
+                    <AnimatedCounter value={Math.round(totalExpenses / expenses.length)} duration={800} formatter={(v) => v.toLocaleString()} />
+                  ) : 0} ج.م
                 </p>
               </div>
             </div>
@@ -248,7 +256,7 @@ const Expenses = () => {
             size="sm"
             onClick={() => setFilterCategory(null)}
             className={cn(
-              "rounded-xl h-10 px-4",
+              "rounded-xl h-10 px-4 active:scale-[0.97]",
               filterCategory === null && "bg-gradient-to-r from-slate-700 to-slate-800 text-white"
             )}
           >
@@ -261,7 +269,7 @@ const Expenses = () => {
               size="sm"
               onClick={() => setFilterCategory(cat.id === filterCategory ? null : cat.id)}
               className={cn(
-                "rounded-xl h-10 px-4",
+                "rounded-xl h-10 px-4 active:scale-[0.97]",
                 filterCategory === cat.id && "bg-gradient-to-r from-slate-700 to-slate-800 text-white"
               )}
             >
@@ -274,12 +282,16 @@ const Expenses = () => {
       {/* Expenses List */}
       <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
         <div className="divide-y divide-slate-100/80">
-          {filteredExpenses.map((expense) => {
+          {filteredExpenses.map((expense, index) => {
             const category = getCategory(expense.categoryId);
             const catColor = category?.color || "bg-slate-100 text-slate-700";
 
             return (
-              <div key={expense.id} className="p-4 hover:bg-slate-50/50 transition-colors">
+              <div
+                key={expense.id}
+                className="stagger-item p-4 hover:bg-slate-50/50 transition-all hover-lift"
+                style={{ animationDelay: `${index * 0.04}s` }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={cn(
@@ -318,7 +330,7 @@ const Expenses = () => {
                     <p className="font-bold text-rose-600">-{expense.amount.toLocaleString()} ج.م</p>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl">
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
                           <MoreHorizontal className="h-5 w-5 text-slate-500" />
                         </Button>
                       </DropdownMenuTrigger>

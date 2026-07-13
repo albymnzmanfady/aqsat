@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import AnimatedCounter from "@/components/AnimatedCounter";
 import { initialContracts, initialInstallments } from "@/data/mockData";
 import { Installment, Contract } from "@/types";
 import {
@@ -42,6 +43,7 @@ const Index = () => {
   const pendingInstallments = installments.filter((i) => !i.isPaid);
   const paidAmount = paidInstallments.reduce((sum, i) => sum + i.amount, 0);
   const totalAmount = installments.reduce((sum, i) => sum + i.amount, 0);
+  const collectionRate = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
 
   // الأقساط القادمة (أقرب 5 أقساط غير مدفوعة)
   const upcomingInstallments = [...pendingInstallments]
@@ -137,7 +139,7 @@ const Index = () => {
         {/* Welcome + Quick Actions */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Welcome Card */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white p-6 lg:p-8 flex-1">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white p-6 lg:p-8 flex-1 hover-lift">
             <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
             <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2" />
             <div className="relative z-10">
@@ -157,19 +159,19 @@ const Index = () => {
 
               <div className="flex flex-wrap gap-3">
                 <Link to="/installments">
-                  <Button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl h-11 gap-2 border border-white/20">
+                  <Button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl h-11 gap-2 border border-white/20 active:scale-[0.97]">
                     <CreditCard className="h-4 w-4" />
                     تسجيل قسط
                   </Button>
                 </Link>
                 <Link to="/contracts">
-                  <Button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl h-11 gap-2 border border-white/20">
+                  <Button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl h-11 gap-2 border border-white/20 active:scale-[0.97]">
                     <FileText className="h-4 w-4" />
                     عقد جديد
                   </Button>
                 </Link>
                 <Button
-                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl h-11 gap-2 border border-white/20"
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl h-11 gap-2 border border-white/20 active:scale-[0.97]"
                   onClick={handleSendAllReminders}
                   disabled={sendingNotifications || upcomingInstallments.length === 0}
                 >
@@ -185,7 +187,7 @@ const Index = () => {
           </div>
 
           {/* Collection Rate Ring */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 lg:p-8 flex flex-col items-center justify-center min-w-[200px] border border-white/20">
+          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 lg:p-8 flex flex-col items-center justify-center min-w-[200px] border border-white/20 hover-lift">
             <div className="relative w-28 h-28 mb-3">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
                 <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" strokeWidth="8" />
@@ -218,11 +220,11 @@ const Index = () => {
             <div className="flex items-center gap-3 text-sm text-slate-600">
               <div className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
-                <span>{paidInstallments.length} مدفوع</span>
+                <span><AnimatedCounter value={paidInstallments.length} duration={800} /> مدفوع</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                <span>{pendingInstallments.length} باقي</span>
+                <span><AnimatedCounter value={pendingInstallments.length} duration={800} /> باقي</span>
               </div>
             </div>
           </div>
@@ -232,15 +234,20 @@ const Index = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((stat, index) => (
             <Link key={index} to={stat.link}>
-              <Card className="border-0 bg-white/70 backdrop-blur-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+              <Card
+                className="border-0 bg-white/70 backdrop-blur-sm hover-lift transition-all duration-300 overflow-hidden group"
+                style={{ animationDelay: `${index * 0.08}s` }}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-500 mb-1">{stat.title}</p>
-                      <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
+                      <p className="text-2xl font-bold text-slate-800">
+                        <AnimatedCounter value={stat.value} duration={800} />
+                      </p>
                     </div>
                     <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-md group-hover:scale-110 transition-transform duration-300",
+                      "w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-300",
                       stat.color
                     )}>
                       <stat.icon className="h-6 w-6 text-white" />
@@ -264,7 +271,7 @@ const Index = () => {
                   <h3 className="font-bold text-slate-800">الأقساط القادمة</h3>
                 </div>
                 <Link to="/installments">
-                  <Button variant="ghost" size="sm" className="text-violet-600 hover:text-violet-700 rounded-xl gap-1">
+                  <Button variant="ghost" size="sm" className="text-violet-600 hover:text-violet-700 rounded-xl gap-1 active:scale-[0.97]">
                     عرض الكل
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
@@ -272,7 +279,7 @@ const Index = () => {
               </div>
 
               <div className="space-y-3">
-                {upcomingInstallments.map((inst) => {
+                {upcomingInstallments.map((inst, index) => {
                   const contract = contracts.find((c) => c.id === inst.contractId);
                   const dueDate = new Date(inst.year, inst.month - 1, inst.day);
                   const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -281,7 +288,8 @@ const Index = () => {
                   return (
                     <div
                       key={inst.id}
-                      className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors"
+                      className="stagger-item flex items-center justify-between p-3 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 hover-lift cursor-pointer transition-all"
+                      style={{ animationDelay: `${index * 0.06}s` }}
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn(
@@ -328,7 +336,7 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Wallet className="h-4 w-4" />
-                  <span>{paidAmount.toLocaleString()} ج.م</span>
+                  <span><AnimatedCounter value={paidAmount} duration={1000} formatter={(v) => v.toLocaleString()} /> ج.م</span>
                 </div>
               </div>
 
@@ -336,12 +344,13 @@ const Index = () => {
                 {[...paidInstallments]
                   .sort((a, b) => new Date(b.paidDate || "").getTime() - new Date(a.paidDate || "").getTime())
                   .slice(0, 5)
-                  .map((inst) => {
+                  .map((inst, index) => {
                     const contract = contracts.find((c) => c.id === inst.contractId);
                     return (
                       <div
                         key={inst.id}
-                        className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors"
+                        className="stagger-item flex items-center justify-between p-3 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 hover-lift cursor-pointer transition-all"
+                        style={{ animationDelay: `${index * 0.06}s` }}
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
@@ -369,7 +378,7 @@ const Index = () => {
         </div>
 
         {/* إشعارات واتساب السريعة */}
-        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -385,7 +394,7 @@ const Index = () => {
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <Link to="/settings">
-                <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl border border-violet-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl border border-violet-100 hover-lift cursor-pointer transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquareText className="h-5 w-5 text-violet-600" />
                     <span className="font-semibold text-sm text-violet-700">إعدادات واتساب</span>
@@ -396,7 +405,7 @@ const Index = () => {
 
               <Button
                 variant="ghost"
-                className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100 hover:shadow-md transition-shadow h-auto flex flex-col items-start gap-2"
+                className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100 hover-lift transition-shadow h-auto flex flex-col items-start gap-2 active:scale-[0.98]"
                 onClick={() => {
                   const config = getWhatsAppConfig();
                   if (!config.endpoint) {
@@ -428,7 +437,7 @@ const Index = () => {
               </Button>
 
               <Link to="/contracts">
-                <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 hover-lift cursor-pointer transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="h-5 w-5 text-emerald-600" />
                     <span className="font-semibold text-sm text-emerald-700">إشعار عقد جديد</span>
@@ -438,7 +447,7 @@ const Index = () => {
               </Link>
 
               <Link to="/installments">
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100 hover-lift cursor-pointer transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
                     <CreditCard className="h-5 w-5 text-blue-600" />
                     <span className="font-semibold text-sm text-blue-700">تأكيد السداد</span>

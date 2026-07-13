@@ -61,7 +61,6 @@ const Contracts = () => {
   );
 
   const handleCreateContract = (data: any) => {
-    // خصم المنتج من المخزون
     setProducts((prev) =>
       prev.map((p) =>
         p.id === data.productId ? { ...p, currentStock: p.currentStock - 1 } : p
@@ -79,7 +78,6 @@ const Contracts = () => {
     setContracts((prev) => [...prev, newContract]);
     setInstallments((prev) => [...prev, ...newInstallments]);
 
-    // إرسال إشعار واتساب
     const config = getWhatsAppConfig();
     if (config.endpoint) {
       sendWhatsAppMessage(
@@ -229,14 +227,18 @@ const Contracts = () => {
 
       {/* Contracts Grid */}
       <div className="grid gap-4">
-        {filteredContracts.map((contract) => {
+        {filteredContracts.map((contract, index) => {
           const insts = contractInstallments(contract.id);
           const paidCount = insts.filter((i) => i.isPaid).length;
           const progress = insts.length > 0 ? Math.round((paidCount / insts.length) * 100) : 0;
           const StatusIcon = statusIcons[contract.status];
 
           return (
-            <Card key={contract.id} className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
+            <Card
+              key={contract.id}
+              className="stagger-item border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
               <div className={cn("h-1.5 w-full", contract.status === "active" ? "bg-gradient-to-l from-emerald-400 to-teal-500" : contract.status === "completed" ? "bg-gradient-to-l from-blue-400 to-cyan-500" : "bg-gradient-to-l from-rose-400 to-pink-500")} />
 
               <CardContent className="p-5">

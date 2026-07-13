@@ -7,8 +7,6 @@ button:active:not(:disabled) {
   transition: transform 0.1s ease;
 }
 
-/* Clear search button inside input – we'll style it inline, but keep here if needed */
-
 /* Page entrance animation */
 @keyframes page-enter {
   from {
@@ -28,4 +26,41 @@ button:active:not(:disabled) {
 /* Smooth scroll for the whole page */
 html {
   scroll-behavior: smooth;
+}
+
+/* Hover lift effect for cards */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* Staggered item entrance */
+@keyframes stagger-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.stagger-item {
+  animation: stagger-fade-in 0.35s ease-out forwards;
+  opacity: 0;
+}
+
+/* Counter text shimmer */
+@keyframes counter-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.counter-pop {
+  animation: counter-pop 0.3s ease-out;
 }

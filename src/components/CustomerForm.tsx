@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
-import { Sparkles } from "lucide-react";
+import { Sparkles, User, Phone, CreditCard, MapPin } from "lucide-react";
 
 interface CustomerFormProps {
   type: "customer" | "guarantor";
@@ -26,16 +26,14 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-
     if (!formData.name.trim()) newErrors.name = "الاسم مطلوب";
     if (!formData.phone.trim()) newErrors.phone = "رقم الهاتف مطلوب";
     else if (!/^01[0-9]{9}$/.test(formData.phone.replace(/\s/g, "")))
-      newErrors.phone = "رقم غير صحيح (مثال: 01012345678)";
+      newErrors.phone = "رقم غير صحيح";
     if (!formData.nationalId.trim()) newErrors.nationalId = "الرقم القومي مطلوب";
     else if (!/^[0-9]{14}$/.test(formData.nationalId.replace(/\s/g, "")))
       newErrors.nationalId = "يجب أن يتكون من 14 رقماً";
     if (!formData.address.trim()) newErrors.address = "العنوان مطلوب";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -51,73 +49,50 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
     }
   };
 
+  const fields = [
+    { key: "name", label: "الاسم الكامل", icon: User, placeholder: "أدخل الاسم الكامل", type: "text", maxLength: undefined, ltr: false },
+    { key: "phone", label: "رقم الهاتف", icon: Phone, placeholder: "01012345678", type: "text", maxLength: 11, ltr: true },
+    { key: "nationalId", label: "الرقم القومي", icon: CreditCard, placeholder: "14 رقم", type: "text", maxLength: 14, ltr: true },
+    { key: "address", label: "العنوان", icon: MapPin, placeholder: "العنوان بالكامل", type: "text", maxLength: undefined, ltr: false },
+  ] as const;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name" className={errors.name ? "text-red-500" : ""}>
-          الاسم {errors.name && `* ${errors.name}`}
-        </Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className={`rounded-xl h-12 ${errors.name ? "border-red-300 focus-visible:ring-red-400" : ""}`}
-          placeholder="الاسم كاملاً"
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-5">
+      {fields.map((field) => {
+        const Icon = field.icon;
+        const error = errors[field.key];
+        return (
+          <div key={field.key} className="space-y-1.5">
+            <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <Icon className="h-3.5 w-3.5 text-slate-400" />
+              {field.label}
+            </Label>
+            <Input
+              value={formData[field.key]}
+              onChange={(e) => {
+                const val = field.key === "phone" || field.key === "nationalId"
+                  ? e.target.value.replace(/[^0-9]/g, "")
+                  : e.target.value;
+                if (!field.maxLength || val.length <= field.maxLength) {
+                  setFormData({ ...formData, [field.key]: val });
+                }
+              }}
+              className={error ? "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300" : ""}
+              placeholder={field.placeholder}
+              dir={field.ltr ? "ltr" : "rtl"}
+            />
+            {error && (
+              <p className="text-xs text-red-500 mt-0.5">{error}</p>
+            )}
+          </div>
+        );
+      })}
 
-      <div className="space-y-2">
-        <Label htmlFor="phone" className={errors.phone ? "text-red-500" : ""}>
-          رقم الهاتف {errors.phone && `* ${errors.phone}`}
-        </Label>
-        <Input
-          id="phone"
-          value={formData.phone}
-          onChange={(e) => {
-            const val = e.target.value.replace(/[^0-9]/g, "");
-            if (val.length <= 11) setFormData({ ...formData, phone: val });
-          }}
-          className={`rounded-xl h-12 ${errors.phone ? "border-red-300 focus-visible:ring-red-400" : ""}`}
-          placeholder="01012345678"
-          dir="ltr"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="nationalId" className={errors.nationalId ? "text-red-500" : ""}>
-          الرقم القومي {errors.nationalId && `* ${errors.nationalId}`}
-        </Label>
-        <Input
-          id="nationalId"
-          value={formData.nationalId}
-          onChange={(e) => {
-            const val = e.target.value.replace(/[^0-9]/g, "");
-            if (val.length <= 14) setFormData({ ...formData, nationalId: val });
-          }}
-          className={`rounded-xl h-12 ${errors.nationalId ? "border-red-300 focus-visible:ring-red-400" : ""}`}
-          placeholder="14 رقم"
-          dir="ltr"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="address" className={errors.address ? "text-red-500" : ""}>
-          العنوان {errors.address && `* ${errors.address}`}
-        </Label>
-        <Input
-          id="address"
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          className={`rounded-xl h-12 ${errors.address ? "border-red-300 focus-visible:ring-red-400" : ""}`}
-          placeholder="العنوان بالكامل"
-        />
-      </div>
-
-      <DialogFooter className="gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11">
+      <DialogFooter className="gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50">
           إلغاء
         </Button>
-        <Button type="submit" className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 h-11">
+        <Button type="submit" className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 h-11 px-8 shadow-lg shadow-violet-500/20">
           <Sparkles className="h-4 w-4 ml-2" />
           حفظ
         </Button>

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Expense, ExpenseCategory } from "@/types";
-import { Sparkles, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Trash2, FileText, Tag, DollarSign, Calendar } from "lucide-react";
 
 interface ExpenseFormProps {
   categories: ExpenseCategory[];
@@ -74,25 +74,28 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label className={errors.description ? "text-red-500" : ""}>
-          وصف المصروف {errors.description && `* ${errors.description}`}
+    <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-5">
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+          <FileText className="h-3.5 w-3.5 text-slate-400" />
+          وصف المصروف
         </Label>
         <Input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className={`rounded-xl h-12 ${errors.description ? "border-red-300 focus-visible:ring-red-400" : ""}`}
+          className={errors.description ? "border-red-300 focus-visible:ring-red-400/40" : ""}
           placeholder="مثال: إيجار المحل"
         />
+        {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
       </div>
 
-      <div className="space-y-2">
-        <Label className={errors.category ? "text-red-500" : ""}>
-          الفئة {errors.category && `* ${errors.category}`}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+          <Tag className="h-3.5 w-3.5 text-slate-400" />
+          الفئة
         </Label>
         <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className={`rounded-xl h-12 ${errors.category ? "border-red-300" : ""}`}>
+          <SelectTrigger className={errors.category ? "border-red-300 focus:ring-red-400/40" : ""}>
             <SelectValue placeholder="اختر الفئة" />
           </SelectTrigger>
           <SelectContent>
@@ -103,47 +106,52 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             ))}
           </SelectContent>
         </Select>
+        {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className={errors.amount ? "text-red-500" : ""}>
-            المبلغ {errors.amount && `* ${errors.amount}`}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+            <DollarSign className="h-3.5 w-3.5 text-slate-400" />
+            المبلغ
           </Label>
           <Input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className={`rounded-xl h-12 ${errors.amount ? "border-red-300" : ""}`}
+            className={errors.amount ? "border-red-300 focus-visible:ring-red-400/40" : ""}
             placeholder="0"
           />
+          {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
         </div>
-        <div className="space-y-2">
-          <Label className={errors.date ? "text-red-500" : ""}>
-            التاريخ {errors.date && `* ${errors.date}`}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+            التاريخ
           </Label>
           <Input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className={`rounded-xl h-12 ${errors.date ? "border-red-300" : ""}`}
+            className={errors.date ? "border-red-300 focus-visible:ring-red-400/40" : ""}
           />
+          {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>ملاحظات</Label>
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-slate-600">ملاحظات</Label>
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="rounded-xl resize-none"
+          className="resize-none"
           rows={2}
           placeholder="ملاحظة اختيارية"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>صورة الإيصال (اختياري)</Label>
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-slate-600">صورة الإيصال (اختياري)</Label>
         <input
           ref={fileInputRef}
           type="file"
@@ -156,13 +164,13 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             <img
               src={receiptImage}
               alt="إيصال"
-              className="h-32 rounded-xl object-cover border border-slate-200"
+              className="h-32 rounded-2xl object-cover border border-slate-200"
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute -top-2 -right-2 h-7 w-7 p-0 rounded-full bg-red-500 text-white hover:bg-red-600"
+              className="absolute -top-2 -right-2 h-7 w-7 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-lg"
               onClick={removeImage}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -172,7 +180,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
           <Button
             type="button"
             variant="outline"
-            className="rounded-xl h-12 gap-2 border-dashed"
+            className="rounded-xl h-12 gap-2 border-dashed border-slate-300 text-slate-500 hover:text-violet-600 hover:border-violet-300 hover:bg-violet-50/50"
             onClick={() => fileInputRef.current?.click()}
           >
             <ImageIcon className="h-4 w-4" />
@@ -181,11 +189,11 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
         )}
       </div>
 
-      <DialogFooter className="gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11">
+      <DialogFooter className="gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50">
           إلغاء
         </Button>
-        <Button type="submit" className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 h-11 gap-2">
+        <Button type="submit" className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 h-11 px-8 shadow-lg shadow-rose-500/20 gap-2">
           <Sparkles className="h-4 w-4" />
           {initialData ? "تحديث" : "حفظ"}
         </Button>

@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -32,9 +33,7 @@ import {
   Trash2,
   Box,
   TrendingUp,
-  DollarSign,
   AlertCircle,
-  Layers,
   Warehouse,
   X,
 } from "lucide-react";
@@ -56,6 +55,7 @@ const Products = () => {
     currentStock: "",
     minStock: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const filteredProducts = products.filter((p) =>
     p.name.includes(searchQuery) || p.category.includes(searchQuery)
@@ -77,6 +77,7 @@ const Products = () => {
       minStock: "",
     });
     setEditingProduct(null);
+    setErrors({});
   };
 
   const openEdit = (product: Product) => {
@@ -90,26 +91,34 @@ const Products = () => {
       currentStock: product.currentStock.toString(),
       minStock: product.minStock.toString(),
     });
+    setErrors({});
     setIsDialogOpen(true);
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "اسم المنتج مطلوب";
+    if (!formData.category.trim()) newErrors.category = "التصنيف مطلوب";
+    if (!formData.costPrice || Number(formData.costPrice) <= 0) newErrors.costPrice = "سعر التكلفة غير صحيح";
+    if (!formData.sellingPrice || Number(formData.sellingPrice) <= 0) newErrors.sellingPrice = "سعر البيع غير صحيح";
+    if (!formData.currentStock || Number(formData.currentStock) < 0) newErrors.currentStock = "الرصيد مطلوب";
+    if (!formData.minStock || Number(formData.minStock) < 0) newErrors.minStock = "الحد الأدنى مطلوب";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = () => {
+    if (!validate()) return;
+
     const data = {
-      name: formData.name,
-      category: formData.category,
-      unit: formData.unit,
+      name: formData.name.trim(),
+      category: formData.category.trim(),
+      unit: formData.unit.trim() || "قطعة",
       costPrice: Number(formData.costPrice),
       sellingPrice: Number(formData.sellingPrice),
       currentStock: Number(formData.currentStock),
       minStock: Number(formData.minStock),
     };
-
-    if (!data.name.trim() || !data.category.trim()) {
-      return;
-    }
-    if (data.costPrice <= 0 || data.sellingPrice <= 0) {
-      return;
-    }
 
     if (editingProduct) {
       setProducts((prev) =>
@@ -171,7 +180,7 @@ const Products = () => {
               منتج جديد
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] rounded-3xl">
+          <DialogContent className="sm:max-w-[520px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-orange-500" />
@@ -181,66 +190,89 @@ const Products = () => {
                 {editingProduct ? "تعديل بيانات المنتج" : "أدخل بيانات المنتج لإضافته إلى المخزن"}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 px-1">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">اسم المنتج</label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="اسم المنتج"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">التصنيف</label>
-                  <Input
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="مثال: أجهزة كهربائية"
-                  />
+
+            <div className="space-y-5 px-8 pb-2">
+              {/* اسم المنتج والتصنيف */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">اسم المنتج</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="مثال: ثلاجة سامسونج 14 قدم"
+                  className={cn(errors.name && "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300")}
+                />
+                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">التصنيف</Label>
+                <Input
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="مثال: أجهزة كهربائية، إلكترونيات"
+                  className={cn(errors.category && "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300")}
+                />
+                {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
+              </div>
+
+              {/* الأسعار */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                <p className="text-xs font-semibold text-slate-400 tracking-wider">الأسعار</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">سعر التكلفة</Label>
+                    <Input
+                      type="number"
+                      value={formData.costPrice}
+                      onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                      placeholder="0"
+                      className={cn(errors.costPrice && "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300")}
+                    />
+                    {errors.costPrice && <p className="text-xs text-red-500">{errors.costPrice}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">سعر البيع</Label>
+                    <Input
+                      type="number"
+                      value={formData.sellingPrice}
+                      onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                      placeholder="0"
+                      className={cn(errors.sellingPrice && "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300")}
+                    />
+                    {errors.sellingPrice && <p className="text-xs text-red-500">{errors.sellingPrice}</p>}
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">سعر التكلفة</label>
-                  <Input
-                    type="number"
-                    value={formData.costPrice}
-                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                    placeholder="0"
-                  />
+
+              {/* المخزون */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                <p className="text-xs font-semibold text-slate-400 tracking-wider">المخزون</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">الرصيد الحالي</Label>
+                    <Input
+                      type="number"
+                      value={formData.currentStock}
+                      onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
+                      placeholder="0"
+                      className={cn(errors.currentStock && "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300")}
+                    />
+                    {errors.currentStock && <p className="text-xs text-red-500">{errors.currentStock}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">الحد الأدنى للتنبيه</Label>
+                    <Input
+                      type="number"
+                      value={formData.minStock}
+                      onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                      placeholder="0"
+                      className={cn(errors.minStock && "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300")}
+                    />
+                    {errors.minStock && <p className="text-xs text-red-500">{errors.minStock}</p>}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">سعر البيع</label>
-                  <Input
-                    type="number"
-                    value={formData.sellingPrice}
-                    onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">الرصيد الحالي</label>
-                  <Input
-                    type="number"
-                    value={formData.currentStock}
-                    onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">الحد الأدنى</label>
-                  <Input
-                    type="number"
-                    value={formData.minStock}
-                    onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">الوحدة</label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الوحدة</Label>
                   <Input
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
@@ -248,15 +280,16 @@ const Products = () => {
                   />
                 </div>
               </div>
-              <div className="flex gap-2 pt-4 justify-end">
-                <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">
-                  إلغاء
-                </Button>
-                <Button onClick={handleSave} className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-11 gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  {editingProduct ? "تحديث" : "حفظ"}
-                </Button>
-              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2 px-8 pb-8 justify-end">
+              <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50">
+                إلغاء
+              </Button>
+              <Button onClick={handleSave} className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-11 px-8 shadow-lg shadow-orange-500/20 gap-2">
+                <Sparkles className="h-4 w-4" />
+                {editingProduct ? "تحديث" : "حفظ المنتج"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

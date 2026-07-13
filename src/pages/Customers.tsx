@@ -129,7 +129,7 @@ const Customers = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md">
@@ -142,7 +142,7 @@ const Customers = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md">
@@ -196,8 +196,8 @@ const Customers = () => {
 
         <TabsContent value="customers" className="mt-0">
           <div className="grid gap-4">
-            {realCustomers.map((customer) => (
-              <Card key={customer.id} className="border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden">
+            {realCustomers.map((customer, index) => (
+              <Card key={customer.id} className="stagger-item border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden" style={{ animationDelay: `${index * 0.05}s` }}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -239,8 +239,8 @@ const Customers = () => {
 
         <TabsContent value="guarantors" className="mt-0">
           <div className="grid gap-4">
-            {guarantors.map((guarantor) => (
-              <Card key={guarantor.id} className="border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden">
+            {guarantors.map((guarantor, index) => (
+              <Card key={guarantor.id} className="stagger-item border-0 bg-white/70 backdrop-blur-sm hover-lift overflow-hidden" style={{ animationDelay: `${index * 0.05}s` }}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">

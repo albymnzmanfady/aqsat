@@ -126,10 +126,9 @@ const Settings = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* استخدام تنسيقات واتساب - بطاقة تعليمات */}
+        {/* إعدادات واتساب + إرسال رسالة اختبارية */}
         <div className="space-y-6">
-          {/* إعدادات واتساب */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
             <CardHeader className="pb-4 border-b border-slate-100/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-md">
@@ -228,7 +227,7 @@ const Settings = () => {
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button
                   onClick={handleTest}
-                  className="rounded-xl h-11 gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                  className="rounded-xl h-11 gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 active:scale-[0.97]"
                   disabled={testStatus === "testing"}
                 >
                   {testStatus === "testing" ? (
@@ -240,7 +239,7 @@ const Settings = () => {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 gap-2"
+                  className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 gap-2 active:scale-[0.97]"
                 >
                   <Sparkles className="h-4 w-4" />
                   حفظ الإعدادات
@@ -270,8 +269,7 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* إرسال رسالة اختبارية */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
             <CardHeader className="pb-4 border-b border-slate-100/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
@@ -300,7 +298,7 @@ const Settings = () => {
                 </div>
                 <Button
                   onClick={handleSendTest}
-                  className="rounded-xl h-11 w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 gap-2"
+                  className="rounded-xl h-11 w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 gap-2 active:scale-[0.97]"
                   disabled={!testPhone}
                 >
                   <Send className="h-4 w-4" />
@@ -313,7 +311,7 @@ const Settings = () => {
 
         {/* تعليمات الإعداد */}
         <div className="space-y-6">
-          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
             <CardHeader className="pb-4 border-b border-slate-100/80">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
@@ -327,7 +325,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               {/* Waha */}
-              <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl border border-violet-100">
+              <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl border border-violet-100 hover-lift">
                 <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
                   <Badge className="bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0">Waha</Badge>
                   <span className="text-sm">مفتوح المصدر - مجاني</span>
@@ -341,7 +339,7 @@ const Settings = () => {
               </div>
 
               {/* Evolution API */}
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100">
+              <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 hover-lift">
                 <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
                   <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">Evolution API</Badge>
                   <span className="text-sm">عبر Docker</span>
@@ -355,7 +353,7 @@ const Settings = () => {
               </div>
 
               {/* UltraMsg */}
-              <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100">
+              <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100 hover-lift">
                 <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
                   <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">UltraMsg</Badge>
                   <span className="text-sm">سحابي - مدفوع</span>
@@ -375,7 +373,7 @@ const Settings = () => {
                   الإشعارات المتاحة
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 hover-lift p-2 rounded-xl transition-all">
                     <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     </div>
@@ -384,7 +382,7 @@ const Settings = () => {
                       <p className="text-xs text-slate-500">يُرسل للعميل تأكيد السداد فور تسجيل القسط</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 hover-lift p-2 rounded-xl transition-all">
                     <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Bell className="h-4 w-4 text-amber-600" />
                     </div>
@@ -393,7 +391,7 @@ const Settings = () => {
                       <p className="text-xs text-slate-500">يُذكّر العميل قبل موعد القسط</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 hover-lift p-2 rounded-xl transition-all">
                     <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                       <XCircle className="h-4 w-4 text-rose-600" />
                     </div>
@@ -402,7 +400,7 @@ const Settings = () => {
                       <p className="text-xs text-slate-500">يُرسل للعميل عند تجاوز موعد الاستحقاق</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 hover-lift p-2 rounded-xl transition-all">
                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Sparkles className="h-4 w-4 text-blue-600" />
                     </div>

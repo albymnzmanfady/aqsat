@@ -73,7 +73,7 @@ const InventoryDashboard = () => {
 
       {/* Main Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -86,7 +86,7 @@ const InventoryDashboard = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -99,7 +99,7 @@ const InventoryDashboard = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -112,7 +112,7 @@ const InventoryDashboard = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -129,14 +129,14 @@ const InventoryDashboard = () => {
 
       {/* Low Stock Alert */}
       {lowStockProducts.length > 0 && (
-        <div className="mb-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl">
+        <div className="mb-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl hover-lift">
           <div className="flex items-center gap-3 mb-3">
             <AlertTriangle className="h-5 w-5 text-amber-600" />
             <h3 className="font-bold text-amber-800">منتجات تحتاج إعادة طلب</h3>
           </div>
           <div className="grid gap-2">
-            {lowStockProducts.map((p) => (
-              <div key={p.id} className="flex items-center justify-between bg-white/60 rounded-xl p-3">
+            {lowStockProducts.map((p, index) => (
+              <div key={p.id} className="stagger-item flex items-center justify-between bg-white/60 rounded-xl p-3 hover-lift" style={{ animationDelay: `${index * 0.04}s` }}>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-slate-700">{p.name}</span>
                   <Badge className={cn("rounded-lg", p.currentStock <= 0 ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700")}>
@@ -152,7 +152,7 @@ const InventoryDashboard = () => {
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* Financial Summary */}
-        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -161,19 +161,19 @@ const InventoryDashboard = () => {
               <h3 className="font-bold text-slate-800">الملخص المالي للمخزون</h3>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl hover-lift">
                 <span className="text-sm text-slate-600">إجمالي المشتريات</span>
                 <span className="font-bold text-blue-600">{totalPurchaseCost.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-emerald-50/50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-emerald-50/50 rounded-xl hover-lift">
                 <span className="text-sm text-slate-600">إجمالي المبيعات</span>
                 <span className="font-bold text-emerald-600">{totalSalesRevenue.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl hover-lift">
                 <span className="text-sm text-slate-600">الربح المحتمل (المخزون الحالي)</span>
                 <span className="font-bold text-amber-600">{potentialProfit.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-violet-50/50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-violet-50/50 rounded-xl hover-lift">
                 <span className="text-sm text-slate-600">عدد المنتجات المباعة</span>
                 <span className="font-bold text-violet-600">
                   {Math.abs(transactions.filter(t => t.type === "sale").reduce((s, t) => s + t.quantity, 0))} وحدة
@@ -184,7 +184,7 @@ const InventoryDashboard = () => {
         </Card>
 
         {/* Categories Breakdown */}
-        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
@@ -193,8 +193,8 @@ const InventoryDashboard = () => {
               <h3 className="font-bold text-slate-800">توزيع المخزون حسب التصنيف</h3>
             </div>
             <div className="space-y-3">
-              {categoryData.map((cat) => (
-                <div key={cat.name} className="p-3 bg-slate-50/50 rounded-xl">
+              {categoryData.map((cat, index) => (
+                <div key={cat.name} className="stagger-item p-3 bg-slate-50/50 rounded-xl hover-lift" style={{ animationDelay: `${index * 0.05}s` }}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-semibold text-slate-700 text-sm">{cat.name}</span>
                     <span className="text-xs text-slate-500">{cat.count} منتجات</span>
@@ -219,7 +219,7 @@ const InventoryDashboard = () => {
       {/* Quick Links */}
       <div className="grid sm:grid-cols-3 gap-4">
         <Link to="/products">
-          <Card className="border-0 bg-gradient-to-br from-orange-500 to-red-500 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+          <Card className="border-0 bg-gradient-to-br from-orange-500 to-red-500 text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -236,7 +236,7 @@ const InventoryDashboard = () => {
           </Card>
         </Link>
         <Link to="/inventory">
-          <Card className="border-0 bg-gradient-to-br from-teal-500 to-emerald-600 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+          <Card className="border-0 bg-gradient-to-br from-teal-500 to-emerald-600 text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -253,7 +253,7 @@ const InventoryDashboard = () => {
           </Card>
         </Link>
         <Link to="/contracts">
-          <Card className="border-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white hover:shadow-xl transition-all duration-300 cursor-pointer">
+          <Card className="border-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>

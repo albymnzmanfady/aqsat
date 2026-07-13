@@ -13,19 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sparkles, Calculator, Package, User, Calendar, CreditCard, Shield, Plus, MapPin } from "lucide-react";
-import { Customer, Product } from "@/types";
+import { ApiCustomer, ApiProduct } from "@/lib/api";
 
 interface ContractFormProps {
-  customers: Customer[];
-  guarantors: Customer[];
-  products: Product[];
+  customers: ApiCustomer[];
+  guarantors: ApiCustomer[];
+  products: ApiProduct[];
   onSave: (data: any) => void;
   onCancel: () => void;
 }
 
 const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: ContractFormProps) => {
-  const [localGuarantors, setLocalGuarantors] = useState<Customer[]>(guarantors);
-  const [localCustomers, setLocalCustomers] = useState<Customer[]>(customers);
+  const [localGuarantors, setLocalGuarantors] = useState<ApiCustomer[]>(guarantors);
+  const [localCustomers, setLocalCustomers] = useState<ApiCustomer[]>(customers);
   const [showNewGuarantorDialog, setShowNewGuarantorDialog] = useState(false);
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
 
@@ -58,7 +58,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
 
   const selectedProduct = products.find((p) => p.id === Number(formData.productId));
 
-  const total = selectedProduct?.sellingPrice || 0;
+  const total = selectedProduct?.selling_price || 0;
   const down = Number(formData.downPayment) || 0;
   const receipts = Number(formData.numberOfReceipts) || 1;
   const installmentAmount = receipts > 0 ? Math.ceil((total - down) / receipts) : 0;
@@ -88,14 +88,14 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
 
   const handleAddNewCustomer = () => {
     if (!validateNewCustomer()) return;
-    const newCustomer: Customer = {
+    const newCustomer: ApiCustomer = {
       id: Math.max(0, ...localCustomers.map((c) => c.id)) + 1,
       name: newCustomerName.trim(),
       phone: newCustomerPhone.trim(),
-      nationalId: newCustomerNationalId.trim(),
+      national_id: newCustomerNationalId.trim(),
       address: newCustomerAddress.trim(),
       type: "customer",
-      createdAt: new Date().toISOString().split("T")[0],
+      created_at: new Date().toISOString().split("T")[0],
     };
     setLocalCustomers((prev) => [...prev, newCustomer]);
     setFormData({ ...formData, customerId: newCustomer.id.toString() });
@@ -143,14 +143,14 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
 
   const handleAddNewGuarantor = () => {
     if (!validateNewGuarantor()) return;
-    const newGuarantor: Customer = {
+    const newGuarantor: ApiCustomer = {
       id: Math.max(0, ...localGuarantors.map((g) => g.id)) + 1,
       name: newGuarantorName.trim(),
       phone: newGuarantorPhone.trim(),
-      nationalId: newGuarantorNationalId.trim(),
+      national_id: newGuarantorNationalId.trim(),
       address: newGuarantorAddress.trim() || "",
       type: "guarantor",
-      createdAt: new Date().toISOString().split("T")[0],
+      created_at: new Date().toISOString().split("T")[0],
     };
     setLocalGuarantors((prev) => [...prev, newGuarantor]);
     setFormData({
@@ -176,7 +176,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
     const newErrors: Record<string, string> = {};
     if (!formData.customerId) newErrors.customerId = "اختر العميل";
     if (!formData.productId) newErrors.productId = "اختر المنتج";
-    else if (selectedProduct && selectedProduct.currentStock <= 0)
+    else if (selectedProduct && selectedProduct.current_stock <= 0)
       newErrors.productId = "هذا المنتج غير متوفر حالياً";
     if (Number(formData.downPayment) >= total && total > 0) newErrors.downPayment = "المقدم لا يمكن أن يساوي السعر أو يزيد";
     if (!formData.numberOfReceipts || Number(formData.numberOfReceipts) <= 0) newErrors.numberOfReceipts = "عدد الأقساط يجب أن يكون 1 على الأقل";
@@ -200,7 +200,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
         customerPhone: customer?.phone || "",
         productType: selectedProduct.name,
         productId: selectedProduct.id,
-        totalPrice: selectedProduct.sellingPrice,
+        totalPrice: selectedProduct.selling_price,
         downPayment: Number(formData.downPayment),
         numberOfReceipts: Number(formData.numberOfReceipts),
         installmentAmount,
@@ -230,7 +230,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
               <SelectValue placeholder="اختر العميل" />
             </SelectTrigger>
             <SelectContent>
-              {localCustomers.map((c) => (
+              {localCustomers.filter((c) => c.type === "customer").map((c) => (
                 <SelectItem key={c.id} value={c.id.toString()}>
                   {c.name} - {c.phone}
                 </SelectItem>
@@ -259,7 +259,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           )}
         </div>
 
-        {/* ===== الضامن (تحت العميل مباشرة) ===== */}
+        {/* ===== الضامن ===== */}
         <div className="border-t border-slate-100 pt-4">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="h-4 w-4 text-slate-400" />
@@ -274,7 +274,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
                   <SelectValue placeholder="اختر ضامن من القائمة" />
                 </SelectTrigger>
                 <SelectContent>
-                  {localGuarantors.map((g) => (
+                  {localGuarantors.filter((g) => g.type === "guarantor").map((g) => (
                     <SelectItem key={g.id} value={g.id.toString()}>
                       {g.name} - {g.phone}
                     </SelectItem>
@@ -340,11 +340,11 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             </SelectTrigger>
             <SelectContent>
               {products.map((p) => (
-                <SelectItem key={p.id} value={p.id.toString()} disabled={p.currentStock <= 0}>
+                <SelectItem key={p.id} value={p.id.toString()} disabled={p.current_stock <= 0}>
                   <div className="flex items-center justify-between w-full">
                     <span>{p.name}</span>
-                    <span className={`text-xs mr-2 ${p.currentStock <= p.minStock ? "text-amber-600" : "text-emerald-600"}`}>
-                      ({p.currentStock} {p.unit})
+                    <span className={`text-xs mr-2 ${p.current_stock <= p.min_stock ? "text-amber-600" : "text-emerald-600"}`}>
+                      ({p.current_stock} {p.unit})
                     </span>
                   </div>
                 </SelectItem>
@@ -355,9 +355,9 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           {selectedProduct && (
             <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-100 px-3 py-2.5 rounded-xl mt-1">
               <Package className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
-              <span>سعر البيع: <strong className="text-slate-700">{selectedProduct.sellingPrice.toLocaleString()} ج.م</strong></span>
+              <span>سعر البيع: <strong className="text-slate-700">{selectedProduct.selling_price.toLocaleString()} ج.م</strong></span>
               <span className="text-slate-300">•</span>
-              <span>المخزون: <strong className={selectedProduct.currentStock <= selectedProduct.minStock ? "text-amber-600" : "text-slate-700"}>{selectedProduct.currentStock} {selectedProduct.unit}</strong></span>
+              <span>المخزون: <strong className={selectedProduct.current_stock <= selectedProduct.min_stock ? "text-amber-600" : "text-slate-700"}>{selectedProduct.current_stock} {selectedProduct.unit}</strong></span>
             </div>
           )}
         </div>
@@ -421,7 +421,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="bg-white/60 rounded-xl p-3 border border-violet-100/50">
                 <p className="text-xs text-slate-500 mb-0.5">سعر المنتج</p>
-                <p className="font-bold text-slate-800">{selectedProduct.sellingPrice.toLocaleString()} ج.م</p>
+                <p className="font-bold text-slate-800">{selectedProduct.selling_price.toLocaleString()} ج.م</p>
               </div>
               <div className="bg-white/60 rounded-xl p-3 border border-violet-100/50">
                 <p className="text-xs text-slate-500 mb-0.5">المبلغ المتبقي</p>
@@ -443,7 +443,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
           <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50">
             إلغاء
           </Button>
-          <Button type="submit" className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 h-11 px-8 shadow-lg shadow-violet-500/20 gap-2" disabled={selectedProduct?.currentStock === 0}>
+          <Button type="submit" className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 h-11 px-8 shadow-lg shadow-violet-500/20 gap-2" disabled={selectedProduct?.current_stock === 0}>
             <Sparkles className="h-4 w-4" />
             إنشاء العقد
           </Button>

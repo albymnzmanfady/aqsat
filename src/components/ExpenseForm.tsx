@@ -13,23 +13,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Expense, ExpenseCategory } from "@/types";
+import { ApiExpense, ApiExpenseCategory } from "@/lib/api";
 import { Sparkles, Image as ImageIcon, Trash2, FileText, Tag, DollarSign, Calendar } from "lucide-react";
 
 interface ExpenseFormProps {
-  categories: ExpenseCategory[];
+  categories: ApiExpenseCategory[];
   onSave: (data: any) => void;
   onCancel: () => void;
-  initialData?: Expense | null;
+  initialData?: ApiExpense | null;
 }
 
 const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormProps) => {
   const [description, setDescription] = useState(initialData?.description || "");
-  const [categoryId, setCategoryId] = useState(initialData?.categoryId?.toString() || "");
+  const [categoryId, setCategoryId] = useState(initialData?.category_id?.toString() || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split("T")[0]);
   const [note, setNote] = useState(initialData?.note || "");
-  const [receiptImage, setReceiptImage] = useState<string | undefined>(initialData?.receiptImage || undefined);
+  const [receiptImage, setReceiptImage] = useState<string | undefined>(initialData?.receipt_image || undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});

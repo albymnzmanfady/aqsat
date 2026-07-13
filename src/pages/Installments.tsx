@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,7 @@ import {
 import PrintDialog from "@/components/PrintDialog";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { getReceiptHtml } from "@/utils/pdfExport";
-import { initialInstallments, initialContracts } from "@/data/mockData";
-import { Installment, Contract } from "@/types";
+import { api, ApiInstallment, ApiContract } from "@/lib/api";
 import { showSuccess, showError } from "@/utils/toast";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 import {
@@ -59,8 +58,9 @@ import {
 
 const InstallmentsPage = () => {
   const { settings } = useAppSettings();
-  const [installments, setInstallments] = useState<Installment[]>(initialInstallments);
-  const [contracts] = useState<Contract[]>(initialContracts);
+  const [installments, setInstallments] = useState<ApiInstallment[]>([]);
+  const [contracts, setContracts] = useState<ApiContract[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "pending" | "overdue">("all");
@@ -75,85 +75,105 @@ const InstallmentsPage = () => {
   const [printTitle, setPrintTitle] = useState("");
   const [printFilename, setPrintFilename] = useState("");
 
+  const fetchData = async () => {
+    try {
+      const [inst, cont] = await Promise.all([
+        api.installments.list(),
+        api.contracts.list(),
+      ]);
+      setInstallments(inst);
+      setContracts(cont);
+    } catch (e: any) {
+      showError("خطأ في تحميل البيانات: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const filteredInstallments = installments.filter((installment) => {
-    const contract = contracts.find((c) => c.id === installment.contractId);
-    const customerName = contract?.customerName || "";
+    const contract = contracts.find((c) => c.id === installment.contract_id);
+    const customerName = contract?.customer_name || "";
 
-    if (searchQuery && !customerName.includes(searchQuery) && !contract?.productType.includes(searchQuery)) {
+    if (searchQuery && !customerName.includes(searchQuery) && !contract?.product_type.includes(searchQuery)) {
       return false;
     }
 
     const dueDate = new Date(installment.year, installment.month - 1, installment.day);
-    const isOverdue = !installment.isPaid && dueDate < today;
+    const isOverdue = !installment.is_paid && dueDate < today;
 
-    if (filterStatus === "paid" && !installment.isPaid) return false;
-    if (filterStatus === "pending" && (installment.isPaid || isOverdue)) return false;
+    if (filterStatus === "paid" && !installment.is_paid) return false;
+    if (filterStatus === "pending" && (installment.is_paid || isOverdue)) return false;
     if (filterStatus === "overdue" && !isOverdue) return false;
 
     return true;
   });
 
-  const paidCount = installments.filter((i) => i.isPaid).length;
-  const pendingCount = installments.filter((i) => !i.isPaid).length;
+  const paidCount = installments.filter((i) => i.is_paid).length;
+  const pendingCount = installments.filter((i) => !i.is_paid).length;
   const totalAmount = installments.reduce((sum, i) => sum + i.amount, 0);
-  const paidAmount = installments.filter((i) => i.isPaid).reduce((sum, i) => sum + i.amount, 0);
+  const paidAmount = installments.filter((i) => i.is_paid).reduce((sum, i) => sum + i.amount, 0);
   const collectionRate = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
 
   const activeContracts = contracts.filter((c) => c.status === "active");
 
-  const handlePrintReceipt = (installment: Installment) => {
-    const contract = contracts.find((c) => c.id === installment.contractId);
+  const handlePrintReceipt = (installment: ApiInstallment) => {
+    const contract = contracts.find((c) => c.id === installment.contract_id);
     if (!contract) return;
 
-    const html = getReceiptHtml(installment, contract, settings);
+    const html = getReceiptHtml({
+      id: installment.id, contractId: installment.contract_id, number: installment.number,
+      amount: installment.amount, dueDate: installment.due_date, isPaid: !!installment.is_paid,
+      paidDate: installment.paid_date || undefined, day: installment.day, month: installment.month, year: installment.year,
+    }, {
+      id: contract.id, customerName: contract.customer_name, customerPhone: contract.customer_phone,
+      productType: contract.product_type, totalPrice: contract.total_price, downPayment: contract.down_payment,
+      numberOfReceipts: contract.number_of_receipts, installmentAmount: contract.installment_amount,
+      startDate: contract.start_date, endDate: contract.end_date, guarantorName: contract.guarantor_name,
+      guarantorPhone: contract.guarantor_phone, createdAt: contract.created_at,
+    }, settings);
     setPrintHtml(html);
-    setPrintTitle(`إيصال سداد - ${contract.customerName} - القسط ${installment.number}`);
+    setPrintTitle(`إيصال سداد - ${contract.customer_name} - القسط ${installment.number}`);
     setPrintFilename(`receipt-${contract.id}-${installment.number}.pdf`);
     setPrintOpen(true);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedContractId || !selectedInstallmentNumber) return;
 
-    setInstallments((prev) =>
-      prev.map((inst) => {
-        if (inst.contractId === Number(selectedContractId) && inst.number === Number(selectedInstallmentNumber)) {
-          return {
-            ...inst,
-            isPaid: true,
-            paidDate: new Date().toISOString().split("T")[0],
-          };
-        }
-        return inst;
-      })
-    );
-
     const installmentToPay = installments.find(
-      (i) => i.contractId === Number(selectedContractId) && i.number === Number(selectedInstallmentNumber)
+      (i) => i.contract_id === Number(selectedContractId) && i.number === Number(selectedInstallmentNumber)
     );
 
     if (installmentToPay) {
-      const contract = contracts.find((c) => c.id === installmentToPay.contractId);
-      if (contract) {
-        const config = getWhatsAppConfig();
-        if (config.endpoint) {
-          const dueDate = `${installmentToPay.day}/${installmentToPay.month}/${installmentToPay.year}`;
-          sendWhatsAppMessage(
-            contract.customerPhone,
-            MESSAGE_TEMPLATES.installmentPaid(contract.customerName, installmentToPay.amount, dueDate, installmentToPay.number),
-            config
-          ).then((result) => {
-            if (result.success) showSuccess(`✅ تم تسجيل القسط وإرسال إشعار للعميل ${contract.customerName}`);
-          });
-        } else {
-          showSuccess("✅ تم تسجيل القسط بنجاح");
+      try {
+        await api.installments.update(installmentToPay.id, {
+          isPaid: true,
+          paidDate: new Date().toISOString().split("T")[0],
+        });
+
+        const contract = contracts.find((c) => c.id === installmentToPay.contract_id);
+        if (contract) {
+          const config = getWhatsAppConfig();
+          if (config.endpoint) {
+            const dueDate = `${installmentToPay.day}/${installmentToPay.month}/${installmentToPay.year}`;
+            sendWhatsAppMessage(
+              contract.customer_phone,
+              MESSAGE_TEMPLATES.installmentPaid(contract.customer_name, installmentToPay.amount, dueDate, installmentToPay.number),
+              config
+            );
+          }
         }
+
+        showSuccess("✅ تم تسجيل القسط بنجاح");
+        fetchData();
+      } catch (e: any) {
+        showError("خطأ: " + e.message);
       }
-    } else {
-      showSuccess("✅ تم تسجيل القسط بنجاح");
     }
 
     setIsDialogOpen(false);
@@ -161,35 +181,38 @@ const InstallmentsPage = () => {
     setSelectedInstallmentNumber("");
   };
 
-  const handleTogglePaid = (installment: Installment) => {
-    setInstallments((prev) =>
-      prev.map((inst) =>
-        inst.id === installment.id
-          ? { ...inst, isPaid: !inst.isPaid, paidDate: inst.isPaid ? undefined : new Date().toISOString().split("T")[0] }
-          : inst
-      )
-    );
-    if (installment.isPaid) {
-      showSuccess("✅ تم إلغاء تسديد القسط");
-    } else {
-      showSuccess("✅ تم تسديد القسط بنجاح");
+  const handleTogglePaid = async (installment: ApiInstallment) => {
+    try {
+      await api.installments.update(installment.id, {
+        isPaid: !installment.is_paid,
+        paidDate: installment.is_paid ? undefined : new Date().toISOString().split("T")[0],
+      });
+      fetchData();
+      showSuccess(installment.is_paid ? "✅ تم إلغاء تسديد القسط" : "✅ تم تسديد القسط بنجاح");
+    } catch (e: any) {
+      showError("خطأ: " + e.message);
     }
   };
 
-  const handleDelete = (id: number) => {
-    setInstallments((prev) => prev.filter((i) => i.id !== id));
-    showSuccess("✅ تم حذف القسط");
+  const handleDelete = async (id: number) => {
+    try {
+      await api.installments.delete(id);
+      showSuccess("✅ تم حذف القسط");
+      fetchData();
+    } catch (e: any) {
+      showError("خطأ: " + e.message);
+    }
     setDeleteConfirmId(null);
   };
 
-  const handleSendWhatsApp = async (installment: Installment) => {
+  const handleSendWhatsApp = async (installment: ApiInstallment) => {
     const config = getWhatsAppConfig();
     if (!config.endpoint) {
       showError("يرجى إعداد واتساب أولاً من صفحة الإعدادات");
       return;
     }
 
-    const contract = contracts.find((c) => c.id === installment.contractId);
+    const contract = contracts.find((c) => c.id === installment.contract_id);
     if (!contract) return;
 
     setSendingId(installment.id);
@@ -199,22 +222,22 @@ const InstallmentsPage = () => {
     const daysOverdue = Math.floor((today.getTime() - dueDt.getTime()) / (1000 * 60 * 60 * 24));
 
     let message: string;
-    if (installment.isPaid) {
-      message = MESSAGE_TEMPLATES.installmentPaid(contract.customerName, installment.amount, dueDate, installment.number);
+    if (installment.is_paid) {
+      message = MESSAGE_TEMPLATES.installmentPaid(contract.customer_name, installment.amount, dueDate, installment.number);
     } else if (daysOverdue > 0) {
-      message = MESSAGE_TEMPLATES.installmentOverdue(contract.customerName, installment.amount, daysOverdue, installment.number);
+      message = MESSAGE_TEMPLATES.installmentOverdue(contract.customer_name, installment.amount, daysOverdue, installment.number);
     } else {
-      message = MESSAGE_TEMPLATES.installmentDue(contract.customerName, installment.amount, dueDate, installment.number);
+      message = MESSAGE_TEMPLATES.installmentDue(contract.customer_name, installment.amount, dueDate, installment.number);
     }
 
-    const result = await sendWhatsAppMessage(contract.customerPhone, message, config);
-    if (result.success) showSuccess(`✅ تم إرسال الإشعار للعميل ${contract.customerName}`);
+    const result = await sendWhatsAppMessage(contract.customer_phone, message, config);
+    if (result.success) showSuccess(`✅ تم إرسال الإشعار للعميل ${contract.customer_name}`);
     else showError(result.message);
     setSendingId(null);
   };
 
   const getContractInstallments = (contractId: number) => {
-    return installments.filter((i) => i.contractId === contractId && !i.isPaid);
+    return installments.filter((i) => i.contract_id === contractId && !i.is_paid);
   };
 
   const stats = [
@@ -223,6 +246,8 @@ const InstallmentsPage = () => {
     { title: "قيد الانتظار", value: pendingCount, icon: Clock, color: "from-amber-500 to-orange-500" },
     { title: "نسبة التحصيل", value: `${collectionRate}%`, icon: TrendingUp, color: "from-violet-500 to-purple-500" },
   ];
+
+  if (loading) return <Layout><div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 text-violet-500 animate-spin" /></div></Layout>;
 
   return (
     <Layout>
@@ -273,7 +298,7 @@ const InstallmentsPage = () => {
                   <SelectContent>
                     {activeContracts.map((contract) => (
                       <SelectItem key={contract.id} value={contract.id.toString()}>
-                        {contract.customerName} - {contract.productType}
+                        {contract.customer_name} - {contract.product_type}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -400,10 +425,10 @@ const InstallmentsPage = () => {
       <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
         <div className="divide-y divide-slate-100/80">
           {filteredInstallments.map((installment, index) => {
-            const contract = contracts.find((c) => c.id === installment.contractId);
+            const contract = contracts.find((c) => c.id === installment.contract_id);
             const dueDate = `${installment.day}/${installment.month}/${installment.year}`;
             const dueDt = new Date(installment.year, installment.month - 1, installment.day);
-            const isOverdue = !installment.isPaid && dueDt < today;
+            const isOverdue = !installment.is_paid && dueDt < today;
 
             return (
               <div
@@ -415,23 +440,23 @@ const InstallmentsPage = () => {
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "w-12 h-12 rounded-2xl flex items-center justify-center shadow-md",
-                      installment.isPaid
+                      installment.is_paid
                         ? "bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/25"
                         : isOverdue
                         ? "bg-gradient-to-br from-rose-500 to-pink-500 shadow-rose-500/25"
                         : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/25"
                     )}>
-                      {installment.isPaid ? (
+                      {installment.is_paid ? (
                         <CheckCircle className="h-6 w-6 text-white" />
                       ) : (
                         <Clock className="h-6 w-6 text-white" />
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-800">{contract?.customerName || "عميل"}</h3>
+                      <h3 className="font-semibold text-slate-800">{contract?.customer_name || "عميل"}</h3>
                       <p className="text-sm text-slate-500">
-                        القسط {installment.number} من {contract?.numberOfReceipts || "?"}
-                        {contract && ` - ${contract.productType}`}
+                        القسط {installment.number} من {contract?.number_of_receipts || "?"}
+                        {contract && ` - ${contract.product_type}`}
                       </p>
                     </div>
                   </div>
@@ -446,13 +471,13 @@ const InstallmentsPage = () => {
                         </span>
                         <Badge className={cn(
                           "rounded-lg text-white border-0",
-                          installment.isPaid
+                          installment.is_paid
                             ? "bg-gradient-to-r from-emerald-500 to-teal-500"
                             : isOverdue
                             ? "bg-gradient-to-r from-rose-500 to-pink-500"
                             : "bg-gradient-to-r from-amber-500 to-orange-500"
                         )}>
-                          {installment.isPaid ? "مدفوع" : isOverdue ? "متأخر" : "باقي"}
+                          {installment.is_paid ? "مدفوع" : isOverdue ? "متأخر" : "باقي"}
                         </Badge>
                       </div>
                     </div>
@@ -468,7 +493,7 @@ const InstallmentsPage = () => {
                           onClick={() => handleTogglePaid(installment)}
                           className="cursor-pointer rounded-lg"
                         >
-                          {installment.isPaid ? (
+                          {installment.is_paid ? (
                             <>
                               <XCircle className="h-4 w-4 ml-2" />
                               إلغاء التسديد
@@ -480,7 +505,7 @@ const InstallmentsPage = () => {
                             </>
                           )}
                         </DropdownMenuItem>
-                        {installment.isPaid && (
+                        {installment.is_paid && (
                           <DropdownMenuItem
                             onClick={() => handlePrintReceipt(installment)}
                             className="cursor-pointer rounded-lg"

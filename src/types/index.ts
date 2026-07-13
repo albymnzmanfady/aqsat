@@ -1,3 +1,5 @@
+"use client";
+
 export interface Customer {
   id: number;
   name: string;
@@ -49,6 +51,24 @@ export interface Product {
   sellingPrice: number;
   currentStock: number;
   minStock: number;
+  createdAt: string;
+}
+
+export interface ExpenseCategory {
+  id: number;
+  name: string;
+  icon?: string;
+  color: string;
+}
+
+export interface Expense {
+  id: number;
+  description: string;
+  categoryId: number;
+  amount: number;
+  date: string;
+  note?: string;
+  receiptImage?: string;
   createdAt: string;
 }
 

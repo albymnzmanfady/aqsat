@@ -1,3 +1,8 @@
+// IMPORTANT: You need to edit the file src/components/Layout.tsx to add navigation items for Expenses.
+// Find the navItems array and add the new items before the settings item.
+
+// We'll rewrite the whole Layout.tsx file to avoid confusion.
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,6 +25,8 @@ import {
   Package,
   ArrowDownUp,
   BarChart3,
+  Receipt,
+  PieChart,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -45,15 +52,19 @@ const Layout = ({ children }: LayoutProps) => {
         { path: "/inventory-dashboard", label: "التقارير", icon: BarChart3 },
       ],
     },
+    {
+      label: "المصروفات",
+      icon: Receipt,
+      color: "from-rose-500 to-pink-600",
+      subItems: [
+        { path: "/expenses", label: "المصروفات", icon: Receipt },
+        { path: "/expense-reports", label: "التقارير", icon: PieChart },
+      ],
+    },
     { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
-
-  // Group items with subItems
-  const flatItems = navItems.flatMap((item) =>
-    item.subItems ? [item, ...item.subItems] : [item]
-  );
 
   // Close sidebar on navigation
   useEffect(() => {
@@ -169,63 +180,68 @@ const Layout = ({ children }: LayoutProps) => {
               return (
                 <div key={item.label} className="space-y-1">
                   <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    <div className="w-1 h-4 bg-gradient-to-b from-orange-500 to-red-500 rounded-full" />
+                    <div className={`w-1 h-4 rounded-full ${item.color.replace("from-", "bg-gradient-to-b from-").replace("to-", " to-")}`} />
                     <span>{item.label}</span>
                   </div>
-                  {item.subItems.map((sub) => (
-                    <Link key={sub.path} to={sub.path}>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
-                          isActive(sub.path!)
-                            ? "bg-gradient-to-l from-orange-500/10 to-red-500/10 text-orange-600 font-semibold shadow-sm"
-                            : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                        )}
-                      >
-                        {isActive(sub.path!) && (
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-orange-500 to-red-600 rounded-l-full" />
-                        )}
-                        <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
-                          isActive(sub.path!)
-                            ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-md"
-                            : "bg-slate-100 text-slate-500"
-                        )}>
-                          <sub.icon className="h-4 w-4" />
-                        </div>
-                        <span className="flex-1 text-right">{sub.label}</span>
-                      </Button>
-                    </Link>
-                  ))}
+                  {item.subItems.map((sub) => {
+                    // Determine if any sub item is active
+                    const subActive = sub.path ? isActive(sub.path) : false;
+                    return (
+                      <Link key={sub.path} to={sub.path}>
+                        <Button
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
+                            subActive
+                              ? "bg-gradient-to-l from-rose-500/10 to-pink-500/10 text-rose-600 font-semibold shadow-sm"
+                              : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                          )}
+                        >
+                          {subActive && (
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-rose-500 to-pink-600 rounded-l-full" />
+                          )}
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
+                            subActive
+                              ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md"
+                              : "bg-slate-100 text-slate-500"
+                          )}>
+                            <sub.icon className="h-4 w-4" />
+                          </div>
+                          <span className="flex-1 text-right">{sub.label}</span>
+                        </Button>
+                      </Link>
+                    );
+                  })}
                 </div>
               );
             }
 
+            const isItemActive = isActive(item.path!);
             return (
               <Link key={item.path} to={item.path}>
                 <Button
                   variant="ghost"
                   className={cn(
                     "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative",
-                    isActive(item.path!)
+                    isItemActive
                       ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
                       : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
                   )}
                 >
-                  {isActive(item.path!) && (
+                  {isItemActive && (
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
                   )}
                   <div className={cn(
                     "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200",
-                    isActive(item.path!)
+                    isItemActive
                       ? `bg-gradient-to-br ${item.color} text-white shadow-md`
                       : "bg-slate-100 text-slate-500"
                   )}>
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
                   <span className="flex-1 text-right">{item.label}</span>
-                  {isActive(item.path!) && (
+                  {isItemActive && (
                     <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
                   )}
                 </Button>

@@ -24,6 +24,13 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+interface CategoryData {
+  name: string;
+  count: number;
+  stock: number;
+  value: number;
+}
+
 const InventoryDashboard = () => {
   const [products] = useState(initialProducts);
   const [transactions] = useState(initialTransactions);
@@ -44,7 +51,7 @@ const InventoryDashboard = () => {
 
   // Group by category
   const categories = [...new Set(products.map((p) => p.category))];
-  const categoryData = categories.map((cat) => ({
+  const categoryData: CategoryData[] = categories.map((cat) => ({
     name: cat,
     count: products.filter((p) => p.category === cat).length,
     stock: products.filter((p) => p.category === cat).reduce((s, p) => s + p.currentStock, 0),

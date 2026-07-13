@@ -41,6 +41,14 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const getStoredAvatar = (): string => {
+  try {
+    const stored = localStorage.getItem("app_user_profile");
+    if (stored) return JSON.parse(stored).avatar || "";
+  } catch {}
+  return "";
+};
+
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -48,11 +56,17 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const { user, logout, hasPermission } = useAuth();
   const { settings } = useAppSettings();
+  const [avatar, setAvatar] = useState(getStoredAvatar);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar_collapsed");
     if (saved === "true") setSidebarCollapsed(true);
   }, []);
+
+  // Refresh avatar on route change
+  useEffect(() => {
+    setAvatar(getStoredAvatar());
+  }, [location.pathname]);
 
   const toggleCollapse = () => {
     const next = !sidebarCollapsed;
@@ -286,12 +300,18 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
           <div className="flex items-center gap-2">
             <NotificationsDropdown />
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br",
-              "from-amber-500 to-orange-500"
-            )}>
-              {user?.name?.charAt(0) || "م"}
-            </div>
+            <Link to="/profile">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br overflow-hidden",
+                "from-amber-500 to-orange-500"
+              )}>
+                {avatar ? (
+                  <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0) || "م"
+                )}
+              </div>
+            </Link>
           </div>
         </div>
       </header>
@@ -359,29 +379,35 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* User Card */}
+        {/* User Card - clickable to profile */}
         {!sidebarCollapsed && (
           <div className="p-4">
-            <div className="rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 p-4">
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
-                <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
-              </div>
-              <div className="relative z-10 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
-                  {user?.name?.charAt(0) || "م"}
+            <Link to="/profile">
+              <div className="rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 p-4 hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]">
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
+                  <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
                 </div>
-                <div className="text-white min-w-0">
-                  <p className="font-semibold text-sm truncate">{user?.name || "مستخدم"}</p>
-                  <p className="text-xs text-white/80 flex items-center gap-1">
-                    <Shield className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">
-                      {user ? (user.role === "admin" ? "مدير النظام" : user.role === "supervisor" ? "مشرف مالي" : "محصل") : ""}
-                    </span>
-                  </p>
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0 overflow-hidden">
+                    {avatar ? (
+                      <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
+                    ) : (
+                      user?.name?.charAt(0) || "م"
+                    )}
+                  </div>
+                  <div className="text-white min-w-0">
+                    <p className="font-semibold text-sm truncate">{user?.name || "مستخدم"}</p>
+                    <p className="text-xs text-white/80 flex items-center gap-1">
+                      <Shield className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">
+                        {user ? (user.role === "admin" ? "مدير النظام" : user.role === "supervisor" ? "مشرف مالي" : "محصل") : ""}
+                      </span>
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         )}
 
@@ -389,9 +415,15 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="p-3 flex justify-center">
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-md cursor-default">
-                  {user?.name?.charAt(0) || "م"}
-                </div>
+                <Link to="/profile">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                    {avatar ? (
+                      <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
+                    ) : (
+                      user?.name?.charAt(0) || "م"
+                    )}
+                  </div>
+                </Link>
               </TooltipTrigger>
               <TooltipContent side="left" className="rounded-xl text-sm">
                 <p>{user?.name}</p>

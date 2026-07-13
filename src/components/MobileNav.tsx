@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAppSettings } from "@/hooks/useAppSettings";
 import {
   Home,
   Users,
@@ -19,7 +18,7 @@ import {
   PieChart,
   LogOut,
   LayoutDashboard,
-  Plus,
+  User,
 } from "lucide-react";
 import {
   Sheet,
@@ -33,10 +32,10 @@ const mainNavItems = [
   { path: "/customers", label: "العملاء", icon: Users, permission: "view_customers" as const },
   { path: "/contracts", label: "العقود", icon: FileText, permission: "view_contracts" as const },
   { path: "/installments", label: "الأقساط", icon: CreditCard, permission: "view_installments" as const },
-  { path: "/expenses", label: "المصروفات", icon: Receipt, permission: "view_expenses" as const },
 ];
 
 const moreItems = [
+  { path: "/expenses", label: "المصروفات", icon: Receipt, color: "from-rose-500 to-pink-600", permission: "view_expenses" as const },
   { path: "/products", label: "المنتجات", icon: Package, color: "from-orange-500 to-red-500", permission: "view_products" as const },
   { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp, color: "from-teal-500 to-emerald-600", permission: "view_inventory" as const },
   { path: "/inventory-dashboard", label: "تقارير المخزون", icon: BarChart3, color: "from-cyan-500 to-blue-600", permission: "view_inventory" as const },
@@ -45,12 +44,19 @@ const moreItems = [
   { path: "/settings", label: "الإعدادات", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
 ];
 
+const getStoredAvatar = (): string => {
+  try {
+    const stored = localStorage.getItem("app_user_profile");
+    if (stored) return JSON.parse(stored).avatar || "";
+  } catch {}
+  return "";
+};
+
 const MobileNav = () => {
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const { hasPermission, logout } = useAuth();
-  // We don't directly display app name in bottom nav, but keep the hook for consistency
-  const { settings } = useAppSettings();
+  const { hasPermission, logout, user } = useAuth();
+  const [avatar] = useState(getStoredAvatar);
 
   const visibleMainItems = mainNavItems.filter(
     (item) => !item.permission || hasPermission(item.permission)
@@ -65,7 +71,7 @@ const MobileNav = () => {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom shadow-lg shadow-slate-200/50">
         <div className="flex items-center justify-around h-16 px-2">
-          {visibleMainItems.slice(0, 4).map((item) => {
+          {visibleMainItems.slice(0, 3).map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -95,6 +101,40 @@ const MobileNav = () => {
               </Link>
             );
           })}
+
+          {/* Profile button */}
+          <Link
+            to="/profile"
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all duration-200 w-16",
+              location.pathname === "/profile"
+                ? "text-violet-600"
+                : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center transition-all overflow-hidden",
+              location.pathname === "/profile"
+                ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/25"
+                : ""
+            )}>
+              {avatar ? (
+                <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
+              ) : location.pathname === "/profile" ? (
+                <User className="h-5 w-5" />
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-xs">
+                  {user?.name?.charAt(0) || "م"}
+                </div>
+              )}
+            </div>
+            <span className={cn(
+              "text-[10px] font-medium leading-tight",
+              location.pathname === "/profile" ? "text-violet-600 font-semibold" : "text-slate-400"
+            )}>
+              حسابي
+            </span>
+          </Link>
 
           {visibleMoreItems.length > 0 && (
             <button
@@ -128,35 +168,11 @@ const MobileNav = () => {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-800">القائمة الكاملة</h2>
-                <p className="text-xs text-slate-500">{settings.appName} - جميع الصفحات</p>
+                <p className="text-xs text-slate-500">جميع الصفحات</p>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              {visibleMainItems.slice(4).map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setSheetOpen(false)}
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200",
-                      isActive
-                        ? "bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-200/50"
-                        : "bg-slate-50/50 hover:bg-slate-100/50 border border-transparent"
-                    )}
-                  >
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-sm">
-                      <item.icon className="h-6 w-6" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-700 text-center leading-tight">
-                      {item.label}
-                    </span>
-                  </Link>
-                );
-              })}
-
               {visibleMoreItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (

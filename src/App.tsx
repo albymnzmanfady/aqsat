@@ -18,6 +18,7 @@ import ExpenseReports from "./pages/ExpenseReports";
 import Users from "./pages/Users";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredPermission="view_users">
             <Users />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

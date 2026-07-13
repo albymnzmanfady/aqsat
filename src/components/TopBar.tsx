@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "next-themes";
-import { useAppSettings } from "@/hooks/useAppSettings";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import {
   DropdownMenu,
@@ -39,18 +38,20 @@ const roleColors: Record<string, string> = {
   collector: "from-emerald-500 to-teal-500",
 };
 
+const getStoredAvatar = (): string => {
+  try {
+    const stored = localStorage.getItem("app_user_profile");
+    if (stored) return JSON.parse(stored).avatar || "";
+  } catch {}
+  return "";
+};
+
 const TopBar = () => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { settings } = useAppSettings();
   const navigate = useNavigate();
   const [themeOpen, setThemeOpen] = useState(false);
-
-  const cycleTheme = () => {
-    if (theme === "light") setTheme("dark");
-    else if (theme === "dark") setTheme("system");
-    else setTheme("light");
-  };
+  const [avatar, setAvatar] = useState(getStoredAvatar);
 
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
 
@@ -138,10 +139,14 @@ const TopBar = () => {
                 </p>
               </div>
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br flex-shrink-0",
+                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br flex-shrink-0 overflow-hidden",
                 roleColors[user?.role || "admin"]
               )}>
-                {user?.name?.charAt(0) || "م"}
+                {avatar ? (
+                  <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0) || "م"
+                )}
               </div>
               <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" />
             </button>
@@ -156,10 +161,14 @@ const TopBar = () => {
             <div className="px-3 py-3 mb-1">
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg bg-gradient-to-br flex-shrink-0",
+                  "w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg bg-gradient-to-br flex-shrink-0 overflow-hidden",
                   roleColors[user?.role || "admin"]
                 )}>
-                  {user?.name?.charAt(0) || "م"}
+                  {avatar ? (
+                    <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
+                  ) : (
+                    user?.name?.charAt(0) || "م"
+                  )}
                 </div>
                 <div>
                   <p className="font-bold text-slate-800 text-sm">{user?.name}</p>
@@ -174,6 +183,19 @@ const TopBar = () => {
             <DropdownMenuSeparator className="bg-slate-100" />
 
             <DropdownMenuItem
+              onClick={() => navigate("/profile")}
+              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm"
+            >
+              <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                <User className="h-4 w-4 text-violet-600" />
+              </div>
+              <div>
+                <p className="font-medium">حسابي</p>
+                <p className="text-[10px] text-slate-400">تعديل الملف الشخصي</p>
+              </div>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
               onClick={() => navigate("/settings")}
               className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm"
             >
@@ -183,19 +205,6 @@ const TopBar = () => {
               <div>
                 <p className="font-medium">الإعدادات</p>
                 <p className="text-[10px] text-slate-400">تخصيص البرنامج</p>
-              </div>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={() => navigate("/users")}
-              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm"
-            >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                <User className="h-4 w-4 text-slate-600" />
-              </div>
-              <div>
-                <p className="font-medium">حسابي</p>
-                <p className="text-[10px] text-slate-400">إدارة الحساب</p>
               </div>
             </DropdownMenuItem>
 

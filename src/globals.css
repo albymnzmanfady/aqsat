@@ -15,6 +15,38 @@
   }
 }
 
+/* Crystal glass effect for cards and menus */
+.crystal {
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* Crystal with stronger border for emphasis */
+.crystal-strong {
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* Crystal with gradient accent for user profile */
+.crystal-gradient {
+  background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(249,115,22,0.15));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(251,191,36,0.3);
+  box-shadow: 0 8px 32px rgba(251,191,36,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* Update default card background to crystal */
+.crystal-card {
+  @apply crystal rounded-2xl;
+}
+
 /* Button click feedback */
 .active-scale:active,
 button:active:not(:disabled) {
@@ -100,4 +132,9 @@ html {
 .page-wrapper {
   min-height: 100vh;
   position: relative;
+}
+
+/* React select / dropdown crystal style */
+.crystal-select {
+  @apply crystal rounded-xl;
 }

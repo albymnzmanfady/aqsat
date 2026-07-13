@@ -276,8 +276,8 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-200/5 rounded-full blur-3xl" />
       </div>
 
-      {/* رأس الموبايل */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl z-40 border-b border-white/20">
+      {/* رأس الموبايل - crystal style */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 crystal z-40">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
             <Button
@@ -325,17 +325,17 @@ const Layout = ({ children }: LayoutProps) => {
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* القائمة الجانبية - ديسكتوب */}
+      {/* القائمة الجانبية - ديسكتوب - crystal style */}
       <aside
         className={cn(
           "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-white/20 flex-col",
-          "bg-white/80 backdrop-blur-xl transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50",
+          "crystal transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50",
           sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
         {/* رأس القائمة */}
         <div className={cn(
-          "p-5 border-b border-slate-100/80 flex items-center",
+          "p-5 border-b border-white/20 flex items-center",
           sidebarCollapsed ? "justify-center" : "justify-between"
         )}>
           {sidebarCollapsed ? (
@@ -379,14 +379,13 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* بطاقة المستخدم */}
+        {/* بطاقة المستخدم - crystal-gradient */}
         <div className={cn("p-4", sidebarCollapsed && "px-2")}>
           <div className={cn(
-            "rounded-2xl relative overflow-hidden bg-gradient-to-br",
-            roleColors[user?.role || "admin"],
+            "rounded-2xl relative overflow-hidden crystal-gradient",
             sidebarCollapsed ? "p-2" : "p-4"
           )}>
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 pointer-events-none">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
               <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
             </div>
@@ -394,7 +393,7 @@ const Layout = ({ children }: LayoutProps) => {
               "relative z-10 flex items-center",
               sidebarCollapsed ? "justify-center" : "gap-3"
             )}>
-              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-white/30 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30 flex-shrink-0">
                 {user?.name?.charAt(0) || "م"}
               </div>
               {!sidebarCollapsed && (
@@ -434,7 +433,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* تذييل القائمة */}
-        <div className={cn("p-3 border-t border-slate-100/80", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
+        <div className={cn("p-3 border-t border-white/20", sidebarCollapsed ? "flex justify-center" : "space-y-2")}>
           {sidebarCollapsed ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>

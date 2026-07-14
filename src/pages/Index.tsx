@@ -19,6 +19,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { 
   Plus, CreditCard, Users, FileText, AlertTriangle, 
@@ -40,6 +41,9 @@ const Index = () => {
 
   // البحث السريع للتحصيل
   const [quickSearch, setQuickSearch] = useState("");
+
+  // حالة تأكيد التحصيل المالي
+  const [confirmPayInstallment, setConfirmPayInstallment] = useState<any | null>(null);
 
   // حالة التحكم في النوافذ المنبثقة لجميع المؤشرات المالية
   const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | "overdue" | "today" | "activeContracts" | null>(null);
@@ -195,15 +199,24 @@ const Index = () => {
     return [];
   }, [activeModal, currentMonthInstallmentsWithDetails, overdueInstallmentsWithDetails, todayInstallmentsWithDetails]);
 
-  // تسجيل سداد قسط مباشر من الصفحة الرئيسية
-  const handleQuickPay = async (installmentId: number) => {
+  // توجيه الطلب إلى نافذة التأكيد قبل التنفيذ
+  const askPayConfirmation = (inst: any) => {
+    setConfirmPayInstallment(inst);
+  };
+
+  // تأكيد و تنفيذ عملية السداد المالي الفعلية في قاعدة البيانات
+  const executePayment = async () => {
+    if (!confirmPayInstallment) return;
+    const installmentId = confirmPayInstallment.id;
+
     try {
       await api.installments.update(installmentId, {
         isPaid: true,
         paidDate: new Date().toISOString().split("T")[0]
       });
-      showSuccess("✅ تم تحصيل القسط بنجاح");
+      showSuccess("✅ تم تحصيل القسط بنجاح وتسجيل المعاملة المالية");
       setQuickSearch(""); // إعادة تصفير البحث الفوري
+      setConfirmPayInstallment(null); // إغلاق تأكيد السداد
       
       // تحديث البيانات فوراً
       const [c, i] = await Promise.all([api.contracts.list(), api.installments.list()]);
@@ -337,7 +350,7 @@ const Index = () => {
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => handleQuickPay(inst.id)}
+                        onClick={() => askPayConfirmation(inst)}
                         className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold gap-1 active:scale-95"
                       >
                         <CheckCircle className="h-4 w-4" />
@@ -596,7 +609,13 @@ const Index = () => {
                           <Button 
                             size="sm" 
                             className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
-                            onClick={() => handleQuickPay(inst.id)}
+                            onClick={() => askPayConfirmation({
+                              id: inst.id,
+                              customerName: contract?.customer_name,
+                              productType: contract?.product_type,
+                              amount: inst.amount,
+                              number: inst.number
+                            })}
                           >
                             تسجيل تحصيل
                           </Button>
@@ -682,7 +701,13 @@ const Index = () => {
                           <Button 
                             size="sm" 
                             className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
-                            onClick={() => handleQuickPay(inst.id)}
+                            onClick={() => askPayConfirmation({
+                              id: inst.id,
+                              customerName: contract?.customer_name,
+                              productType: contract?.product_type,
+                              amount: inst.amount,
+                              number: inst.number
+                            })}
                           >
                             تسجيل سداد
                           </Button>
@@ -905,7 +930,13 @@ const Index = () => {
                         variant="ghost"
                         className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
                         onClick={() => {
-                          handleQuickPay(inst.id);
+                          askPayConfirmation({
+                            id: inst.id,
+                            customerName: inst.customerName,
+                            productType: inst.productType,
+                            amount: inst.amount,
+                            number: inst.number
+                          });
                           setActiveModal(null);
                         }}
                         title="تسجيل تحصيل سريع"
@@ -936,6 +967,50 @@ const Index = () => {
               إغلاق النافذة
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* نافذة تأكيد عملية تحصيل الأموال الحذرة */}
+      <Dialog open={confirmPayInstallment !== null} onOpenChange={(open) => { if (!open) setConfirmPayInstallment(null); }}>
+        <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-amber-50 border border-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-500 animate-bounce">
+              <AlertTriangle className="h-8 w-8" />
+            </div>
+            <h3 className="font-extrabold text-lg text-slate-800">تأكيد عملية تحصيل مالي 🪙</h3>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-right text-sm space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500">العميل المستلم منه:</span>
+                <span className="font-bold text-slate-800">{confirmPayInstallment?.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">رقم الدفعة / السلعة:</span>
+                <span className="font-bold text-slate-800">القسط #{confirmPayInstallment?.number} - {confirmPayInstallment?.productType}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-2 mt-2">
+                <span className="text-slate-600 font-semibold">المبلغ النقدي الفعلي:</span>
+                <span className="font-extrabold text-base text-emerald-600">{confirmPayInstallment?.amount?.toLocaleString()} ج.م</span>
+              </div>
+            </div>
+            <p className="text-xs text-rose-500 font-semibold leading-relaxed text-center">
+              ⚠️ يرجى التأكد من استلام النقدية أو التحويل البنكي الفعلي قبل الضغط على تأكيد.
+            </p>
+          </div>
+          <DialogFooter className="grid grid-cols-2 gap-3 mt-4">
+            <Button
+              variant="outline"
+              className="rounded-xl h-11"
+              onClick={() => setConfirmPayInstallment(null)}
+            >
+              تراجع وإلغاء
+            </Button>
+            <Button
+              className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold"
+              onClick={executePayment}
+            >
+              نعم، تم الاستلام
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>

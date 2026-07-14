@@ -86,6 +86,13 @@ const InstallmentsPage = () => {
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [expandedContracts, setExpandedContracts] = useState<Record<number, boolean>>({});
 
+  // حالة تأكيد الحركة المالية الدقيقة
+  const [financialConfirm, setFinancialConfirm] = useState<{
+    installment: ApiInstallment;
+    contract: ApiContract;
+    type: "pay" | "cancel";
+  } | null>(null);
+
   // Print state
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
@@ -238,16 +245,30 @@ const InstallmentsPage = () => {
     setSelectedInstallmentNumber("");
   };
 
-  const handleTogglePaid = async (installment: ApiInstallment) => {
+  // تحضير التأكيد المالي قبل التبديل
+  const askToggleConfirmation = (installment: ApiInstallment, contract: ApiContract) => {
+    setFinancialConfirm({
+      installment,
+      contract,
+      type: installment.is_paid ? "cancel" : "pay"
+    });
+  };
+
+  // تنفيذ الحركة المالية بعد التأكيد الواعي
+  const executeTogglePaid = async () => {
+    if (!financialConfirm) return;
+    const { installment, contract, type } = financialConfirm;
+
     try {
       await api.installments.update(installment.id, {
-        isPaid: !installment.is_paid,
-        paidDate: installment.is_paid ? undefined : new Date().toISOString().split("T")[0],
+        isPaid: type === "pay",
+        paidDate: type === "pay" ? new Date().toISOString().split("T")[0] : undefined,
       });
       fetchData();
-      showSuccess(installment.is_paid ? "✅ تم إلغاء تسديد القسط" : "✅ تم تسديد القسط بنجاح");
+      showSuccess(type === "cancel" ? "✅ تم إلغاء تسديد القسط وإعادة المديونية للعميل" : "✅ تم تحصيل القسط وتسجيل السند المالي بنجاح");
+      setFinancialConfirm(null);
     } catch (e: any) {
-      showError("خطأ: " + e.message);
+      showError("خطأ في تحديث البيانات: " + e.message);
     }
   };
 
@@ -590,7 +611,7 @@ const InstallmentsPage = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-xl border border-slate-100 bg-white z-50">
                                   <DropdownMenuItem 
-                                    onClick={() => handleTogglePaid(inst)}
+                                    onClick={() => askToggleConfirmation(inst, item.contract)}
                                     className="cursor-pointer rounded-lg text-sm gap-2"
                                   >
                                     {inst.is_paid ? <XCircle className="h-4 w-4 text-rose-500" /> : <CheckCircle className="h-4 w-4 text-emerald-500" />}
@@ -638,6 +659,64 @@ const InstallmentsPage = () => {
           </div>
         )}
       </div>
+
+      {/* نافذة تأكيد دقيقة للحركات المالية */}
+      <Dialog open={financialConfirm !== null} onOpenChange={(open) => { if (!open) setFinancialConfirm(null); }}>
+        <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
+          <div className="text-center space-y-4">
+            <div className={cn(
+              "w-16 h-16 rounded-full flex items-center justify-center mx-auto border animate-pulse",
+              financialConfirm?.type === "pay" ? "bg-emerald-50 border-emerald-100 text-emerald-500" : "bg-rose-50 border-rose-100 text-rose-500"
+            )}>
+              {financialConfirm?.type === "pay" ? <CheckCircle className="h-8 w-8" /> : <XCircle className="h-8 w-8" />}
+            </div>
+            <h3 className="font-extrabold text-lg text-slate-800">
+              {financialConfirm?.type === "pay" ? "تأكيد تسجيل تحصيل مالي 🪙" : "تأكيد إلغاء حركة تحصيل مالي ⚠️"}
+            </h3>
+            
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-right text-sm space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500">العميل:</span>
+                <span className="font-bold text-slate-800">{financialConfirm?.contract.customer_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">السلعة / رقم القسط:</span>
+                <span className="font-bold text-slate-800">القسط #{financialConfirm?.installment.number} - {financialConfirm?.contract.product_type}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-2 mt-2">
+                <span className="text-slate-600 font-semibold">المبلغ المحتسب:</span>
+                <span className={cn(
+                  "font-extrabold text-base",
+                  financialConfirm?.type === "pay" ? "text-emerald-600" : "text-rose-600"
+                )}>
+                  {financialConfirm?.installment.amount?.toLocaleString()} ج.م
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed text-center">
+              {financialConfirm?.type === "pay" 
+                ? "يرجى تحري الدقة والتأكد من استلام كامل النقدية قبل السداد الفعلي." 
+                : "سيتم إلغاء عملية الدفع وإرجاع المديونية كاملة على حساب العميل."
+              }
+            </p>
+          </div>
+          <DialogFooter className="grid grid-cols-2 gap-3 mt-4">
+            <Button variant="outline" className="rounded-xl h-11" onClick={() => setFinancialConfirm(null)}>
+              تراجع وإلغاء
+            </Button>
+            <Button
+              className={cn(
+                "rounded-xl h-11 text-white font-bold",
+                financialConfirm?.type === "pay" ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600" : "bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600"
+              )}
+              onClick={executeTogglePaid}
+            >
+              {financialConfirm?.type === "pay" ? "نعم، تم التحصيل" : "نعم، إلغاء السداد"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Print Dialog */}
       <PrintDialog

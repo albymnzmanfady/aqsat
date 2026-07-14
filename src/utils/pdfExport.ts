@@ -17,36 +17,36 @@ const PRINT_STYLES = `
   }
 `;
 
-interface ContractData {
+/**
+ * واجهات البيانات المتوقعة من قبل دوال الطباعة
+ * (تمت مراعاة snake_case القادمة من API)
+ */
+interface ContractPrintData {
   id: number;
-  customerName: string;
-  customerPhone: string;
-  productType: string;
-  totalPrice: number;
-  downPayment: number;
-  numberOfReceipts: number;
-  installmentAmount: number;
-  startDate: string;
-  endDate: string;
-  guarantorName: string;
-  guarantorPhone: string;
-  createdAt: string;
+  customer_name: string;
+  customer_phone: string;
+  product_type: string;
+  total_price: number;
+  down_payment: number;
+  number_of_receipts: number;
+  installment_amount: number;
+  start_date: string;
+  end_date: string;
+  guarantor_name: string;
+  guarantor_phone: string;
+  created_at: string;
 }
 
-interface InstallmentData {
-  id: number;
-  contractId: number;
+interface InstallmentPrintData {
   number: number;
   amount: number;
-  dueDate: string;
-  isPaid: boolean;
-  paidDate?: string;
   day: number;
   month: number;
   year: number;
+  is_paid: boolean;
 }
 
-interface Settings {
+interface SettingsPrintData {
   appName: string;
   companyName: string;
   companyPhone: string;
@@ -54,7 +54,7 @@ interface Settings {
   logoUrl: string;
 }
 
-const getLogoHtml = (settings: Settings, color = "#8b5cf6", size = 60) => {
+const getLogoHtml = (settings: SettingsPrintData, color = "#8b5cf6", size = 60) => {
   if (settings.logoUrl) {
     return `<img src="${settings.logoUrl}" alt="الشعار" style="width:${size}px;height:${size}px;border-radius:${size / 4}px;object-fit:cover;margin-bottom:8px;">`;
   }
@@ -62,9 +62,9 @@ const getLogoHtml = (settings: Settings, color = "#8b5cf6", size = 60) => {
 };
 
 export const getContractHtml = (
-  contract: ContractData,
-  installments: InstallmentData[],
-  settings: Settings
+  contract: ContractPrintData,
+  installments: InstallmentPrintData[],
+  settings: SettingsPrintData
 ): string => {
   const installmentRows = installments
     .map(
@@ -73,8 +73,8 @@ export const getContractHtml = (
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;">${inst.number}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;">${inst.day}/${inst.month}/${inst.year}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;">${inst.amount.toLocaleString()} ج.م</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;color:${inst.isPaid ? "#10b981" : "#f59e0b"};font-weight:600;">
-        ${inst.isPaid ? "مدفوع ✓" : "غير مدفوع"}
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;color:${inst.is_paid ? "#10b981" : "#f59e0b"};font-weight:600;">
+        ${inst.is_paid ? "مدفوع ✓" : "غير مدفوع"}
       </td>
     </tr>`
     )
@@ -86,7 +86,7 @@ export const getContractHtml = (
         ${getLogoHtml(settings)}
         <h1 style="font-size:24px;font-weight:700;color:#1e293b;margin:0 0 4px;">${settings.companyName || settings.appName}</h1>
         <h2 style="font-size:18px;font-weight:600;color:#6366f1;margin:0 0 6px;">عقد بيع بالأقساط</h2>
-        <p style="font-size:12px;color:#64748b;margin:0;">رقم العقد: ${contract.id} &nbsp;|&nbsp; تاريخ الإنشاء: ${contract.createdAt}</p>
+        <p style="font-size:12px;color:#64748b;margin:0;">رقم العقد: ${contract.id} &nbsp;|&nbsp; تاريخ الإنشاء: ${contract.created_at}</p>
       </div>
 
       <div style="margin-bottom:20px;">
@@ -94,28 +94,28 @@ export const getContractHtml = (
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div style="padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
             <span style="font-size:11px;color:#94a3b8;display:block;">الاسم الكامل</span>
-            <span style="font-size:14px;font-weight:600;color:#1e293b;">${contract.customerName}</span>
+            <span style="font-size:14px;font-weight:600;color:#1e293b;">${contract.customer_name}</span>
           </div>
           <div style="padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
             <span style="font-size:11px;color:#94a3b8;display:block;">رقم الهاتف</span>
-            <span style="font-size:14px;font-weight:600;color:#1e293b;" dir="ltr">${contract.customerPhone}</span>
+            <span style="font-size:14px;font-weight:600;color:#1e293b;" dir="ltr">${contract.customer_phone}</span>
           </div>
         </div>
       </div>
 
       ${
-        contract.guarantorName
+        contract.guarantor_name
           ? `
       <div style="margin-bottom:20px;">
         <h3 style="font-size:14px;font-weight:600;color:#6366f1;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;">بيانات الضامن</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div style="padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1px solid #dcfce7;">
             <span style="font-size:11px;color:#94a3b8;display:block;">الاسم</span>
-            <span style="font-size:14px;font-weight:600;color:#1e293b;">${contract.guarantorName}</span>
+            <span style="font-size:14px;font-weight:600;color:#1e293b;">${contract.guarantor_name}</span>
           </div>
           <div style="padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1px solid #dcfce7;">
             <span style="font-size:11px;color:#94a3b8;display:block;">رقم الهاتف</span>
-            <span style="font-size:14px;font-weight:600;color:#1e293b;" dir="ltr">${contract.guarantorPhone}</span>
+            <span style="font-size:14px;font-weight:600;color:#1e293b;" dir="ltr">${contract.guarantor_phone}</span>
           </div>
         </div>
       </div>`
@@ -127,29 +127,29 @@ export const getContractHtml = (
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
           <div style="padding:14px 10px;background:#f8fafc;border-radius:10px;text-align:center;border:1px solid #e2e8f0;">
             <p style="font-size:10px;color:#94a3b8;margin:0 0 4px;">المنتج</p>
-            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">${contract.productType}</p>
+            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">${contract.product_type}</p>
           </div>
           <div style="padding:14px 10px;background:#f8fafc;border-radius:10px;text-align:center;border:1px solid #e2e8f0;">
             <p style="font-size:10px;color:#94a3b8;margin:0 0 4px;">السعر الإجمالي</p>
-            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">${contract.totalPrice.toLocaleString()} ج.م</p>
+            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">${contract.total_price.toLocaleString()} ج.م</p>
           </div>
           <div style="padding:14px 10px;background:#f8fafc;border-radius:10px;text-align:center;border:1px solid #e2e8f0;">
             <p style="font-size:10px;color:#94a3b8;margin:0 0 4px;">الدفعة المقدمة</p>
-            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">${contract.downPayment.toLocaleString()} ج.م</p>
+            <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">${contract.down_payment.toLocaleString()} ج.م</p>
           </div>
           <div style="padding:14px 10px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:10px;text-align:center;border:1px solid #ddd6fe;">
             <p style="font-size:10px;color:#7c3aed;margin:0 0 4px;">القسط الشهري</p>
-            <p style="font-size:16px;font-weight:700;color:#6d28d9;margin:0;">${contract.installmentAmount.toLocaleString()} ج.م</p>
+            <p style="font-size:16px;font-weight:700;color:#6d28d9;margin:0;">${contract.installment_amount.toLocaleString()} ج.م</p>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
           <div style="padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
             <span style="font-size:11px;color:#94a3b8;">عدد الأقساط:</span>
-            <span style="font-size:14px;font-weight:600;margin-right:8px;">${contract.numberOfReceipts} قسط</span>
+            <span style="font-size:14px;font-weight:600;margin-right:8px;">${contract.number_of_receipts} قسط</span>
           </div>
           <div style="padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
             <span style="font-size:11px;color:#94a3b8;">فترة السداد:</span>
-            <span style="font-size:14px;font-weight:600;margin-right:8px;">من ${contract.startDate} إلى ${contract.endDate}</span>
+            <span style="font-size:14px;font-weight:600;margin-right:8px;">من ${contract.start_date} إلى ${contract.end_date}</span>
           </div>
         </div>
       </div>
@@ -186,12 +186,12 @@ export const getContractHtml = (
         <div style="text-align:center;">
           <div style="border-top:2px solid #1e293b;margin-top:60px;margin-bottom:10px;"></div>
           <p style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px;">توقيع العميل</p>
-          <p style="font-size:11px;color:#94a3b8;">(${contract.customerName})</p>
+          <p style="font-size:11px;color:#94a3b8;">(${contract.customer_name})</p>
         </div>
         <div style="text-align:center;">
           <div style="border-top:2px solid #1e293b;margin-top:60px;margin-bottom:10px;"></div>
           <p style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px;">توقيع الضامن</p>
-          <p style="font-size:11px;color:#94a3b8;">(${contract.guarantorName || "—"})</p>
+          <p style="font-size:11px;color:#94a3b8;">(${contract.guarantor_name || "—"})</p>
         </div>
       </div>
 
@@ -203,11 +203,11 @@ export const getContractHtml = (
 };
 
 export const getReceiptHtml = (
-  installment: InstallmentData,
-  contract: ContractData,
-  settings: Settings
+  installment: { number: number; amount: number; paid_date?: string; day: number; month: number; year: number; is_paid: boolean },
+  contract: { id: number; customer_name: string; product_type: string; number_of_receipts: number; total_price: number; down_payment: number; installment_amount: number; start_date: string; end_date: string; guarantor_name: string; guarantor_phone: string; created_at: string; customer_phone: string },
+  settings: SettingsPrintData
 ): string => {
-  const paidDate = installment.paidDate || new Date().toISOString().split("T")[0];
+  const paidDate = installment.paid_date || new Date().toISOString().split("T")[0];
 
   return `
     <div style="font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;max-width:500px;margin:0 auto;">
@@ -228,7 +228,7 @@ export const getReceiptHtml = (
         <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
           <tr>
             <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#94a3b8;width:42%;background:#f8fafc;">اسم العميل</td>
-            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:600;">${contract.customerName}</td>
+            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:600;">${contract.customer_name}</td>
           </tr>
           <tr>
             <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#94a3b8;background:#f8fafc;">رقم العقد</td>
@@ -236,11 +236,11 @@ export const getReceiptHtml = (
           </tr>
           <tr>
             <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#94a3b8;background:#f8fafc;">المنتج</td>
-            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:600;">${contract.productType}</td>
+            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:600;">${contract.product_type}</td>
           </tr>
           <tr>
             <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#94a3b8;background:#f8fafc;">رقم القسط</td>
-            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:600;">القسط ${installment.number} من ${contract.numberOfReceipts}</td>
+            <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;font-weight:600;">القسط ${installment.number} من ${contract.number_of_receipts}</td>
           </tr>
           <tr>
             <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#94a3b8;background:#f8fafc;">المبلغ المدفوع</td>

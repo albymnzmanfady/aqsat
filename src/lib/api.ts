@@ -12,150 +12,145 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+function buildQuery(params: Record<string, string | number | undefined>): string {
+  const q = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') q.set(key, String(value));
+  });
+  const s = q.toString();
+  return s ? `?${s}` : '';
+}
+
 export const api = {
-  // Auth
+  // === Authentication ===
   login: (email: string, password: string) =>
     request<{ id: number; name: string; email: string; role: string; avatar?: string }>(
       "/users/login",
       { method: "POST", body: JSON.stringify({ email, password }) }
     ),
 
-  // Backup & Restore
+  // === Backup & Restore ===
   backup: {
     exportUrl: () => `${API_BASE}/backup/export`,
     import: (data: any) => request<{ success: boolean }>("/backup/import", { method: "POST", body: JSON.stringify(data) }),
   },
 
-  // Nested API (backward compat for .list(), .create(), .update(), .delete())
+  // === Nested API methods ===
   customers: {
-    list: (search?: string) => request<any[]>("/customers" + (search ? `?search=${search}` : "")),
+    list: (search?: string) => request<any[]>("/customers" + buildQuery({ search })),
     get: (id: number) => request<any>(`/customers/${id}`),
     create: (data: any) => request<any>("/customers", { method: "POST", body: JSON.stringify(data) }),
     update: (id: number, data: any) => request<any>(`/customers/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: number) => request<{ success: boolean }>(`/customers/${id}`, { method: "DELETE" }),
   },
   contracts: {
-    list: (search?: string) => request<any[]>("/contracts" + (search ? `?search=${search}` : "")),
+    list: (search?: string) => request<any[]>("/contracts" + buildQuery({ search })),
     get: (id: number) => request<any>(`/contracts/${id}`),
     create: (data: any) => request<any>("/contracts", { method: "POST", body: JSON.stringify(data) }),
     update: (id: number, data: any) => request<any>(`/contracts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: number) => request<{ success: boolean }>(`/contracts/${id}`, { method: "DELETE" }),
   },
   installments: {
-    list: () => request<any[]>("/installments"),
+    list: (params?: { contractId?: number; isPaid?: string }) =>
+      request<any[]>("/installments" + buildQuery(params as any)),
     update: (id: number, data: any) => request<any>(`/installments/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: number) => request<{ success: boolean }>(`/installments/${id}`, { method: "DELETE" }),
   },
   products: {
-    list: (search?: string) => request<any[]>("/products" + (search ? `?search=${search}` : "")),
+    list: (search?: string) => request<any[]>("/products" + buildQuery({ search })),
     create: (data: any) => request<any>("/products", { method: "POST", body: JSON.stringify(data) }),
     update: (id: number, data: any) => request<any>(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: number) => request<{ success: boolean }>(`/products/${id}`, { method: "DELETE" }),
   },
   inventory: {
-    list: () => request<any[]>("/inventory"),
+    list: (params?: { search?: string; type?: string }) =>
+      request<any[]>("/inventory" + buildQuery(params as any)),
     create: (data: any) => request<any>("/inventory", { method: "POST", body: JSON.stringify(data) }),
-  },
-  expenses: {
-    list: (search?: string, categoryId?: number) => {
-      const q = new URLSearchParams();
-      if (search) q.set("search", search);
-      if (categoryId) q.set("categoryId", String(categoryId));
-      return request<any[]>("/expenses" + (q.toString() ? `?${q}` : ""));
-    },
-    create: (data: any) => request<any>("/expenses", { method: "POST", body: JSON.stringify(data) }),
-    update: (id: number, data: any) => request<any>(`/expenses/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-    delete: (id: number) => request<{ success: boolean }>(`/expenses/${id}`, { method: "DELETE" }),
   },
   expenseCategories: {
     list: () => request<any[]>("/expense-categories"),
+  },
+  expenses: {
+    list: (search?: string, categoryId?: number) =>
+      request<any[]>("/expenses" + buildQuery({ search, categoryId })),
+    create: (data: any) => request<any>("/expenses", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: any) => request<any>(`/expenses/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: number) => request<{ success: boolean }>(`/expenses/${id}`, { method: "DELETE" }),
   },
   users: {
     list: () => request<any[]>("/users"),
     create: (data: any) => request<any>("/users", { method: "POST", body: JSON.stringify(data) }),
     update: (id: number, data: any) => request<any>(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-    delete: (id: number) => request<{ success: boolean }>(`/users/${id}`, { method: "DELETE" }),
     changePassword: (id: number, currentPassword: string, newPassword: string) =>
       request<{ success: boolean }>(`/users/${id}/password`, { method: "PUT", body: JSON.stringify({ currentPassword, newPassword }) }),
+    delete: (id: number) => request<{ success: boolean }>(`/users/${id}`, { method: "DELETE" }),
   },
   settings: {
     get: (key: string) => request<any>(`/settings/${key}`),
     set: (key: string, data: any) => request<{ success: boolean }>(`/settings/${key}`, { method: "PUT", body: JSON.stringify(data) }),
   },
-  // Legacy direct methods (used by some older pages)
+
+  // === Flat legacy methods (calling nested ones) ===
   getCustomers: (params?: { search?: string; type?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.search) q.set("search", params.search);
-    if (params?.type) q.set("type", params.type);
-    return request<any[]>(`/customers${q.toString() ? `?${q}` : ""}`);
+    const q = buildQuery(params as any);
+    return request<any[]>(`/customers${q}`);
   },
-  getCustomer: (id: number) => request<any>(`/customers/${id}`),
-  createCustomer: (data: any) => request<any>("/customers", { method: "POST", body: JSON.stringify(data) }),
-  updateCustomer: (id: number, data: any) => request<any>(`/customers/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteCustomer: (id: number) => request<{ success: boolean }>(`/customers/${id}`, { method: "DELETE" }),
+  getCustomer: (id: number) => api.customers.get(id),
+  createCustomer: (data: any) => api.customers.create(data),
+  updateCustomer: (id: number, data: any) => api.customers.update(id, data),
+  deleteCustomer: (id: number) => api.customers.delete(id),
 
   getContracts: (params?: { search?: string; status?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.search) q.set("search", params.search);
-    if (params?.status) q.set("status", params.status);
-    return request<any[]>(`/contracts${q.toString() ? `?${q}` : ""}`);
+    const q = buildQuery(params as any);
+    return request<any[]>(`/contracts${q}`);
   },
-  getContract: (id: number) => request<any>(`/contracts/${id}`),
-  createContract: (data: any) => request<any>("/contracts", { method: "POST", body: JSON.stringify(data) }),
-  updateContract: (id: number, data: any) => request<any>(`/contracts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteContract: (id: number) => request<{ success: boolean }>(`/contracts/${id}`, { method: "DELETE" }),
+  getContract: (id: number) => api.contracts.get(id),
+  createContract: (data: any) => api.contracts.create(data),
+  updateContract: (id: number, data: any) => api.contracts.update(id, data),
+  deleteContract: (id: number) => api.contracts.delete(id),
 
   getInstallments: (params?: { contractId?: number; isPaid?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.contractId) q.set("contractId", String(params.contractId));
-    if (params?.isPaid !== undefined) q.set("isPaid", params.isPaid);
-    return request<any[]>(`/installments${q.toString() ? `?${q}` : ""}`);
+    const q = buildQuery(params as any);
+    return request<any[]>(`/installments${q}`);
   },
-  updateInstallment: (id: number, data: any) => request<any>(`/installments/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  createInstallment: (data: any) => request<any>("/installments", { method: "POST", body: JSON.stringify(data) }),
-  deleteInstallment: (id: number) => request<{ success: boolean }>(`/installments/${id}`, { method: "DELETE" }),
+  updateInstallment: (id: number, data: any) => api.installments.update(id, data),
+  deleteInstallment: (id: number) => api.installments.delete(id),
 
   getProducts: (params?: { search?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.search) q.set("search", params.search);
-    return request<any[]>(`/products${q.toString() ? `?${q}` : ""}`);
+    const q = buildQuery(params as any);
+    return request<any[]>(`/products${q}`);
   },
-  createProduct: (data: any) => request<any>("/products", { method: "POST", body: JSON.stringify(data) }),
-  updateProduct: (id: number, data: any) => request<any>(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteProduct: (id: number) => request<{ success: boolean }>(`/products/${id}`, { method: "DELETE" }),
+  createProduct: (data: any) => api.products.create(data),
+  updateProduct: (id: number, data: any) => api.products.update(id, data),
+  deleteProduct: (id: number) => api.products.delete(id),
 
   getInventory: (params?: { search?: string; type?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.search) q.set("search", params.search);
-    if (params?.type) q.set("type", params.type);
-    return request<any[]>(`/inventory${q.toString() ? `?${q}` : ""}`);
+    const q = buildQuery(params as any);
+    return request<any[]>(`/inventory${q}`);
   },
-  createInventoryTransaction: (data: any) => request<any>("/inventory", { method: "POST", body: JSON.stringify(data) }),
+  createInventoryTransaction: (data: any) => api.inventory.create(data),
 
-  getExpenseCategories: () => request<any[]>("/expense-categories"),
+  getExpenseCategories: () => api.expenseCategories.list(),
   getExpenses: (params?: { search?: string; categoryId?: number }) => {
-    const q = new URLSearchParams();
-    if (params?.search) q.set("search", params.search);
-    if (params?.categoryId) q.set("categoryId", String(params.categoryId));
-    return request<any[]>(`/expenses${q.toString() ? `?${q}` : ""}`);
+    const q = buildQuery(params as any);
+    return request<any[]>(`/expenses${q}`);
   },
-  createExpense: (data: any) => request<any>("/expenses", { method: "POST", body: JSON.stringify(data) }),
-  updateExpense: (id: number, data: any) => request<any>(`/expenses/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteExpense: (id: number) => request<{ success: boolean }>(`/expenses/${id}`, { method: "DELETE" }),
+  createExpense: (data: any) => api.expenses.create(data),
+  updateExpense: (id: number, data: any) => api.expenses.update(id, data),
+  deleteExpense: (id: number) => api.expenses.delete(id),
 
-  getUsers: () => request<any[]>("/users"),
-  createUser: (data: any) => request<any>("/users", { method: "POST", body: JSON.stringify(data) }),
-  updateUser: (id: number, data: any) => request<any>(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  getUsers: () => api.users.list(),
+  createUser: (data: any) => api.users.create(data),
+  updateUser: (id: number, data: any) => api.users.update(id, data),
   updateUserPassword: (id: number, currentPassword: string, newPassword: string) =>
-    request<{ success: boolean }>(`/users/${id}/password`, { method: "PUT", body: JSON.stringify({ currentPassword, newPassword }) }),
-  deleteUser: (id: number) => request<{ success: boolean }>(`/users/${id}`, { method: "DELETE" }),
+    api.users.changePassword(id, currentPassword, newPassword),
+  deleteUser: (id: number) => api.users.delete(id),
 
-  getSettings: (key: string) => request<any>(`/settings/${key}`),
-  updateSettings: (key: string, data: any) =>
-    request<{ success: boolean }>(`/settings/${key}`, { method: "PUT", body: JSON.stringify(data) }),
+  getSettings: (key: string) => api.settings.get(key),
+  updateSettings: (key: string, data: any) => api.settings.set(key, data),
 };
 
-// Also export individual types for backward compatibility
+// === Re-exported types for convenience ===
 export interface ApiCustomer {
   id: number;
   name: string;

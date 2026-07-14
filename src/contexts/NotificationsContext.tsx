@@ -1,21 +1,18 @@
-"use client";
-
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
-
-export type NotificationType = "overdue_installment" | "upcoming_installment" | "low_stock" | "out_of_stock";
+import { api } from "@/lib/api";
+import { showError } from "@/utils/toast";
 
 export interface Notification {
   id: string;
-  type: NotificationType;
+  type: "overdue_installment" | "upcoming_installment" | "low_stock" | "out_of_stock" | "new_contract" | "payment_received";
   title: string;
   message: string;
-  link: string;
-  read: boolean;
-  createdAt: string;
   priority: "high" | "medium" | "low";
   icon: string;
+  read: boolean;
+  link?: string;
+  createdAt: Date;
 }
 
 interface NotificationsContextType {
@@ -23,25 +20,18 @@ interface NotificationsContextType {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  clearAll: () => void;
   removeNotification: (id: string) => void;
   refreshNotifications: () => void;
   navigateToNotification: (notification: Notification) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
-const STORAGE_KEY = "app_notifications_read";
-
-const getReadIds = (): Set<string> => {
-  try { const stored = localStorage.getItem(STORAGE_KEY); if (stored) return new Set(JSON.parse(stored)); } catch {}
-  return new Set();
-};
-
-const saveReadIds = (ids: Set<string>) => { localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids])); };
 
 export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [readIds, setReadIds] = useState<Set<string>>(getReadIds);
+
+  const generateId = () => Math.random().toString(36).substr(2, 9);
 
   const loadData = useCallback(async () => {
     try {
@@ -51,48 +41,135 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
         api.getProducts(),
       ]);
 
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const result: Notification[] = [];
+      if (!inst || !cont || !prods) return;
 
-      inst.filter((i: any) => !i.is_paid && new Date(i.year, i.month - 1, i.day) < today).forEach((instItem: any) => {
-        const contract = cont.find((c: any) => c.id === instItem.contract_id);
-        if (!contract) return;
-        const daysOverdue = Math.floor((today.getTime() - new Date(instItem.year, instItem.month - 1, instItem.day).getTime()) / 86400000);
-        const notifId = `overdue-${instItem.id}`;
-        result.push({ id: notifId, type: "overdue_installment", title: "قسط متأخر", message: `${contract.customer_name} - القسط ${instItem.number} متأخر ${daysOverdue} يوم`, link: "/installments", read: readIds.has(notifId), createdAt: today.toISOString(), priority: daysOverdue > 7 ? "high" : "medium", icon: "⚠️" });
-      });
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-      inst.filter((i: any) => { if (i.is_paid) return false; const d = new Date(i.year, i.month - 1, i.day); const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000); return diff >= 0 && diff <= 3; }).forEach((instItem: any) => {
-        const contract = cont.find((c: any) => c.id === instItem.contract_id);
-        if (!contract) return;
-        const daysUntil = Math.ceil((new Date(instItem.year, instItem.month - 1, instItem.day).getTime() - today.getTime()) / 86400000);
-        const notifId = `upcoming-${instItem.id}`;
-        result.push({ id: notifId, type: "upcoming_installment", title: "قسط قريب", message: `${contract.customer_name} - القسط ${instItem.number} يستحق خلال ${daysUntil === 0 ? "اليوم" : daysUntil + " يوم"}`, link: "/installments", read: readIds.has(notifId), createdAt: today.toISOString(), priority: daysUntil === 0 ? "high" : "low", icon: "📅" });
-      });
+      const newNotifs: Notification[] = [];
 
-      prods.forEach((p: any) => {
-        if (p.current_stock <= 0) { const n = `out-${p.id}`; result.push({ id: n, type: "out_of_stock", title: "نفذ من المخزون", message: `${p.name} نفذ بالكامل`, link: "/products", read: readIds.has(n), createdAt: today.toISOString(), priority: "high", icon: "🚫" }); }
-        else if (p.current_stock <= p.min_stock) { const n = `low-${p.id}`; result.push({ id: n, type: "low_stock", title: "مخزون منخفض", message: `${p.name} - متبقي ${p.current_stock}`, link: "/products", read: readIds.has(n), createdAt: today.toISOString(), priority: "medium", icon: "📦" }); }
-      });
+      // Overdue installments
+      if (Array.isArray(inst)) {
+        (inst as any[]).filter((i: any) => !i.is_paid && new Date(i.year, i.month - 1, i.day) < today).forEach((instItem: any) => {
+          const contract = Array.isArray(cont) ? (cont as any[]).find((c: any) => c.id === instItem.contract_id) : null;
+          if (!contract) return;
+          newNotifs.push({
+            id: generateId(),
+            type: "overdue_installment",
+            title: "قسط متأخر",
+            message: `العميل ${contract.customer_name} - القسط #${instItem.number} متأخر`,
+            priority: "high",
+            icon: "🚨",
+            read: false,
+            link: `/installments?contractId=${contract.id}`,
+            createdAt: new Date(),
+          });
+        });
 
-      result.sort((a, b) => { if (a.read !== b.read) return a.read ? 1 : -1; const po: any = { high: 0, medium: 1, low: 2 }; return (po[a.priority] || 0) - (po[b.priority] || 0); });
-      setNotifications(result);
-    } catch {}
-  }, [readIds]);
+        // Upcoming installments (within 3 days)
+        (inst as any[]).filter((i: any) => {
+          if (i.is_paid) return false;
+          const d = new Date(i.year, i.month - 1, i.day);
+          const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000);
+          return diff >= 0 && diff <= 3;
+        }).forEach((instItem: any) => {
+          const contract = Array.isArray(cont) ? (cont as any[]).find((c: any) => c.id === instItem.contract_id) : null;
+          if (!contract) return;
+          newNotifs.push({
+            id: generateId(),
+            type: "upcoming_installment",
+            title: "اقتراب قسط",
+            message: `العميل ${contract.customer_name} - القسط #${instItem.number} بعد ${Math.ceil((new Date(instItem.year, instItem.month - 1, instItem.day).getTime() - today.getTime()) / 86400000)} أيام`,
+            priority: "medium",
+            icon: "⏰",
+            read: false,
+            link: `/installments?contractId=${contract.id}`,
+            createdAt: new Date(),
+          });
+        });
+      }
 
-  useEffect(() => { loadData(); }, [loadData]);
+      // Low stock products
+      if (Array.isArray(prods)) {
+        (prods as any[]).filter((p: any) => p.current_stock <= p.min_stock && p.current_stock > 0).forEach((p: any) => {
+          newNotifs.push({
+            id: generateId(),
+            type: "low_stock",
+            title: "مخزون منخفض",
+            message: `المنتج ${p.name} وصل للحد الأدنى (${p.current_stock} ${p.unit})`,
+            priority: "medium",
+            icon: "📦",
+            read: false,
+            link: `/products?id=${p.id}`,
+            createdAt: new Date(),
+          });
+        });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  const markAsRead = useCallback((id: string) => { setReadIds((prev) => { const next = new Set(prev); next.add(id); saveReadIds(next); return next; }); }, []);
-  const markAllAsRead = useCallback(() => { setReadIds((prev) => { const next = new Set(prev); notifications.forEach((n) => next.add(n.id)); saveReadIds(next); return next; }); }, [notifications]);
-  const clearAll = markAllAsRead;
-  const removeNotification = useCallback((id: string) => { setNotifications((prev) => prev.filter((n) => n.id !== id)); }, []);
-  const refreshNotifications = useCallback(async () => { await loadData(); }, [loadData]);
-  const navigate = useNavigate();
-  const navigateToNotification = useCallback((notification: Notification) => { markAsRead(notification.id); navigate(notification.link); }, [markAsRead, navigate]);
+        (prods as any[]).filter((p: any) => p.current_stock <= 0).forEach((p: any) => {
+          newNotifs.push({
+            id: generateId(),
+            type: "out_of_stock",
+            title: "نفاد مخزون",
+            message: `المنتج ${p.name} نفذ بالكامل`,
+            priority: "high",
+            icon: "🚫",
+            read: false,
+            link: `/products?id=${p.id}`,
+            createdAt: new Date(),
+          });
+        });
+      }
+
+      setNotifications(newNotifs);
+    } catch (e: any) {
+      console.error("Notifications: Failed to load data", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, [loadData]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  }, []);
+
+  const markAllAsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
+
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const refreshNotifications = useCallback(() => {
+    loadData();
+  }, [loadData]);
+
+  const navigateToNotification = useCallback((notification: Notification) => {
+    markAsRead(notification.id);
+    if (notification.link) {
+      const [path, query] = notification.link.split("?");
+      navigate({ pathname: path, search: query ? `?${query}` : "" });
+    }
+  }, [markAsRead, navigate]);
 
   return (
-    <NotificationsContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, clearAll, removeNotification, refreshNotifications, navigateToNotification }}>
+    <NotificationsContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        removeNotification,
+        refreshNotifications,
+        navigateToNotification,
+      }}
+    >
       {children}
     </NotificationsContext.Provider>
   );
@@ -100,6 +177,8 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
 
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (!context) throw new Error("useNotifications must be used within NotificationsProvider");
+  if (!context) {
+    throw new Error("useNotifications must be used within a NotificationsProvider");
+  }
   return context;
 };

@@ -1,66 +1,32 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import AnimatedCounter from "@/components/AnimatedCounter";
 import { cn } from "@/lib/utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ExpenseForm from "@/components/ExpenseForm";
 import { api, ApiExpense, ApiExpenseCategory } from "@/lib/api";
 import { showSuccess, showError } from "@/utils/toast";
 import {
-  Receipt,
-  Plus,
-  Search,
-  Sparkles,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Calendar,
-  FileText,
-  Image as ImageIcon,
-  Wallet,
-  Coins,
-  Loader2,
-  PieChart,
+  Receipt, Search, Plus, Sparkles, MoreHorizontal, Edit, Trash2, Loader2, Calendar, Tag, DollarSign, Image,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-
-const categoryIcons: Record<string, any> = {
-  "bg-cyan-100 text-cyan-700": "🏢",
-  "bg-yellow-100 text-yellow-700": "💡",
-  "bg-green-100 text-green-700": "👥",
-  "bg-orange-100 text-orange-700": "🔧",
-  "bg-purple-100 text-purple-700": "📢",
-  "bg-slate-100 text-slate-700": "📋",
-  "bg-gray-100 text-gray-700": "📌",
-};
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState<ApiExpense[]>([]);
   const [categories, setCategories] = useState<ApiExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ApiExpense | null>(null);
-  const [filterCategory, setFilterCategory] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const fetchData = async () => {
     try {
@@ -77,17 +43,11 @@ const Expenses = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, [searchQuery, filterCategory]);
+  useEffect(() => {
+    fetchData();
+  }, [searchQuery, filterCategory]);
 
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const monthTotal = expenses.filter((e) => {
-    const d = new Date(e.date);
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  }).reduce((s, e) => s + e.amount, 0);
-
-  const handleSave = async (data: any) => {
+  const handleSaveExpense = async (data: any) => {
     try {
       if (editingExpense) {
         await api.expenses.update(editingExpense.id, data);
@@ -104,7 +64,7 @@ const Expenses = () => {
     setEditingExpense(null);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteExpense = async (id: number) => {
     try {
       await api.expenses.delete(id);
       showSuccess("✅ تم حذف المصروف");
@@ -112,14 +72,21 @@ const Expenses = () => {
     } catch (e: any) {
       showError("خطأ: " + e.message);
     }
+    setDeleteConfirmId(null);
   };
 
-  const openEdit = (expense: ApiExpense) => {
-    setEditingExpense(expense);
-    setIsDialogOpen(true);
-  };
+  const getCategoryName = (categoryId: number) => categories.find((c) => c.id === categoryId)?.name || "أخرى";
+  const getCategoryColor = (categoryId: number) => categories.find((c) => c.id === categoryId)?.color || "bg-slate-100 text-slate-700";
 
-  const getCategory = (id: number) => categories.find((c) => c.id === id);
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-32">
+          <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -127,95 +94,140 @@ const Expenses = () => {
         <div className="relative">
           <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full opacity-20 blur-xl" />
           <div className="relative flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30"><Receipt className="h-7 w-7 text-white" /></div>
+            <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+              <Receipt className="h-7 w-7 text-white" />
+            </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">المصروفات</h1>
-              <p className="text-slate-500 mt-1">تسجيل ومتابعة المصروفات اليومية</p>
+              <p className="text-slate-500 mt-1">تسجيل وتتبع المصروفات اليومية</p>
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link to="/expense-reports"><Button variant="outline" className="rounded-2xl h-12 px-6 gap-2 border-rose-200 hover:bg-rose-50 active:scale-[0.97]"><PieChart className="h-5 w-5 text-rose-500" />التقارير</Button></Link>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingExpense(null); }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg shadow-rose-500/30 h-12 px-6 active:scale-[0.97]"><Plus className="h-5 w-5" />مصروف جديد</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] rounded-3xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl flex items-center gap-2"><Sparkles className="h-5 w-5 text-rose-500" />{editingExpense ? "تعديل مصروف" : "إضافة مصروف جديد"}</DialogTitle>
-                <DialogDescription>{editingExpense ? "تعديل بيانات المصروف" : "أدخل بيانات المصروف اليومي"}</DialogDescription>
-              </DialogHeader>
-              <ExpenseForm categories={categories} onSave={handleSave} onCancel={() => { setIsDialogOpen(false); setEditingExpense(null); }} initialData={editingExpense} />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 shadow-md flex items-center justify-center"><Coins className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">إجمالي المصروفات</p><p className="font-bold text-xl text-slate-800"><AnimatedCounter value={totalExpenses} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م</p></div></div></CardContent></Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md flex items-center justify-center"><Calendar className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">هذا الشهر</p><p className="font-bold text-xl text-slate-800"><AnimatedCounter value={monthTotal} duration={800} formatter={(v) => v.toLocaleString()} /> ج.م</p></div></div></CardContent></Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center"><FileText className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">عدد العمليات</p><p className="font-bold text-xl text-slate-800"><AnimatedCounter value={expenses.length} duration={800} /></p></div></div></CardContent></Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md flex items-center justify-center"><Wallet className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">متوسط المصروف</p><p className="font-bold text-xl text-slate-800">{expenses.length > 0 ? <AnimatedCounter value={Math.round(totalExpenses / expenses.length)} duration={800} formatter={(v) => v.toLocaleString()} /> : 0} ج.م</p></div></div></CardContent></Card>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingExpense(null); }}>
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            className="gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg shadow-rose-500/30 h-12 px-6"
+          >
+            <Plus className="h-5 w-5" />
+            مصروف جديد
+          </Button>
+          <DialogContent className="sm:max-w-[500px] rounded-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl flex items-center gap-2 justify-start">
+                <Sparkles className="h-5 w-5 text-rose-500" />
+                {editingExpense ? "تعديل المصروف" : "مصروف جديد"}
+              </DialogTitle>
+              <DialogDescription>أدخل بيانات المصروف</DialogDescription>
+            </DialogHeader>
+            <ExpenseForm
+              categories={categories}
+              onSave={handleSaveExpense}
+              onCancel={() => { setIsDialogOpen(false); setEditingExpense(null); }}
+              initialData={editingExpense}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1"><Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" /><Input type="text" placeholder="بحث في المصروفات..." className="pr-12 rounded-2xl bg-white/70 backdrop-blur-sm border-slate-200/50 h-12 shadow-sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant={filterCategory === null ? "default" : "outline"} size="sm" onClick={() => setFilterCategory(null)} className={cn("rounded-xl h-10 px-4 active:scale-[0.97]", filterCategory === null && "bg-gradient-to-r from-slate-700 to-slate-800 text-white")}>الكل</Button>
-          {categories.map((cat) => (
-            <Button key={cat.id} variant={filterCategory === cat.id ? "default" : "outline"} size="sm" onClick={() => setFilterCategory(cat.id === filterCategory ? null : cat.id)} className={cn("rounded-xl h-10 px-4 active:scale-[0.97]", filterCategory === cat.id && "bg-gradient-to-r from-slate-700 to-slate-800 text-white")}>{cat.name}</Button>
-          ))}
+        <div className="relative flex-1">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <Input
+            type="text"
+            placeholder="بحث..."
+            className="pr-12 rounded-2xl h-12"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
+        <select
+          className="rounded-2xl h-12 border border-slate-200 bg-white px-4 text-sm"
+          value={filterCategory || ""}
+          onChange={(e) => setFilterCategory(e.target.value ? Number(e.target.value) : undefined)}
+        >
+          <option value="">جميع الفئات</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 text-violet-500 animate-spin" /></div>
-      ) : (
-        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
-          <div className="divide-y divide-slate-100/80">
-            {expenses.map((expense, index) => {
-              const category = getCategory(expense.category_id);
-              const catColor = category?.color || "bg-slate-100 text-slate-700";
-              return (
-                <div key={expense.id} className="stagger-item p-4 hover:bg-slate-50/50 transition-all hover-lift" style={{ animationDelay: `${index * 0.04}s` }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-lg shadow-md", catColor.split(" ")[0])}>{categoryIcons[catColor] || "📄"}</div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-slate-800">{expense.description}</h3>
-                          {expense.receipt_image && <ImageIcon className="h-4 w-4 text-slate-400" />}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {category && <Badge className={cn("rounded-lg border-0 text-xs", catColor)}>{category.name}</Badge>}
-                          <span className="text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3" />{expense.date}</span>
-                          {expense.note && <span className="text-xs text-slate-500">{expense.note}</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-rose-600">-{expense.amount.toLocaleString()} ج.م</p>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90"><MoreHorizontal className="h-5 w-5 text-slate-500" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem onClick={() => openEdit(expense)} className="cursor-pointer rounded-lg"><Edit className="h-4 w-4 ml-2" />تعديل</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(expense.id)} className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"><Trash2 className="h-4 w-4 ml-2" />حذف</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+      <div className="space-y-3">
+        {expenses.length === 0 && (
+          <div className="text-center py-16">
+            <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-slate-600">لا توجد مصروفات</h3>
+          </div>
+        )}
+
+        {expenses.map((exp) => (
+          <Card key={exp.id} className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white shadow-md flex-shrink-0">
+                    <Receipt className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800">{exp.description}</h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <Badge className={cn("rounded-lg border-0", getCategoryColor(exp.category_id))}>
+                        {getCategoryName(exp.category_id)}
+                      </Badge>
+                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {exp.date}
+                      </span>
+                      {exp.receipt_image && (
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Image className="h-3 w-3" />
+                          إيصال
+                        </span>
+                      )}
+                      {exp.note && (
+                        <span className="text-xs text-slate-400">{exp.note}</span>
+                      )}
                     </div>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-lg text-rose-600">{exp.amount.toLocaleString()} ج.م</p>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl">
+                        <MoreHorizontal className="h-5 w-5 text-slate-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-xl">
+                      <DropdownMenuItem onClick={() => { setEditingExpense(exp); setIsDialogOpen(true); }} className="cursor-pointer rounded-lg">
+                        <Edit className="h-4 w-4 ml-2" /> تعديل
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDeleteConfirmId(exp.id)} className="cursor-pointer rounded-lg text-red-600">
+                        <Trash2 className="h-4 w-4 ml-2" /> حذف
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="sm:max-w-[350px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2 text-red-600"><Trash2 className="h-5 w-5" />تأكيد الحذف</DialogTitle>
+            <DialogDescription>هل أنت متأكد؟ لا يمكن التراجع.</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end px-8 pb-6">
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)} className="rounded-xl h-11">إلغاء</Button>
+            <Button variant="destructive" onClick={() => deleteConfirmId !== null && handleDeleteExpense(deleteConfirmId)} className="rounded-xl h-11">حذف</Button>
           </div>
-          {expenses.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4"><Receipt className="h-10 w-10 text-slate-300" /></div>
-              <h3 className="text-lg font-bold text-slate-600 mb-2">لا توجد مصروفات</h3>
-            </div>
-          )}
-        </Card>
-      )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

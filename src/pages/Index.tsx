@@ -382,61 +382,76 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* المستحقات الكلية */}
-            <Card 
+            <div
               onClick={() => setActiveModal("total")}
-              className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden cursor-pointer group active:scale-[0.99] transition-all"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("total"); }}
+              className="cursor-pointer active:scale-[0.99] transition-all"
             >
-              <CardContent className="p-5 flex items-center justify-between">
-                <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500 group-hover:text-violet-600 transition-colors">إجمالي مستحقات الشهر</p>
-                  <p className="text-2xl font-extrabold text-slate-800">
-                    <AnimatedCounter value={currentMonthStats.totalToCollect} duration={800} formatter={(v) => v.toLocaleString()} />
-                    <span className="text-xs font-medium text-slate-400 mr-1">ج.م</span>
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform">
-                  <Wallet className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div className="space-y-1 text-right">
+                    <p className="text-xs font-semibold text-slate-500 group-hover:text-violet-600 transition-colors">إجمالي مستحقات الشهر</p>
+                    <p className="text-2xl font-extrabold text-slate-800">
+                      <AnimatedCounter value={currentMonthStats.totalToCollect} duration={800} formatter={(v) => v.toLocaleString()} />
+                      <span className="text-xs font-medium text-slate-400 mr-1">ج.م</span>
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform">
+                    <Wallet className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* ما تم تحصيله */}
-            <Card 
+            <div
               onClick={() => setActiveModal("collected")}
-              className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500 cursor-pointer group active:scale-[0.99] transition-all"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("collected"); }}
+              className="cursor-pointer active:scale-[0.99] transition-all"
             >
-              <CardContent className="p-5 flex items-center justify-between">
-                <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">تم تحصيله بنجاح</p>
-                  <p className="text-2xl font-extrabold text-emerald-600">
-                    <AnimatedCounter value={currentMonthStats.collected} duration={800} formatter={(v) => v.toLocaleString()} />
-                    <span className="text-xs font-medium text-emerald-400 mr-1">ج.م</span>
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
-                  <CheckCircle className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500 group">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div className="space-y-1 text-right">
+                    <p className="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">تم تحصيله بنجاح</p>
+                    <p className="text-2xl font-extrabold text-emerald-600">
+                      <AnimatedCounter value={currentMonthStats.collected} duration={800} formatter={(v) => v.toLocaleString()} />
+                      <span className="text-xs font-medium text-emerald-400 mr-1">ج.م</span>
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                    <CheckCircle className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* المتبقي للتحصيل */}
-            <Card 
+            <div
               onClick={() => setActiveModal("remaining")}
-              className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500 cursor-pointer group active:scale-[0.99] transition-all"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("remaining"); }}
+              className="cursor-pointer active:scale-[0.99] transition-all"
             >
-              <CardContent className="p-5 flex items-center justify-between">
-                <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">المتبقي المطلوب تحصيله</p>
-                  <p className="text-2xl font-extrabold text-amber-600">
-                    <AnimatedCounter value={currentMonthStats.remaining} duration={800} formatter={(v) => v.toLocaleString()} />
-                    <span className="text-xs font-medium text-amber-400 mr-1">ج.م</span>
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-                  <Clock className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500 group">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div className="space-y-1 text-right">
+                    <p className="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">المتبقي المطلوب تحصيله</p>
+                    <p className="text-2xl font-extrabold text-amber-600">
+                      <AnimatedCounter value={currentMonthStats.remaining} duration={800} formatter={(v) => v.toLocaleString()} />
+                      <span className="text-xs font-medium text-amber-400 mr-1">ج.م</span>
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                    <Clock className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
           </div>
         </div>
@@ -474,58 +489,73 @@ const Index = () => {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           
           {/* المتأخرات الكلية */}
-          <Card 
+          <div
             onClick={() => setActiveModal("overdue")}
-            className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("overdue"); }}
+            className="cursor-pointer active:scale-[0.99] transition-all"
           >
-            <CardContent className="p-5 flex items-center justify-between">
-              <div className="space-y-1 text-right">
-                <p className="text-xs font-semibold text-slate-500">متأخرات عاجلة (خارج الشهر الحالي)</p>
-                <p className="text-lg font-bold text-rose-600">
-                  <AnimatedCounter value={overdueInstallments.length} duration={800} /> قسط
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
-                <AlertTriangle className="h-5 w-5 animate-pulse" />
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div className="space-y-1 text-right">
+                  <p className="text-xs font-semibold text-slate-500">متأخرات عاجلة (خارج الشهر الحالي)</p>
+                  <p className="text-lg font-bold text-rose-600">
+                    <AnimatedCounter value={overdueInstallments.length} duration={800} /> قسط
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
+                  <AlertTriangle className="h-5 w-5 animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* يستحق اليوم */}
-          <Card 
+          <div
             onClick={() => setActiveModal("today")}
-            className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("today"); }}
+            className="cursor-pointer active:scale-[0.99] transition-all"
           >
-            <CardContent className="p-5 flex items-center justify-between">
-              <div className="space-y-1 text-right">
-                <p className="text-xs font-semibold text-slate-500">مستحقات اليوم الفردية</p>
-                <p className="text-lg font-bold text-slate-800">
-                  <AnimatedCounter value={todayInstallments.length} duration={800} /> قسط
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                <Clock className="h-5 w-5" />
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div className="space-y-1 text-right">
+                  <p className="text-xs font-semibold text-slate-500">مستحقات اليوم الفردية</p>
+                  <p className="text-lg font-bold text-slate-800">
+                    <AnimatedCounter value={todayInstallments.length} duration={800} /> قسط
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                  <Clock className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* العقود النشطة */}
-          <Card 
+          <div
             onClick={() => setActiveModal("activeContracts")}
-            className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden col-span-2 lg:col-span-1 cursor-pointer active:scale-[0.99] transition-all"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("activeContracts"); }}
+            className="cursor-pointer active:scale-[0.99] transition-all col-span-2 lg:col-span-1"
           >
-            <CardContent className="p-5 flex items-center justify-between">
-              <div className="space-y-1 text-right">
-                <p className="text-xs font-semibold text-slate-500">العقود النشطة بالبرنامج</p>
-                <p className="text-lg font-bold text-violet-600">
-                  <AnimatedCounter value={contracts.filter(c => c.status === "active").length} duration={800} /> عقد
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600">
-                <FileText className="h-5 w-5" />
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div className="space-y-1 text-right">
+                  <p className="text-xs font-semibold text-slate-500">العقود النشطة بالبرنامج</p>
+                  <p className="text-lg font-bold text-violet-600">
+                    <AnimatedCounter value={contracts.filter(c => c.status === "active").length} duration={800} /> عقد
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600">
+                  <FileText className="h-5 w-5" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* التبويبات التفاعلية للمهام اليومية والعقود */}

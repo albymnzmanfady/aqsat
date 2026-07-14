@@ -12,11 +12,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, ApiContract, ApiInstallment, ApiCustomer } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { showSuccess, showError } from "@/utils/toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Plus, CreditCard, Users, FileText, AlertTriangle, 
   CheckCircle2, Clock, Loader2,
   TrendingUp, Wallet, Sparkles, Calendar,
-  ChevronLeft, Send, CheckCircle, Coins
+  ChevronLeft, Send, CheckCircle, Coins, ArrowLeftRight
 } from "lucide-react";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 
@@ -29,6 +36,9 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overdue" | "today" | "recent">("overdue");
   const [sendingId, setSendingId] = useState<number | null>(null);
+
+  // حالة التحكم في النوافذ المنبثقة للتفاصيل المالية
+  const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -79,12 +89,12 @@ const Index = () => {
       .slice(0, 5);
   }, [contracts]);
 
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
   // إحصائيات الشهر الحالي بالتفصيل
   const currentMonthStats = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-
     // جميع أقساط هذا الشهر
     const monthInsts = installments.filter(i => i.month === currentMonth && i.year === currentYear);
     
@@ -107,7 +117,29 @@ const Index = () => {
       progressPercent,
       monthName: now.toLocaleDateString("ar-EG", { month: "long" })
     };
-  }, [installments]);
+  }, [installments, currentMonth, currentYear]);
+
+  // تجهيز الأقساط الشهرية مع تفاصيل العميل والمنتج للنافذة المنبثقة
+  const currentMonthInstallmentsWithDetails = useMemo(() => {
+    return installments
+      .filter(i => i.month === currentMonth && i.year === currentYear)
+      .map(i => {
+        const contract = contracts.find(c => c.id === i.contract_id);
+        return {
+          ...i,
+          customerName: contract?.customer_name || "عميل غير معروف",
+          productType: contract?.product_type || "منتج غير معروف",
+          customerPhone: contract?.customer_phone || ""
+        };
+      });
+  }, [installments, contracts, currentMonth, currentYear]);
+
+  const modalInstallmentsList = useMemo(() => {
+    if (activeModal === "total") return currentMonthInstallmentsWithDetails;
+    if (activeModal === "collected") return currentMonthInstallmentsWithDetails.filter(i => i.is_paid);
+    if (activeModal === "remaining") return currentMonthInstallmentsWithDetails.filter(i => !i.is_paid);
+    return [];
+  }, [activeModal, currentMonthInstallmentsWithDetails]);
 
   // تسجيل سداد قسط مباشر من الصفحة الرئيسية
   const handleQuickPay = async (installmentId: number) => {
@@ -128,7 +160,7 @@ const Index = () => {
   };
 
   // إرسال تذكير سريع بالواتساب
-  const handleQuickWhatsApp = async (inst: ApiInstallment, contract: ApiContract) => {
+  const handleQuickWhatsApp = async (inst: any) => {
     const config = getWhatsAppConfig();
     if (!config.endpoint) {
       showError("يرجى إعداد واتساب أولاً من صفحة الإعدادات");
@@ -137,11 +169,11 @@ const Index = () => {
 
     setSendingId(inst.id);
     const dueDate = `${inst.day}/${inst.month}/${inst.year}`;
-    const message = MESSAGE_TEMPLATES.installmentDue(contract.customer_name, inst.amount, dueDate, inst.number);
+    const message = MESSAGE_TEMPLATES.installmentDue(inst.customerName, inst.amount, dueDate, inst.number);
 
-    const result = await sendWhatsAppMessage(contract.customer_phone, message, config);
+    const result = await sendWhatsAppMessage(inst.customerPhone, message, config);
     if (result.success) {
-      showSuccess(`✅ تم إرسال تذكير واتساب لـ ${contract.customer_name}`);
+      showSuccess(`✅ تم إرسال تذكير واتساب لـ ${inst.customerName}`);
     } else {
       showError(result.message);
     }
@@ -200,58 +232,67 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-md font-bold text-slate-700 flex items-center gap-2 px-1">
               <Coins className="h-5 w-5 text-violet-600" />
-              مؤشرات شهر {currentMonthStats.monthName} المالي
+              مؤشرات شهر {currentMonthStats.monthName} المالي <span className="text-xs font-normal text-slate-400 mr-1">(اضغط لعرض التفاصيل)</span>
             </h2>
             <Badge variant="outline" className="border-violet-200 text-violet-700 bg-violet-50 font-bold rounded-lg px-3 py-1">
-              متابعة حية
+              تفاعلي ذكي ⚡
             </Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* المستحقات الكلية */}
-            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
+            <Card 
+              onClick={() => setActiveModal("total")}
+              className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden cursor-pointer group active:scale-[0.99] transition-all"
+            >
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">إجمالي مستحقات الشهر</p>
+                  <p className="text-xs font-semibold text-slate-500 group-hover:text-violet-600 transition-colors">إجمالي مستحقات الشهر</p>
                   <p className="text-2xl font-extrabold text-slate-800">
                     <AnimatedCounter value={currentMonthStats.totalToCollect} duration={800} formatter={(v) => v.toLocaleString()} />
                     <span className="text-xs font-medium text-slate-400 mr-1">ج.م</span>
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600">
+                <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform">
                   <Wallet className="h-6 w-6" />
                 </div>
               </CardContent>
             </Card>
 
             {/* ما تم تحصيله */}
-            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500">
+            <Card 
+              onClick={() => setActiveModal("collected")}
+              className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500 cursor-pointer group active:scale-[0.99] transition-all"
+            >
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">تم تحصيله بنجاح</p>
+                  <p className="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">تم تحصيله بنجاح</p>
                   <p className="text-2xl font-extrabold text-emerald-600">
                     <AnimatedCounter value={currentMonthStats.collected} duration={800} formatter={(v) => v.toLocaleString()} />
                     <span className="text-xs font-medium text-emerald-400 mr-1">ج.م</span>
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
                   <CheckCircle className="h-6 w-6" />
                 </div>
               </CardContent>
             </Card>
 
             {/* المتبقي للتحصيل */}
-            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500">
+            <Card 
+              onClick={() => setActiveModal("remaining")}
+              className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500 cursor-pointer group active:scale-[0.99] transition-all"
+            >
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">المتبقي المطلوب تحصيله</p>
+                  <p className="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">المتبقي المطلوب تحصيله</p>
                   <p className="text-2xl font-extrabold text-amber-600">
                     <AnimatedCounter value={currentMonthStats.remaining} duration={800} formatter={(v) => v.toLocaleString()} />
                     <span className="text-xs font-medium text-amber-400 mr-1">ج.م</span>
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
                   <Clock className="h-6 w-6" />
                 </div>
               </CardContent>
@@ -428,7 +469,16 @@ const Index = () => {
                               variant="outline"
                               className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 gap-1.5"
                               disabled={sendingId === inst.id}
-                              onClick={() => handleQuickWhatsApp(inst, contract)}
+                              onClick={() => handleQuickWhatsApp({
+                                id: inst.id,
+                                customerName: contract.customer_name,
+                                amount: inst.amount,
+                                day: inst.day,
+                                month: inst.month,
+                                year: inst.year,
+                                number: inst.number,
+                                customerPhone: contract.customer_phone
+                              })}
                             >
                               {sendingId === inst.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 text-violet-500" />}
                               تذكير
@@ -505,7 +555,16 @@ const Index = () => {
                               variant="outline"
                               className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 gap-1.5"
                               disabled={sendingId === inst.id}
-                              onClick={() => handleQuickWhatsApp(inst, contract)}
+                              onClick={() => handleQuickWhatsApp({
+                                id: inst.id,
+                                customerName: contract.customer_name,
+                                amount: inst.amount,
+                                day: inst.day,
+                                month: inst.month,
+                                year: inst.year,
+                                number: inst.number,
+                                customerPhone: contract.customer_phone
+                              })}
                             >
                               {sendingId === inst.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 text-violet-500" />}
                               تذكير
@@ -605,6 +664,99 @@ const Index = () => {
           </Button>
         </Link>
       </div>
+
+      {/* نافذة التفاصيل المالية المنبثقة التفاعلية */}
+      <Dialog open={activeModal !== null} onOpenChange={(open) => { if (!open) setActiveModal(null); }}>
+        <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden bg-white">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-100 text-right bg-gradient-to-r from-violet-50 to-slate-50">
+            <DialogTitle className="text-lg font-extrabold text-slate-800 flex items-center gap-2 justify-start">
+              {activeModal === "total" && (
+                <>
+                  <Wallet className="h-5 w-5 text-violet-600" />
+                  <span>تفاصيل مستحقات شهر {currentMonthStats.monthName}</span>
+                </>
+              )}
+              {activeModal === "collected" && (
+                <>
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <span>الأقساط المحصلة بنجاح</span>
+                </>
+              )}
+              {activeModal === "remaining" && (
+                <>
+                  <Clock className="h-5 w-5 text-amber-600" />
+                  <span>الأقساط المتبقية للتحصيل</span>
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 text-right mt-1">
+              {activeModal === "total" && `إجمالي المطلوب تحصيله: ${currentMonthStats.totalToCollect.toLocaleString()} ج.م`}
+              {activeModal === "collected" && `إجمالي المبالغ المحصلة: ${currentMonthStats.collected.toLocaleString()} ج.م`}
+              {activeModal === "remaining" && `المتبقي المطلوب تحصيله: ${currentMonthStats.remaining.toLocaleString()} ج.م`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* قائمة الأقساط للتفاصيل المحددة */}
+          <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 p-4">
+            {modalInstallmentsList.map((inst, index) => (
+              <div key={inst.id} className="flex items-center justify-between py-3 px-2 hover:bg-slate-50 rounded-xl transition-all">
+                <div className="flex items-center gap-3 text-right">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white",
+                    inst.is_paid ? "bg-emerald-500" : "bg-amber-500"
+                  )}>
+                    #{inst.number}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{inst.customerName}</p>
+                    <p className="text-[10px] text-slate-400">{inst.productType}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-left">
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
+                    <p className="text-[10px] text-slate-400" dir="ltr">{inst.day}/{inst.month}/{inst.year}</p>
+                  </div>
+
+                  {!inst.is_paid && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                      onClick={() => {
+                        handleQuickPay(inst.id);
+                        setActiveModal(null);
+                      }}
+                      title="تسجيل تحصيل سريع"
+                    >
+                      <CheckCircle className="h-4.5 w-4.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {modalInstallmentsList.length === 0 && (
+              <div className="text-center py-12 text-slate-400">
+                <Clock className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                <p className="text-sm font-medium">لا توجد بيانات متاحة لهذا القسم</p>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setActiveModal(null)}
+            >
+              إغلاق النافذة
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

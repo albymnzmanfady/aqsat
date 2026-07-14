@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -13,7 +12,7 @@ import PrintDialog from "@/components/PrintDialog";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { showSuccess } from "@/utils/toast";
 import {
-  Calculator, Sparkles, DollarSign, Calendar, Percent, Printer, FileText, ArrowRight, TrendingUp, Info, HelpCircle
+  Calculator, Sparkles, DollarSign, Calendar, Percent, Printer, FileText, ArrowRight, Info
 } from "lucide-react";
 
 const CalculatorPage = () => {
@@ -147,9 +146,15 @@ const CalculatorPage = () => {
   };
 
   const handleConvertToContract = () => {
-    // Navigate to Contracts screen and suggest values (or keep pre-filled state)
-    showSuccess("🎯 تم تجهيز محاكاة التمويل للعميل!");
-    navigate("/contracts");
+    showSuccess("🎯 تم تجهيز محاكاة التمويل وتحويلها للعقد!");
+    navigate("/contracts", {
+      state: {
+        fromCalculator: true,
+        price: productPrice,
+        downPayment: downPayment,
+        months: months
+      }
+    });
   };
 
   return (

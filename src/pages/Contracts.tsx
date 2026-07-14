@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import { FileText, Plus, Search, Sparkles, Calendar, Send, Loader2, Eye, CheckCi
 
 const Contracts = () => {
   const { settings } = useAppSettings();
+  const location = useLocation();
+  
   const [contracts, setContracts] = useState<ApiContract[]>([]);
   const [installments, setInstallments] = useState<ApiInstallment[]>([]);
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
@@ -33,6 +36,9 @@ const Contracts = () => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [sendingContract, setSendingContract] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [initialCalculatorValues, setInitialCalculatorValues] = useState<any>(null);
+
+  // Print state
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
   const [printTitle, setPrintTitle] = useState("");
@@ -46,12 +52,36 @@ const Contracts = () => {
         api.customers.list(),
         api.products.list(),
       ]);
-      setContracts(c); setInstallments(i); setCustomers(cu); setProducts(p);
-    } catch (e: any) { showError("خطأ: " + e.message); }
-    finally { setLoading(false); }
+      setContracts(c); 
+      setInstallments(i); 
+      setCustomers(cu); 
+      setProducts(p);
+    } catch (e: any) { 
+      showError("خطأ: " + e.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  useEffect(() => { fetchData(); }, [searchQuery]);
+  useEffect(() => { 
+    fetchData(); 
+  }, [searchQuery]);
+
+  // التحقق من نقل بيانات الحاسبة وفتح النافذة مسبقة التعبئة
+  useEffect(() => {
+    if (location.state?.fromCalculator) {
+      setInitialCalculatorValues({
+        price: location.state.price,
+        downPayment: String(location.state.downPayment),
+        numberOfReceipts: String(location.state.months),
+      });
+      setEditingContract(null);
+      setIsDialogOpen(true);
+      
+      // مسح الحالة لتجنب فتحها مجدداً عند التحديث
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const guarantors = customers.filter((c) => c.type === "guarantor");
   const contractCustomers = customers.filter((c) => c.type === "customer");
@@ -89,14 +119,22 @@ const Contracts = () => {
         }
       }
       fetchData();
-    } catch (e: any) { showError("خطأ: " + e.message); }
+    } catch (e: any) { 
+      showError("خطأ: " + e.message); 
+    }
     setIsDialogOpen(false);
     setEditingContract(null);
+    setInitialCalculatorValues(null);
   };
 
   const handleDelete = async (id: number) => {
-    try { await api.contracts.delete(id); showSuccess("✅ تم حذف العقد"); fetchData(); }
-    catch (e: any) { showError("خطأ: " + e.message); }
+    try { 
+      await api.contracts.delete(id); 
+      showSuccess("✅ تم حذف العقد"); 
+      fetchData(); 
+    } catch (e: any) { 
+      showError("خطأ: " + e.message); 
+    }
     setDeleteConfirmId(null);
   };
 
@@ -105,7 +143,9 @@ const Contracts = () => {
       await api.installments.update(installmentId, { isPaid: true, paidDate: new Date().toISOString().split("T")[0] });
       fetchData();
       showSuccess("✅ تم تسديد القسط بنجاح");
-    } catch (e: any) { showError("خطأ: " + e.message); }
+    } catch (e: any) { 
+      showError("خطأ: " + e.message); 
+    }
   };
 
   const contractInstallments = (contractId: number) => installments.filter((i) => i.contract_id === contractId);
@@ -122,13 +162,21 @@ const Contracts = () => {
             <div><h1 className="text-2xl lg:text-3xl font-bold text-slate-800">العقود</h1><p className="text-slate-500 mt-1">إدارة عقود الأقساط</p></div>
           </div>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingContract(null); }}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingContract(null); setInitialCalculatorValues(null); } }}>
           <DialogTrigger asChild>
             <Button className="gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/30 h-12 px-6 active:scale-[0.97]"><Plus className="h-5 w-5" />عقد جديد</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px] rounded-3xl">
             <DialogHeader><DialogTitle className="text-xl flex items-center gap-2"><Sparkles className="h-5 w-5 text-emerald-500" />{editingContract ? "تعديل العقد" : "إنشاء عقد جديد"}</DialogTitle><DialogDescription>{editingContract ? "تعديل بيانات العقد" : "اختر العميل والمنتج من المخزن"}</DialogDescription></DialogHeader>
-            <ContractForm key={editingContract?.id || "new"} customers={contractCustomers} guarantors={guarantors} products={editingContract ? products : availableProducts} onSave={handleCreateContract} onCancel={() => { setIsDialogOpen(false); setEditingContract(null); }} />
+            <ContractForm 
+              key={editingContract?.id || "new"} 
+              customers={contractCustomers} 
+              guarantors={guarantors} 
+              products={editingContract ? products : availableProducts} 
+              onSave={handleCreateContract} 
+              onCancel={() => { setIsDialogOpen(false); setEditingContract(null); setInitialCalculatorValues(null); }} 
+              initialValues={initialCalculatorValues}
+            />
           </DialogContent>
         </Dialog>
       </div>

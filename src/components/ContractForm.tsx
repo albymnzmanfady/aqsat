@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DialogFooter, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { DialogFooter, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Calculator, Package, User, Calendar, CreditCard, Shield, Plus, MapPin } from "lucide-react";
+import { Sparkles, Calculator, Package, User, Shield, Plus } from "lucide-react";
 import { ApiCustomer, ApiProduct, api } from "@/lib/api";
 import { showSuccess, showError } from "@/utils/toast";
 
@@ -16,9 +16,14 @@ interface ContractFormProps {
   products: ApiProduct[];
   onSave: (data: any) => void;
   onCancel: () => void;
+  initialValues?: {
+    price?: number;
+    downPayment?: string;
+    numberOfReceipts?: string;
+  };
 }
 
-const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: ContractFormProps) => {
+const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initialValues }: ContractFormProps) => {
   const [localGuarantors, setLocalGuarantors] = useState<ApiCustomer[]>(guarantors);
   const [localCustomers, setLocalCustomers] = useState<ApiCustomer[]>(customers);
   const [showNewGuarantorDialog, setShowNewGuarantorDialog] = useState(false);
@@ -37,10 +42,37 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel }: Con
   const [customerErrors, setCustomerErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
-    customerId: "", productId: "", downPayment: "", numberOfReceipts: "", startDate: "",
-    guarantorId: "", guarantorName: "", guarantorPhone: "",
+    customerId: "", 
+    productId: "", 
+    downPayment: initialValues?.downPayment || "", 
+    numberOfReceipts: initialValues?.numberOfReceipts || "", 
+    startDate: new Date().toISOString().split("T")[0],
+    guarantorId: "", 
+    guarantorName: "", 
+    guarantorPhone: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // محاولة اختيار المنتج المقارب للسعر المحاكى تلقائياً
+  useEffect(() => {
+    if (initialValues?.price && products.length > 0) {
+      // إيجاد أقرب منتج لسعر البيع المحاكى
+      let closestProduct = products[0];
+      let minDiff = Math.abs(products[0].selling_price - initialValues.price);
+
+      for (let i = 1; i < products.length; i++) {
+        const diff = Math.abs(products[i].selling_price - initialValues.price);
+        if (diff < minDiff && products[i].current_stock > 0) {
+          minDiff = diff;
+          closestProduct = products[i];
+        }
+      }
+
+      if (closestProduct && closestProduct.current_stock > 0) {
+        setFormData((prev) => ({ ...prev, productId: closestProduct.id.toString() }));
+      }
+    }
+  }, [initialValues, products]);
 
   const selectedProduct = products.find((p) => p.id === Number(formData.productId));
   const total = selectedProduct?.selling_price || 0;

@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem("auth_user");
-    if (saved) {
+    if ( saved) {
       try { return JSON.parse(saved); } catch { return null; }
     }
     return null;
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const foundUser = await api.login(email, password);
-      setUser(foundUser);
+      setUser({ ...foundUser, role: foundUser.role as User["role"] });
       return { success: true };
     } catch (e: any) {
       return { success: false, error: e.message || "فشل تسجيل الدخول" };

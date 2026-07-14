@@ -206,9 +206,9 @@ const Contracts = () => {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap"><h3 className="font-bold text-slate-800">{contract.customer_name}</h3><Badge className={cn("rounded-lg border-0", statusStyles[contract.status])}><StatusIcon className="h-3 w-3 ml-1" />{contract.status === "active" ? "نشط" : contract.status === "completed" ? "مكتمل" : "متأخر"}</Badge></div>
                       <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg flex items-center gap-1"><Package className="h-3.5 w-3.5" />{contract.product_type}</span>
-                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg">{contract.total_price.toLocaleString()} ج.م</span>
-                        <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{contract.start_date}</span>
+                        <span className="px-2.5 py-0.5 rounded-lg flex items-center gap-1"><Package className="h-3.5 w-3.5" />{contract.product_type}</span>
+                        <span className="px-2.5 py-0.5 rounded-lg">{contract.total_price.toLocaleString()} ج.م</span>
+                        <span className="px-2.5 py-0.5 rounded-lg flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{contract.start_date}</span>
                       </div>
                     </div>
                   </div>

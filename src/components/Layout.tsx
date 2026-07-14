@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useTheme } from "next-themes";
 import MobileNav from "@/components/MobileNav";
 import ScrollToTop from "@/components/ScrollToTop";
 import TopBar from "@/components/TopBar";
@@ -36,6 +37,8 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   Calculator,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -57,6 +60,7 @@ const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
   const { user, logout, hasPermission } = useAuth();
   const { settings } = useAppSettings();
+  const { theme, setTheme } = useTheme();
   const [avatar, setAvatar] = useState(getStoredAvatar);
 
   useEffect(() => {
@@ -73,6 +77,10 @@ const Layout = ({ children }: LayoutProps) => {
     const next = !sidebarCollapsed;
     setSidebarCollapsed(next);
     localStorage.setItem("sidebar_collapsed", next.toString());
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const navItems = [
@@ -301,6 +309,20 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Quick Dark Mode Toggle Button for Mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-10 w-10 rounded-xl text-slate-600 active:scale-90"
+              title="تبديل وضع الألوان"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5 text-amber-500" />
+              ) : (
+                <Moon className="h-5 w-5 text-slate-600" />
+              )}
+            </Button>
             <NotificationsDropdown />
             <Link to="/profile">
               <div className={cn(

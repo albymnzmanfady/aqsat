@@ -20,6 +20,12 @@ export const api = {
       { method: "POST", body: JSON.stringify({ email, password }) }
     ),
 
+  // Backup & Restore
+  backup: {
+    exportUrl: () => `${API_BASE}/backup/export`,
+    import: (data: any) => request<{ success: boolean }>("/backup/import", { method: "POST", body: JSON.stringify(data) }),
+  },
+
   // Nested API (backward compat for .list(), .create(), .update(), .delete())
   customers: {
     list: (search?: string) => request<any[]>("/customers" + (search ? `?search=${search}` : "")),

@@ -17,7 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '15mb' }));
 
 // 1. تسجيل الدخول
 app.post('/api/users/login', (req, res) => {
@@ -485,6 +485,58 @@ app.put('/api/settings/:key', (req, res) => {
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// 11. استيراد وتصدير النسخة الاحتياطية (Backup/Import)
+app.get('/api/backup/export', (req, res) => {
+  try {
+    const tables = [
+      'customers', 'products', 'contracts', 'installments', 
+      'inventory_transactions', 'expense_categories', 'expenses', 
+      'users', 'app_settings'
+    ];
+    const data: Record<string, any[]> = {};
+    for (const table of tables) {
+      data[table] = db.prepare(`SELECT * FROM ${table}`).all();
+    }
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=aqsat-backup.json');
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: 'فشل تصدير النسخة الاحتياطية: ' + error.message });
+  }
+});
+
+app.post('/api/backup/import', (req, res) => {
+  const data = req.body;
+  try {
+    const tables = [
+      'customers', 'products', 'contracts', 'installments', 
+      'inventory_transactions', 'expense_categories', 'expenses', 
+      'users', 'app_settings'
+    ];
+    
+    const dbTxn = db.transaction(() => {
+      for (const table of tables) {
+        if (data[table] && Array.isArray(data[table])) {
+          db.prepare(`DELETE FROM ${table}`).run();
+          if (data[table].length > 0) {
+            const columns = Object.keys(data[table][0]);
+            const placeholders = columns.map(() => '?').join(',');
+            const stmt = db.prepare(`INSERT INTO ${table} (${columns.join(',')}) VALUES (${placeholders})`);
+            for (const row of data[table]) {
+              const values = columns.map(col => row[col]);
+              stmt.run(...values);
+            }
+          }
+        }
+      }
+    });
+    dbTxn();
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: 'فشل استيراد النسخة الاحتياطية: ' + error.message });
   }
 });
 

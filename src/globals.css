@@ -15,6 +15,80 @@
   }
 }
 
+/* الوضع الداكن الشامل والأنيق */
+.dark body {
+  background-color: #0b0f17 !important;
+  background-image: radial-gradient(circle, #1e293b 0.5px, transparent 0.5px) !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .bg-white,
+.dark .bg-white\/80,
+.dark .bg-white\/70,
+.dark .bg-white\/90 {
+  background-color: rgba(17, 24, 39, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/50 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-50\/50 {
+  background-color: #111827 !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .crystal,
+.dark .crystal-strong {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.4) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark header,
+.dark aside,
+.dark nav {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .DropdownMenuContent,
+.dark .dropdown-menu-content,
+.dark div[role="menu"],
+.dark div[role="dialog"] {
+  background-color: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f3f4f6 !important;
+}
+
 /* Crystal glass effect for cards and menus */
 .crystal {
   background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);

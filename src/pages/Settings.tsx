@@ -20,7 +20,7 @@ import {
 import {
   MessageSquareText, Settings2, Wifi, Send, Phone, Key, Server, RefreshCw, Loader2,
   CheckCircle2, XCircle, Sparkles, Info, Smartphone, Bell, Sun, Moon, Monitor,
-  Palette, Building2, Upload, Trash2, Save, Globe,
+  Palette, Building2, Upload, Trash2, Save, Globe, Database, Download,
 } from "lucide-react";
 
 interface GeneralSettings {
@@ -92,6 +92,31 @@ const Settings = () => {
 
   const removeLogo = () => { setSettings({ ...settings, logoUrl: "" }); if (fileInputRef.current) fileInputRef.current.value = ""; };
 
+  // التعامل مع استيراد النسخة الاحتياطية
+  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const confirmImport = window.confirm("⚠️ تحذير مالي هام جداً:\n\nسيتم حذف كافة البيانات الحالية بالكامل واستبدالها ببيانات ملف النسخة الاحتياطية المختار!\n\nهل أنت متأكد تماماً وتريد الاستمرار؟");
+    if (!confirmImport) {
+      if (e.target) e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        await api.backup.import(json);
+        showSuccess("✅ تم استيراد واسترجاع بيانات النسخة الاحتياطية بنجاح! جاري إعادة تهيئة النظام...");
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error: any) {
+        showError("❌ خطأ: ملف غير صحيح أو معطوب. " + error.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const providers = [
     { value: "waha", label: "Waha", desc: "مفتوح المصدر" },
     { value: "evolution", label: "Evolution API", desc: "قابل للتوسع" },
@@ -118,6 +143,7 @@ const Settings = () => {
           <TabsTrigger value="general" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-700 data-[state=active]:to-slate-800 data-[state=active]:text-white gap-2"><Settings2 className="h-4 w-4" /><span className="hidden sm:inline">عام</span></TabsTrigger>
           <TabsTrigger value="appearance" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white gap-2"><Palette className="h-4 w-4" /><span className="hidden sm:inline">المظهر</span></TabsTrigger>
           <TabsTrigger value="whatsapp" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white gap-2"><MessageSquareText className="h-4 w-4" /><span className="hidden sm:inline">واتساب</span></TabsTrigger>
+          <TabsTrigger value="backup" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-violet-600 data-[state=active]:text-white gap-2"><Database className="h-4 w-4" /><span className="hidden sm:inline">النسخ الاحتياطي</span></TabsTrigger>
         </TabsList>
 
         {/* GENERAL TAB */}
@@ -224,6 +250,80 @@ const Settings = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* BACKUP TAB */}
+        <TabsContent value="backup" className="mt-0 space-y-6">
+          <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="pb-4 border-b border-slate-100/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center">
+                  <Database className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg text-slate-800">النسخ الاحتياطي واستيراد البيانات</CardTitle>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                <h4 className="font-bold text-sm text-indigo-800 mb-1 flex items-center gap-2">
+                  <Info className="h-4 w-4 text-indigo-600" />
+                  تنبيه أمان مالي هام ⚠️
+                </h4>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  يرجى الاحتفاظ بنسخة احتياطية من بياناتك بشكل دوري. تصدير البيانات سينتج ملفاً بصيغة JSON يحتوي على كافة الحسابات والعملاء والعقود والمصروفات والمستخدمين، ويمكنك استيراده في أي وقت لاستعادة بياناتك بالكامل في حال حدوث أي طارئ.
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-6">
+                {/* Export */}
+                <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm text-center space-y-4">
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
+                    <Download className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h5 className="font-bold text-sm text-slate-800">تصدير النسخة الاحتياطية</h5>
+                    <p className="text-xs text-slate-400">تحميل نسخة كاملة من كافة جداول النظام وحفظها بجهازك</p>
+                  </div>
+                  <a href={api.backup.exportUrl()} download="aqsat-backup.json" className="block">
+                    <Button className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 gap-2 active:scale-95 transition-transform">
+                      <Download className="h-4 w-4" />
+                      تصدير وحفظ البيانات (.json)
+                    </Button>
+                  </a>
+                </div>
+
+                {/* Import */}
+                <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm text-center space-y-4">
+                  <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h5 className="font-bold text-sm text-slate-800">استيراد النسخة الاحتياطية</h5>
+                    <p className="text-xs text-slate-400">استعادة البيانات من ملف نسخة احتياطية تم تصديره سابقاً</p>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept=".json" 
+                      onChange={handleImportBackup} 
+                      className="hidden" 
+                      id="import-backup-file" 
+                    />
+                    <label htmlFor="import-backup-file">
+                      <Button asChild className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 gap-2 cursor-pointer active:scale-95 transition-transform">
+                        <span>
+                          <Upload className="h-4 w-4" />
+                          رفع واستيراد نسخة احتياطية
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </Layout>

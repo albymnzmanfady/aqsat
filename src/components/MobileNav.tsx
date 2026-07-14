@@ -36,6 +36,7 @@ const mainNavItems = [
 
 // بقية العناصر والصفحات التي تظهر في قائمة "المزيد"
 const moreItems = [
+  { path: "/collection-reports", label: "تقارير التحصيل", icon: BarChart3, color: "from-violet-500 to-purple-600", permission: "view_installments" as const },
   { path: "/calculator", label: "حاسبة الأقساط", icon: Calculator, color: "from-indigo-500 to-violet-600", permission: null as string | null },
   { path: "/profile", label: "حسابي الشخصي", icon: User, color: "from-amber-500 to-orange-500", permission: null as string | null },
   { path: "/expenses", label: "المصروفات", icon: Receipt, color: "from-rose-500 to-pink-600", permission: "view_expenses" as const },

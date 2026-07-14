@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import CustomerLink from "@/components/CustomerLink";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -38,7 +39,6 @@ const Contracts = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("active");
 
-  // Print state
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
   const [printTitle, setPrintTitle] = useState("");
@@ -259,7 +259,7 @@ const Contracts = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-slate-800">{contract.customer_name}</h3>
+                        <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="font-bold text-slate-800" />
                         {getStatusBadge(contract.status)}
                         {isOverdue && (
                           <Badge className="rounded-lg bg-rose-100 text-rose-700 border-rose-200 border">

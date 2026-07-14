@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import CustomerLink from "@/components/CustomerLink";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -26,7 +27,6 @@ const Installments = () => {
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ installment: ApiInstallment; type: "pay" | "unpay" } | null>(null);
 
-  // Print
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
   const [printTitle, setPrintTitle] = useState("");
@@ -226,9 +226,11 @@ const Installments = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-800">
-                          {contract?.customer_name || "عميل غير معروف"}
-                        </h3>
+                        <CustomerLink
+                          customerId={contract?.customer_id}
+                          customerName={contract?.customer_name || "عميل غير معروف"}
+                          className="font-bold text-slate-800"
+                        />
                         <Badge className={cn("rounded-lg border-0", status.color)}>
                           {status.label}
                         </Badge>

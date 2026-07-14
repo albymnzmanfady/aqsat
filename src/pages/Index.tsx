@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import CustomerLink from "@/components/CustomerLink";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiContract, ApiInstallment, ApiCustomer } from "@/lib/api";
@@ -39,13 +40,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"overdue" | "today" | "recent">("overdue");
   const [sendingId, setSendingId] = useState<number | null>(null);
 
-  // البحث السريع للتحصيل
   const [quickSearch, setQuickSearch] = useState("");
-
-  // حالة تأكيد التحصيل المالي
   const [confirmPayInstallment, setConfirmPayInstallment] = useState<any | null>(null);
-
-  // حالة التحكم في النوافذ المنبثقة لجميع المؤشرات المالية
   const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | "overdue" | "today" | "activeContracts" | null>(null);
 
   useEffect(() => {
@@ -71,7 +67,6 @@ const Index = () => {
     return d;
   }, []);
 
-  // حساب التوقيت والتحية الذكية
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "صباح الخير والبركة";
@@ -79,12 +74,10 @@ const Index = () => {
     return "مساء الخير والنجاح";
   }, []);
 
-  // فرز الأقساط المتأخرة
   const overdueInstallments = useMemo(() => {
     return installments.filter(i => !i.is_paid && new Date(i.year, i.month - 1, i.day) < today);
   }, [installments, today]);
 
-  // مستحقات اليوم الفردية
   const todayInstallments = useMemo(() => {
     return installments.filter(i => {
       const due = new Date(i.year, i.month - 1, i.day);
@@ -102,7 +95,6 @@ const Index = () => {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  // إحصائيات الشهر الحالي بالتفصيل
   const currentMonthStats = useMemo(() => {
     const monthInsts = installments.filter(i => i.month === currentMonth && i.year === currentYear);
     const totalToCollect = monthInsts.reduce((sum, i) => sum + i.amount, 0);
@@ -119,7 +111,6 @@ const Index = () => {
     };
   }, [installments, currentMonth, currentYear]);
 
-  // أقساط الشهر الحالي بالتفاصيل
   const currentMonthInstallmentsWithDetails = useMemo(() => {
     return installments
       .filter(i => i.month === currentMonth && i.year === currentYear)
@@ -128,18 +119,17 @@ const Index = () => {
         return {
           ...i,
           customerName: contract?.customer_name || "عميل غير معروف",
-          productType: contract?.product_type || "منتج غير معروف",
-          customerPhone: contract?.customer_phone || ""
+          productType: contract?.product_type || "غير معروف",
+          customerPhone: contract?.customer_phone || "",
+          customerId: contract?.customer_id
         };
       });
   }, [installments, contracts, currentMonth, currentYear]);
 
-  // تصفية ذكية للأقساط غير المسددة للتحصيل السريع
   const quickSearchResults = useMemo(() => {
     if (!quickSearch.trim()) return [];
     const query = quickSearch.trim().toLowerCase();
     
-    // إيجاد كافة الأقساط غير المسددة
     return installments
       .filter(i => !i.is_paid)
       .map(i => {
@@ -148,48 +138,47 @@ const Index = () => {
           ...i,
           customerName: contract?.customer_name || "",
           customerPhone: contract?.customer_phone || "",
-          productType: contract?.product_type || ""
+          productType: contract?.product_type || "",
+          customerId: contract?.customer_id
         };
       })
       .filter(i => 
         i.customerName.toLowerCase().includes(query) || 
         i.customerPhone.includes(query)
       )
-      .slice(0, 5); // أقصى حد 5 نتائج للحفاظ على بساطة الواجهة
+      .slice(0, 5);
   }, [quickSearch, installments, contracts]);
 
-  // أقساط المتأخرات بالتفاصيل الكاملة
   const overdueInstallmentsWithDetails = useMemo(() => {
     return overdueInstallments.map(i => {
       const contract = contracts.find(c => c.id === i.contract_id);
       return {
         ...i,
         customerName: contract?.customer_name || "عميل غير معروف",
-        productType: contract?.product_type || "منتج غير معروف",
-        customerPhone: contract?.customer_phone || ""
+        productType: contract?.product_type || "غير معروف",
+        customerPhone: contract?.customer_phone || "",
+        customerId: contract?.customer_id
       };
     });
   }, [overdueInstallments, contracts]);
 
-  // أقساط اليوم بالتفاصيل الكاملة
   const todayInstallmentsWithDetails = useMemo(() => {
     return todayInstallments.map(i => {
       const contract = contracts.find(c => c.id === i.contract_id);
       return {
         ...i,
         customerName: contract?.customer_name || "عميل غير معروف",
-        productType: contract?.product_type || "منتج غير معروف",
-        customerPhone: contract?.customer_phone || ""
+        productType: contract?.product_type || "غير معروف",
+        customerPhone: contract?.customer_phone || "",
+        customerId: contract?.customer_id
       };
     });
   }, [todayInstallments, contracts]);
 
-  // العقود النشطة بالبرنامج
   const activeContractsList = useMemo(() => {
     return contracts.filter(c => c.status === "active");
   }, [contracts]);
 
-  // إعداد مصفوفة البيانات المعروضة في النافذة المنبثقة بناءً على البطاقة النشطة
   const modalInstallmentsList = useMemo(() => {
     if (activeModal === "total") return currentMonthInstallmentsWithDetails;
     if (activeModal === "collected") return currentMonthInstallmentsWithDetails.filter(i => i.is_paid);
@@ -199,12 +188,10 @@ const Index = () => {
     return [];
   }, [activeModal, currentMonthInstallmentsWithDetails, overdueInstallmentsWithDetails, todayInstallmentsWithDetails]);
 
-  // توجيه الطلب إلى نافذة التأكيد قبل التنفيذ
   const askPayConfirmation = (inst: any) => {
     setConfirmPayInstallment(inst);
   };
 
-  // تأكيد و تنفيذ عملية السداد المالي الفعلية في قاعدة البيانات
   const executePayment = async () => {
     if (!confirmPayInstallment) return;
     const installmentId = confirmPayInstallment.id;
@@ -215,10 +202,9 @@ const Index = () => {
         paidDate: new Date().toISOString().split("T")[0]
       });
       showSuccess("✅ تم تحصيل القسط بنجاح وتسجيل المعاملة المالية");
-      setQuickSearch(""); // إعادة تصفير البحث الفوري
-      setConfirmPayInstallment(null); // إغلاق تأكيد السداد
+      setQuickSearch("");
+      setConfirmPayInstallment(null);
       
-      // تحديث البيانات فوراً
       const [c, i] = await Promise.all([api.contracts.list(), api.installments.list()]);
       setContracts(c);
       setInstallments(i);
@@ -227,7 +213,6 @@ const Index = () => {
     }
   };
 
-  // إرسال تذكير سريع بالواتساب
   const handleQuickWhatsApp = async (inst: any) => {
     const config = getWhatsAppConfig();
     if (!config.endpoint) {
@@ -263,7 +248,7 @@ const Index = () => {
     <Layout>
       <div className="space-y-8 pb-24 page-enter-animation">
         
-        {/* ترحيب و واجهة رئيسية راقية */}
+        {/* ترحيب */}
         <div className="relative overflow-hidden rounded-3xl p-6 lg:p-8 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 text-white shadow-xl shadow-purple-500/10">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-xl animate-pulse" />
@@ -295,7 +280,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* قسم التحصيل السريع والمباشر - Quick Collector Widget */}
+        {/* البحث السريع */}
         <Card className="border-0 bg-white/90 backdrop-blur-sm overflow-hidden p-5 shadow-lg border-r-4 border-r-violet-500">
           <div className="space-y-3">
             <div className="text-right">
@@ -325,13 +310,12 @@ const Index = () => {
               )}
             </div>
 
-            {/* عرض نتائج البحث الفوري */}
             {quickSearch && (
               <div className="mt-3 p-2 bg-slate-50/50 rounded-2xl border border-slate-100 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
                 {quickSearchResults.map((inst) => (
                   <div key={inst.id} className="flex items-center justify-between p-3 first:pt-2 last:pb-2">
                     <div className="text-right space-y-1">
-                      <p className="text-sm font-bold text-slate-800">{inst.customerName}</p>
+                      <CustomerLink customerId={inst.customerId} customerName={inst.customerName} className="text-sm font-bold text-slate-800" />
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500">{inst.productType}</span>
                         <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-100">
@@ -367,7 +351,7 @@ const Index = () => {
           </div>
         </Card>
 
-        {/* المؤشرات المالية المخصصة لشهر التحصيل الحالي */}
+        {/* المؤشرات المالية */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-md font-bold text-slate-700 flex items-center gap-2 px-1">
@@ -380,8 +364,6 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            {/* المستحقات الكلية */}
             <div
               onClick={() => setActiveModal("total")}
               role="button"
@@ -405,7 +387,6 @@ const Index = () => {
               </Card>
             </div>
 
-            {/* ما تم تحصيله */}
             <div
               onClick={() => setActiveModal("collected")}
               role="button"
@@ -429,7 +410,6 @@ const Index = () => {
               </Card>
             </div>
 
-            {/* المتبقي للتحصيل */}
             <div
               onClick={() => setActiveModal("remaining")}
               role="button"
@@ -452,11 +432,10 @@ const Index = () => {
                 </CardContent>
               </Card>
             </div>
-
           </div>
         </div>
 
-        {/* شريط تقدم تحصيل مستهدفات الشهر الكلية */}
+        {/* شريط التقدم */}
         <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden p-6 hover-lift">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="text-right">
@@ -485,17 +464,9 @@ const Index = () => {
           </div>
         </Card>
 
-        {/* المؤشرات العامة للنظام */}
+        {/* المؤشرات العامة */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          
-          {/* المتأخرات الكلية */}
-          <div
-            onClick={() => setActiveModal("overdue")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("overdue"); }}
-            className="cursor-pointer active:scale-[0.99] transition-all"
-          >
+          <div onClick={() => setActiveModal("overdue")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("overdue"); }} className="cursor-pointer active:scale-[0.99] transition-all">
             <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
@@ -511,14 +482,7 @@ const Index = () => {
             </Card>
           </div>
 
-          {/* يستحق اليوم */}
-          <div
-            onClick={() => setActiveModal("today")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("today"); }}
-            className="cursor-pointer active:scale-[0.99] transition-all"
-          >
+          <div onClick={() => setActiveModal("today")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("today"); }} className="cursor-pointer active:scale-[0.99] transition-all">
             <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
@@ -534,14 +498,7 @@ const Index = () => {
             </Card>
           </div>
 
-          {/* العقود النشطة */}
-          <div
-            onClick={() => setActiveModal("activeContracts")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("activeContracts"); }}
-            className="cursor-pointer active:scale-[0.99] transition-all col-span-2 lg:col-span-1"
-          >
+          <div onClick={() => setActiveModal("activeContracts")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("activeContracts"); }} className="cursor-pointer active:scale-[0.99] transition-all col-span-2 lg:col-span-1">
             <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
@@ -558,7 +515,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* التبويبات التفاعلية للمهام اليومية والعقود */}
+        {/* التبويبات */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 px-1">
@@ -566,7 +523,6 @@ const Index = () => {
               المهام والحركات النشطة
             </h2>
             
-            {/* التبويبات */}
             <div className="flex gap-2 self-start sm:self-auto bg-slate-100 p-1 rounded-xl">
               {[
                 { id: "overdue", label: "متأخرات حرجة", count: overdueInstallments.length },
@@ -599,26 +555,21 @@ const Index = () => {
             </div>
           </div>
 
-          {/* محتوى التبويبات */}
           <div className="grid gap-3">
             
-            {/* الأقساط المتأخرة */}
             {activeTab === "overdue" && (
               <>
                 {overdueInstallments.slice(0, 5).map(inst => {
                   const contract = contracts.find(c => c.id === inst.contract_id);
                   const dueDate = `${inst.day}/${inst.month}/${inst.year}`;
                   return (
-                    <div 
-                      key={inst.id} 
-                      className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow"
-                    >
+                    <div key={inst.id} className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-4 text-right">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500/10 flex items-center justify-center text-rose-500 shadow-sm flex-shrink-0">
                           <AlertTriangle className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-slate-800">{contract?.customer_name}</p>
+                          <CustomerLink customerId={contract?.customer_id} customerName={contract?.customer_name || ""} className="font-bold text-sm text-slate-800" />
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                               {contract?.product_type}
@@ -676,11 +627,7 @@ const Index = () => {
                   );
                 })}
                 {overdueInstallments.length > 5 && (
-                  <Button 
-                    variant="ghost" 
-                    className="w-full text-xs text-violet-600 hover:text-violet-700 font-semibold gap-1 py-3"
-                    onClick={() => navigate("/installments")}
-                  >
+                  <Button variant="ghost" className="w-full text-xs text-violet-600 hover:text-violet-700 font-semibold gap-1 py-3" onClick={() => navigate("/installments")}>
                     <span>عرض كافة المتأخرات ({overdueInstallments.length})</span>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -695,22 +642,18 @@ const Index = () => {
               </>
             )}
 
-            {/* مستحقات اليوم */}
             {activeTab === "today" && (
               <>
                 {todayInstallments.slice(0, 5).map(inst => {
                   const contract = contracts.find(c => c.id === inst.contract_id);
                   return (
-                    <div 
-                      key={inst.id} 
-                      className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow"
-                    >
+                    <div key={inst.id} className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-4 text-right">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500/10 flex items-center justify-center text-amber-500 shadow-sm flex-shrink-0">
                           <Clock className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-slate-800">{contract?.customer_name}</p>
+                          <CustomerLink customerId={contract?.customer_id} customerName={contract?.customer_name || ""} className="font-bold text-sm text-slate-800" />
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                               {contract?.product_type}
@@ -768,11 +711,7 @@ const Index = () => {
                   );
                 })}
                 {todayInstallments.length > 5 && (
-                  <Button 
-                    variant="ghost" 
-                    className="w-full text-xs text-violet-600 hover:text-violet-700 font-semibold gap-1 py-3"
-                    onClick={() => navigate("/installments")}
-                  >
+                  <Button variant="ghost" className="w-full text-xs text-violet-600 hover:text-violet-700 font-semibold gap-1 py-3" onClick={() => navigate("/installments")}>
                     <span>عرض كافة مستحقات اليوم ({todayInstallments.length})</span>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -787,20 +726,16 @@ const Index = () => {
               </>
             )}
 
-            {/* أحدث العقود المضافة */}
             {activeTab === "recent" && (
               <>
                 {recentContracts.map(contract => (
-                  <div 
-                    key={contract.id} 
-                    className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow"
-                  >
+                  <div key={contract.id} className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 text-right">
                       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500/10 flex items-center justify-center text-violet-600 shadow-sm flex-shrink-0">
                         <FileText className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-bold text-sm text-slate-800">{contract.customer_name}</p>
+                        <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="font-bold text-sm text-slate-800" />
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                             {contract.product_type}
@@ -837,13 +772,11 @@ const Index = () => {
                 )}
               </>
             )}
-
           </div>
         </div>
-
       </div>
 
-      {/* أزرار الوصول السريع والعمليات الحيوية العائمة */}
+      {/* أزرار الوصول السريع العائمة */}
       <div className="fixed bottom-20 left-6 z-40 flex flex-col gap-3">
         <Link to="/installments" title="تسجيل قسط">
           <Button className="h-14 w-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-xl hover:shadow-amber-500/25 active:scale-90 transition-all text-white border-0">
@@ -857,7 +790,7 @@ const Index = () => {
         </Link>
       </div>
 
-      {/* نافذة التفاصيل المالية المنبثقة التفاعلية */}
+      {/* نافذة التفاصيل المالية */}
       <Dialog open={activeModal !== null} onOpenChange={(open) => { if (!open) setActiveModal(null); }}>
         <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden bg-white">
           <DialogHeader className="p-6 pb-4 border-b border-slate-100 text-right bg-gradient-to-r from-violet-50 to-slate-50">
@@ -909,10 +842,7 @@ const Index = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {/* قائمة الأقساط / العقود للتفاصيل المحددة */}
           <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 p-4">
-            
-            {/* العرض في حال كان الخيار المختار هو عرض العقود النشطة */}
             {activeModal === "activeContracts" ? (
               activeContractsList.map((contract) => (
                 <div key={contract.id} className="flex items-center justify-between py-3.5 px-2 hover:bg-slate-50 rounded-xl transition-all">
@@ -921,7 +851,7 @@ const Index = () => {
                       #{contract.id}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-800">{contract.customer_name}</p>
+                      <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="text-sm font-bold text-slate-800" />
                       <p className="text-[10px] text-slate-400">{contract.product_type} - {contract.number_of_receipts} قسط</p>
                     </div>
                   </div>
@@ -932,7 +862,6 @@ const Index = () => {
                 </div>
               ))
             ) : (
-              // العرض في حال كان الخيار المختار هو أحد تصنيفات الأقساط
               modalInstallmentsList.map((inst) => (
                 <div key={inst.id} className="flex items-center justify-between py-3 px-2 hover:bg-slate-50 rounded-xl transition-all">
                   <div className="flex items-center gap-3 text-right">
@@ -943,7 +872,7 @@ const Index = () => {
                       #{inst.number}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-800">{inst.customerName}</p>
+                      <CustomerLink customerId={(inst as any).customerId} customerName={inst.customerName} className="text-sm font-bold text-slate-800" />
                       <p className="text-[10px] text-slate-400">{inst.productType}</p>
                     </div>
                   </div>
@@ -988,19 +917,14 @@ const Index = () => {
           </div>
 
           <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl"
-              onClick={() => setActiveModal(null)}
-            >
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setActiveModal(null)}>
               إغلاق النافذة
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* نافذة تأكيد عملية تحصيل الأموال الحذرة */}
+      {/* نافذة تأكيد التحصيل */}
       <Dialog open={confirmPayInstallment !== null} onOpenChange={(open) => { if (!open) setConfirmPayInstallment(null); }}>
         <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
           <div className="text-center space-y-4">
@@ -1027,17 +951,10 @@ const Index = () => {
             </p>
           </div>
           <DialogFooter className="grid grid-cols-2 gap-3 mt-4">
-            <Button
-              variant="outline"
-              className="rounded-xl h-11"
-              onClick={() => setConfirmPayInstallment(null)}
-            >
+            <Button variant="outline" className="rounded-xl h-11" onClick={() => setConfirmPayInstallment(null)}>
               تراجع وإلغاء
             </Button>
-            <Button
-              className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold"
-              onClick={executePayment}
-            >
+            <Button className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold" onClick={executePayment}>
               نعم، تم الاستلام
             </Button>
           </DialogFooter>

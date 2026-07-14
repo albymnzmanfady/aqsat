@@ -15,29 +15,35 @@
   }
 }
 
-/* الوضع الداكن الشامل والأنيق */
+/* ==========================================================================
+   الوضع الداكن المطور والمتناسق بالكامل (Dark Mode Colors)
+   ========================================================================== */
 .dark body {
-  background-color: #0b0f17 !important;
-  background-image: none !important; /* إلغاء شبكة النقاط بالوضع الداكن */
-  color: #f1f5f9 !important;
+  background-color: #090d14 !important;
+  background-image: none !important;
+  color: #f8fafc !important;
 }
 
 .dark .dot-grid-bg {
-  background-image: none !important; /* إلغاء شبكة النقاط بالوضع الداكن للمكونات */
+  background-image: none !important;
 }
 
+/* حماية البطاقات من اللون الأبيض وضبط تباينها */
 .dark .bg-white,
 .dark .bg-white\/80,
 .dark .bg-white\/70,
 .dark .bg-white\/90 {
-  background-color: rgba(17, 24, 39, 0.8) !important;
+  background-color: #111827 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
-  color: #f1f5f9 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
+/* تنسيق النصوص وتناسقها */
 .dark .text-slate-800,
-.dark .text-slate-700 {
-  color: #f1f5f9 !important;
+.dark .text-slate-700,
+.dark .text-slate-900 {
+  color: #f8fafc !important;
 }
 
 .dark .text-slate-600,
@@ -45,55 +51,122 @@
   color: #94a3b8 !important;
 }
 
+.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* الحدود والفواصل */
 .dark .border-slate-100,
 .dark .border-slate-200,
 .dark .border-slate-200\/60,
 .dark .border-slate-200\/80,
-.dark .border-slate-200\/50 {
+.dark .border-slate-200\/50,
+.dark .divide-slate-100,
+.dark .divide-slate-100\/80 {
   border-color: rgba(255, 255, 255, 0.08) !important;
+  divide-color: rgba(255, 255, 255, 0.08) !important;
 }
 
+/* الخلفيات الثانوية والقوائم */
 .dark .bg-slate-50,
 .dark .bg-slate-50\/50 {
-  background-color: #111827 !important;
+  background-color: #0f172a !important;
 }
 
 .dark .bg-slate-100 {
-  background-color: #1f2937 !important;
-  color: #e5e7eb !important;
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
 }
 
+/* معالجة الحقول والمدخلات والقوائم المنسدلة */
 .dark input,
 .dark select,
-.dark textarea {
-  background-color: #1f2937 !important;
-  color: #f3f4f6 !important;
+.dark textarea,
+.dark .SelectTrigger {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.dark .crystal,
-.dark .crystal-strong {
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.4) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+.dark input::placeholder {
+  color: #475569 !important;
 }
 
 .dark header,
 .dark aside,
 .dark nav {
-  background-color: rgba(17, 24, 39, 0.95) !important;
+  background-color: rgba(15, 23, 42, 0.95) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
+/* القوائم المنبثقة والنوافذ (Modals and Menus) */
 .dark .DropdownMenuContent,
 .dark .dropdown-menu-content,
 .dark div[role="menu"],
-.dark div[role="dialog"] {
-  background-color: #111827 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  color: #f3f4f6 !important;
+.dark div[role="dialog"],
+.dark .DialogContent {
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
 }
 
-/* Crystal glass effect for cards and menus */
+/* معالجة فئات الألوان المالية والتفاعلية (تجاوز الألوان الفاتحة في الوضع الداكن) */
+.dark .bg-blue-50\/50, 
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.dark .bg-emerald-50\/50, 
+.dark .bg-emerald-50, 
+.dark .bg-emerald-50\/20,
+.dark .bg-emerald-50\/10 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.dark .bg-amber-50\/50, 
+.dark .bg-amber-50,
+.dark .bg-amber-50\/20 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+.dark .bg-violet-50\/50, 
+.dark .bg-violet-50, 
+.dark .bg-violet-50\/10 {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+  color: #a78bfa !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+.dark .bg-rose-50\/10, 
+.dark .bg-rose-50, 
+.dark .bg-rose-50\/20 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.25) !important;
+}
+
+.dark .bg-slate-50\/50, 
+.dark .bg-slate-50 {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* تأثير الزجاج الكريستالي الفاخر في الوضع الداكن */
+.dark .crystal,
+.dark .crystal-strong {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ==========================================================================
+   تأثيرات الواجهة والتحريك
+   ========================================================================== */
 .crystal {
   background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
   backdrop-filter: blur(12px);
@@ -102,7 +175,6 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
-/* Crystal with stronger border for emphasis */
 .crystal-strong {
   background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%);
   backdrop-filter: blur(16px);
@@ -111,7 +183,6 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 
-/* Crystal with gradient accent for user profile */
 .crystal-gradient {
   background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(249,115,22,0.15));
   backdrop-filter: blur(16px);
@@ -120,19 +191,16 @@
   box-shadow: 0 8px 32px rgba(251,191,36,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
-/* Update default card background to crystal */
 .crystal-card {
   @apply crystal rounded-2xl;
 }
 
-/* Button click feedback */
 .active-scale:active,
 button:active:not(:disabled) {
   transform: scale(0.97);
   transition: transform 0.1s ease;
 }
 
-/* Page entrance animation */
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -148,12 +216,10 @@ button:active:not(:disabled) {
   animation: page-enter 0.35s ease-out forwards;
 }
 
-/* Smooth scroll for the whole page */
 html {
   scroll-behavior: smooth;
 }
 
-/* Hover lift effect for cards */
 .hover-lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -162,7 +228,6 @@ html {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
 }
 
-/* Staggered item entrance */
 @keyframes stagger-fade-in {
   from {
     opacity: 0;
@@ -179,7 +244,6 @@ html {
   opacity: 0;
 }
 
-/* Counter text shimmer */
 @keyframes counter-pop {
   0% { transform: scale(1); }
   50% { transform: scale(1.08); }
@@ -190,7 +254,6 @@ html {
   animation: counter-pop 0.3s ease-out;
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -206,13 +269,11 @@ html {
   background: #94a3b8;
 }
 
-/* Ensure all pages have min-height for background */
 .page-wrapper {
   min-height: 100vh;
   position: relative;
 }
 
-/* React select / dropdown crystal style */
 .crystal-select {
   @apply crystal rounded-xl;
 }

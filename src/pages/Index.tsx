@@ -37,8 +37,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"overdue" | "today" | "recent">("overdue");
   const [sendingId, setSendingId] = useState<number | null>(null);
 
-  // حالة التحكم في النوافذ المنبثقة للتفاصيل المالية
-  const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | null>(null);
+  // حالة التحكم في النوافذ المنبثقة لجميع المؤشرات المالية
+  const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | "overdue" | "today" | "activeContracts" | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -71,11 +71,12 @@ const Index = () => {
     return "مساء الخير والنجاح";
   }, []);
 
-  // فرز الأقساط
+  // فرز الأقساط المتأخرة
   const overdueInstallments = useMemo(() => {
     return installments.filter(i => !i.is_paid && new Date(i.year, i.month - 1, i.day) < today);
   }, [installments, today]);
 
+  // مستحقات اليوم الفردية
   const todayInstallments = useMemo(() => {
     return installments.filter(i => {
       const due = new Date(i.year, i.month - 1, i.day);
@@ -95,19 +96,10 @@ const Index = () => {
 
   // إحصائيات الشهر الحالي بالتفصيل
   const currentMonthStats = useMemo(() => {
-    // جميع أقساط هذا الشهر
     const monthInsts = installments.filter(i => i.month === currentMonth && i.year === currentYear);
-    
-    // إجمالي المستحقات (المطلوب تحصيله) للشهر الحالي
     const totalToCollect = monthInsts.reduce((sum, i) => sum + i.amount, 0);
-    
-    // ما تم تحصيله بنجاح هذا الشهر
     const collected = monthInsts.filter(i => i.is_paid).reduce((sum, i) => sum + i.amount, 0);
-    
-    // المتبقي للتحصيل هذا الشهر
     const remaining = Math.max(0, totalToCollect - collected);
-    
-    // نسبة الإنجاز والتحصيل
     const progressPercent = totalToCollect > 0 ? Math.round((collected / totalToCollect) * 100) : 0;
 
     return {
@@ -119,7 +111,7 @@ const Index = () => {
     };
   }, [installments, currentMonth, currentYear]);
 
-  // تجهيز الأقساط الشهرية مع تفاصيل العميل والمنتج للنافذة المنبثقة
+  // أقساط الشهر الحالي بالتفاصيل
   const currentMonthInstallmentsWithDetails = useMemo(() => {
     return installments
       .filter(i => i.month === currentMonth && i.year === currentYear)
@@ -134,12 +126,46 @@ const Index = () => {
       });
   }, [installments, contracts, currentMonth, currentYear]);
 
+  // أقساط المتأخرات بالتفاصيل الكاملة
+  const overdueInstallmentsWithDetails = useMemo(() => {
+    return overdueInstallments.map(i => {
+      const contract = contracts.find(c => c.id === i.contract_id);
+      return {
+        ...i,
+        customerName: contract?.customer_name || "عميل غير معروف",
+        productType: contract?.product_type || "منتج غير معروف",
+        customerPhone: contract?.customer_phone || ""
+      };
+    });
+  }, [overdueInstallments, contracts]);
+
+  // أقساط اليوم بالتفاصيل الكاملة
+  const todayInstallmentsWithDetails = useMemo(() => {
+    return todayInstallments.map(i => {
+      const contract = contracts.find(c => c.id === i.contract_id);
+      return {
+        ...i,
+        customerName: contract?.customer_name || "عميل غير معروف",
+        productType: contract?.product_type || "منتج غير معروف",
+        customerPhone: contract?.customer_phone || ""
+      };
+    });
+  }, [todayInstallments, contracts]);
+
+  // العقود النشطة بالبرنامج
+  const activeContractsList = useMemo(() => {
+    return contracts.filter(c => c.status === "active");
+  }, [contracts]);
+
+  // إعداد مصفوفة البيانات المعروضة في النافذة المنبثقة بناءً على البطاقة النشطة
   const modalInstallmentsList = useMemo(() => {
     if (activeModal === "total") return currentMonthInstallmentsWithDetails;
     if (activeModal === "collected") return currentMonthInstallmentsWithDetails.filter(i => i.is_paid);
     if (activeModal === "remaining") return currentMonthInstallmentsWithDetails.filter(i => !i.is_paid);
+    if (activeModal === "overdue") return overdueInstallmentsWithDetails;
+    if (activeModal === "today") return todayInstallmentsWithDetails;
     return [];
-  }, [activeModal, currentMonthInstallmentsWithDetails]);
+  }, [activeModal, currentMonthInstallmentsWithDetails, overdueInstallmentsWithDetails, todayInstallmentsWithDetails]);
 
   // تسجيل سداد قسط مباشر من الصفحة الرئيسية
   const handleQuickPay = async (installmentId: number) => {
@@ -332,8 +358,12 @@ const Index = () => {
 
         {/* المؤشرات العامة للنظام */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          
           {/* المتأخرات الكلية */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
+          <Card 
+            onClick={() => setActiveModal("overdue")}
+            className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all"
+          >
             <CardContent className="p-5 flex items-center justify-between">
               <div className="space-y-1 text-right">
                 <p className="text-xs font-semibold text-slate-500">متأخرات عاجلة (خارج الشهر الحالي)</p>
@@ -348,7 +378,10 @@ const Index = () => {
           </Card>
 
           {/* يستحق اليوم */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
+          <Card 
+            onClick={() => setActiveModal("today")}
+            className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all"
+          >
             <CardContent className="p-5 flex items-center justify-between">
               <div className="space-y-1 text-right">
                 <p className="text-xs font-semibold text-slate-500">مستحقات اليوم الفردية</p>
@@ -363,7 +396,10 @@ const Index = () => {
           </Card>
 
           {/* العقود النشطة */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden col-span-2 lg:col-span-1">
+          <Card 
+            onClick={() => setActiveModal("activeContracts")}
+            className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden col-span-2 lg:col-span-1 cursor-pointer active:scale-[0.99] transition-all"
+          >
             <CardContent className="p-5 flex items-center justify-between">
               <div className="space-y-1 text-right">
                 <p className="text-xs font-semibold text-slate-500">العقود النشطة بالبرنامج</p>
@@ -688,56 +724,100 @@ const Index = () => {
                   <span>الأقساط المتبقية للتحصيل</span>
                 </>
               )}
+              {activeModal === "overdue" && (
+                <>
+                  <AlertTriangle className="h-5 w-5 text-rose-600 animate-pulse" />
+                  <span>جميع المتأخرات الحرجة بالنظام</span>
+                </>
+              )}
+              {activeModal === "today" && (
+                <>
+                  <Clock className="h-5 w-5 text-amber-500" />
+                  <span>مستحقات اليوم الفردية</span>
+                </>
+              )}
+              {activeModal === "activeContracts" && (
+                <>
+                  <FileText className="h-5 w-5 text-violet-600" />
+                  <span>جميع العقود النشطة بالبرنامج</span>
+                </>
+              )}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500 text-right mt-1">
               {activeModal === "total" && `إجمالي المطلوب تحصيله: ${currentMonthStats.totalToCollect.toLocaleString()} ج.م`}
               {activeModal === "collected" && `إجمالي المبالغ المحصلة: ${currentMonthStats.collected.toLocaleString()} ج.م`}
               {activeModal === "remaining" && `المتبقي المطلوب تحصيله: ${currentMonthStats.remaining.toLocaleString()} ج.م`}
+              {activeModal === "overdue" && `إجمالي المتأخرات العاجلة: ${overdueInstallments.length} قسط`}
+              {activeModal === "today" && `مستحقات اليوم غير المسددة: ${todayInstallments.length} قسط`}
+              {activeModal === "activeContracts" && `إجمالي العقود النشطة المفتوحة: ${activeContractsList.length} عقد`}
             </DialogDescription>
           </DialogHeader>
 
-          {/* قائمة الأقساط للتفاصيل المحددة */}
+          {/* قائمة الأقساط / العقود للتفاصيل المحددة */}
           <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 p-4">
-            {modalInstallmentsList.map((inst, index) => (
-              <div key={inst.id} className="flex items-center justify-between py-3 px-2 hover:bg-slate-50 rounded-xl transition-all">
-                <div className="flex items-center gap-3 text-right">
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white",
-                    inst.is_paid ? "bg-emerald-500" : "bg-amber-500"
-                  )}>
-                    #{inst.number}
+            
+            {/* العرض في حال كان الخيار المختار هو عرض العقود النشطة */}
+            {activeModal === "activeContracts" ? (
+              activeContractsList.map((contract) => (
+                <div key={contract.id} className="flex items-center justify-between py-3.5 px-2 hover:bg-slate-50 rounded-xl transition-all">
+                  <div className="flex items-center gap-3 text-right">
+                    <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-xs">
+                      #{contract.id}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{contract.customer_name}</p>
+                      <p className="text-[10px] text-slate-400">{contract.product_type} - {contract.number_of_receipts} قسط</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{inst.customerName}</p>
-                    <p className="text-[10px] text-slate-400">{inst.productType}</p>
+                  <div className="text-left">
+                    <p className="text-sm font-extrabold text-slate-800">{contract.total_price.toLocaleString()} ج.م</p>
+                    <p className="text-[10px] text-slate-400">مقدم: {contract.down_payment.toLocaleString()} ج.م</p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-4 text-left">
-                  <div>
-                    <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
-                    <p className="text-[10px] text-slate-400" dir="ltr">{inst.day}/{inst.month}/{inst.year}</p>
+              ))
+            ) : (
+              // العرض في حال كان الخيار المختار هو أحد تصنيفات الأقساط
+              modalInstallmentsList.map((inst) => (
+                <div key={inst.id} className="flex items-center justify-between py-3 px-2 hover:bg-slate-50 rounded-xl transition-all">
+                  <div className="flex items-center gap-3 text-right">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white",
+                      inst.is_paid ? "bg-emerald-500" : "bg-amber-500"
+                    )}>
+                      #{inst.number}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{inst.customerName}</p>
+                      <p className="text-[10px] text-slate-400">{inst.productType}</p>
+                    </div>
                   </div>
 
-                  {!inst.is_paid && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                      onClick={() => {
-                        handleQuickPay(inst.id);
-                        setActiveModal(null);
-                      }}
-                      title="تسجيل تحصيل سريع"
-                    >
-                      <CheckCircle className="h-4.5 w-4.5" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+                  <div className="flex items-center gap-4 text-left">
+                    <div>
+                      <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
+                      <p className="text-[10px] text-slate-400" dir="ltr">{inst.day}/{inst.month}/{inst.year}</p>
+                    </div>
 
-            {modalInstallmentsList.length === 0 && (
+                    {!inst.is_paid && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                        onClick={() => {
+                          handleQuickPay(inst.id);
+                          setActiveModal(null);
+                        }}
+                        title="تسجيل تحصيل سريع"
+                      >
+                        <CheckCircle className="h-4.5 w-4.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+
+            {((activeModal === "activeContracts" ? activeContractsList.length : modalInstallmentsList.length) === 0) && (
               <div className="text-center py-12 text-slate-400">
                 <Clock className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                 <p className="text-sm font-medium">لا توجد بيانات متاحة لهذا القسم</p>

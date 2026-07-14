@@ -16,27 +16,20 @@ if exist "%ARCHIVE_NAME%" del "%ARCHIVE_NAME%"
 mkdir "%DEPLOY_DIR%"
 mkdir "%DEPLOY_DIR%\src"
 mkdir "%DEPLOY_DIR%\server"
-mkdir "%DEPLOY_DIR%\public"
 
-echo [1/5] Copying root files...
+echo [1/4] Copying root files...
 
 for %%f in (package.json package-lock.json Dockerfile docker-compose.yml nginx.conf deploy.sh .dockerignore index.html vite.config.ts tailwind.config.ts postcss.config.js tsconfig.json components.json vercel.json eslint.config.js tsconfig.app.json tsconfig.node.json) do (
     if exist "%%f" copy "%%f" "%DEPLOY_DIR%\" >nul 2>&1
 )
 
-echo [2/5] Copying src folder...
-
+echo [2/4] Copying src folder...
 xcopy /E /I /Q /Y "src" "%DEPLOY_DIR%\src" >nul
 
-echo [3/5] Copying server folder...
-
+echo [3/4] Copying server folder...
 xcopy /E /I /Q /Y "server" "%DEPLOY_DIR%\server" >nul
 
-echo [4/5] Copying public folder...
-
-xcopy /E /I /Q /Y "public" "%DEPLOY_DIR%\public" >nul 2>&1
-
-echo [5/5] Creating zip archive...
+echo [4/4] Creating zip archive...
 
 powershell -Command "Compress-Archive -Path '%DEPLOY_DIR%\*' -DestinationPath '%CD%\%ARCHIVE_NAME%' -Force"
 
@@ -53,7 +46,8 @@ if exist "%ARCHIVE_NAME%" (
     echo    Upload to VPS:
     echo    scp %ARCHIVE_NAME% root@92.5.115.174:/root/
     echo.
-    echo    On VPS run:
+    echo    On VPS:
+    echo    apt-get install -y unzip
     echo    unzip %ARCHIVE_NAME% -d aqsat
     echo    cd aqsat
     echo    chmod +x deploy.sh

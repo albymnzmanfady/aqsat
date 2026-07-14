@@ -10,35 +10,60 @@
     background-image: radial-gradient(circle, #cbd5e1 0.5px, transparent 0.5px);
     background-size: 24px 24px;
   }
+
+  .dark body {
+    background-color: #05070c;
+    color: #e2e8f0;
+  }
+
+  .dark .dot-grid-bg {
+    background-image: none;
+  }
 }
 
-.dark body {
-  background-color: #05070c !important;
-  color: #e2e8f0 !important;
+/* الوضع الداكن - أنيق ونظيف */
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
 }
 
-/* بطاقات ذات تباين عالٍ ومريح */
-.dark .bg-white,
-.dark .bg-white\/80,
 .dark .bg-white\/70,
-.dark .bg-white\/90 {
-  background-color: #0f131a !important;
-  border: 1px solid #1e293b !important;
+.dark .bg-white\/80,
+.dark .bg-white\/90,
+.dark .bg-white {
+  background-color: hsl(222.2 84% 6.9%) !important;
   color: #f1f5f9 !important;
 }
 
-/* تحسين تباين النصوص */
+.dark .backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* إزالة الحدود الزائدة التي تظهر المربعات */
+.dark .border-slate-200\/80,
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .border-slate-100\/80 {
+  border-color: hsl(217 33% 17%) !important;
+}
+
+/* نصوص */
 .dark .text-slate-800,
-.dark .text-slate-700 {
+.dark .text-slate-700,
+.dark .font-bold.text-slate-800 {
   color: #f1f5f9 !important;
 }
-
 .dark .text-slate-500,
 .dark .text-slate-400 {
   color: #94a3b8 !important;
 }
 
-/* تحسين القوائم المنسدلة */
+/* بطاقات Hover لطيفة */
+.dark .hover-lift:hover {
+  background-color: hsl(222.2 84% 9%) !important;
+}
+
+/* القوائم المنسدلة */
 .dark [role="menu"],
 .dark .DropdownMenuContent {
   background-color: #1a1f2e !important;
@@ -51,19 +76,15 @@
   color: #ffffff !important;
 }
 
-/* تحسين ملمس الـ Hover للبطاقات */
-.dark .hover-lift:hover {
-  background-color: #161b22 !important;
-  border-color: #334155 !important;
-}
+/* شارات الحالة */
+.dark .bg-emerald-100 { background-color: #064e3b !important; color: #34d399 !important; }
+.dark .bg-rose-100 { background-color: #7f1d1d !important; color: #fda4af !important; }
+.dark .bg-amber-100 { background-color: #78350f !important; color: #fbbf24 !important; }
 
-/* عناصر الحالة */
-.dark .bg-slate-100 {
-  background-color: #1e293b !important;
-  color: #e2e8f0 !important;
-}
-
-.dark input, .dark select, .dark textarea {
+/* تحسين حقول الإدخال */
+.dark input,
+.dark select,
+.dark textarea {
   background-color: #0f131a !important;
   border: 1px solid #334155 !important;
   color: #f8fafc !important;
@@ -71,10 +92,5 @@
 
 .dark input:focus {
   border-color: #6366f1 !important;
-  ring: 2px solid #818cf8 !important;
+  --tw-ring-color: #818cf8;
 }
-
-/* إصلاح تباين الشارات (Badges) */
-.dark .bg-emerald-100 { background-color: #064e3b !important; color: #34d399 !important; }
-.dark .bg-rose-100 { background-color: #7f1d1d !important; color: #fda4af !important; }
-.dark .bg-amber-100 { background-color: #78350f !important; color: #fbbf24 !important; }

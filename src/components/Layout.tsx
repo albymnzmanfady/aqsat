@@ -75,6 +75,10 @@ const Layout = ({ children }: LayoutProps) => {
     setAvatar(getStoredAvatar());
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [location.pathname, isMobile]);
+
   const toggleCollapse = () => {
     const next = !sidebarCollapsed;
     setSidebarCollapsed(next);
@@ -123,10 +127,6 @@ const Layout = ({ children }: LayoutProps) => {
   });
 
   const isActive = (path: string) => location.pathname === path;
-
-  useEffect(() => {
-    if (isMobile) setSidebarOpen(false);
-  }, [location.pathname, isMobile]);
 
   const renderNavItem = (item: typeof navItems[number]) => {
     if (item.subItems) {
@@ -316,7 +316,7 @@ const Layout = ({ children }: LayoutProps) => {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-10 w-10 rounded-xl text-slate-600 dark:text-slate-400 active:scale-90"
+              className="h-10 w-10 rounded-xl active:scale-90 text-slate-600 dark:text-slate-400"
               title="تبديل وضع الألوان"
             >
               {theme === "dark" ? (

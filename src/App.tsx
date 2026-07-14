@@ -1,10 +1,10 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Customers from "./pages/Customers";
 import Contracts from "./pages/Contracts";
@@ -22,7 +22,15 @@ import Profile from "./pages/Profile";
 import Calculator from "./pages/Calculator";
 import CollectionReports from "./pages/CollectionReports";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000, // 30 seconds
+    },
+  },
+});
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -37,7 +45,9 @@ const AppRoutes = () => {
         path="/"
         element={
           <ProtectedRoute>
-            <Index />
+            <ErrorBoundary>
+              <Index />
+            </ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -45,7 +55,7 @@ const AppRoutes = () => {
         path="/customers"
         element={
           <ProtectedRoute requiredPermission="view_customers">
-            <Customers />
+            <ErrorBoundary><Customers /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -53,7 +63,7 @@ const AppRoutes = () => {
         path="/contracts"
         element={
           <ProtectedRoute requiredPermission="view_contracts">
-            <Contracts />
+            <ErrorBoundary><Contracts /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -61,7 +71,7 @@ const AppRoutes = () => {
         path="/installments"
         element={
           <ProtectedRoute requiredPermission="view_installments">
-            <Installments />
+            <ErrorBoundary><Installments /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -69,7 +79,7 @@ const AppRoutes = () => {
         path="/collection-reports"
         element={
           <ProtectedRoute requiredPermission="view_installments">
-            <CollectionReports />
+            <ErrorBoundary><CollectionReports /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -77,7 +87,7 @@ const AppRoutes = () => {
         path="/settings"
         element={
           <ProtectedRoute requiredPermission="view_settings">
-            <Settings />
+            <ErrorBoundary><Settings /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -85,7 +95,7 @@ const AppRoutes = () => {
         path="/products"
         element={
           <ProtectedRoute requiredPermission="view_products">
-            <Products />
+            <ErrorBoundary><Products /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -93,7 +103,7 @@ const AppRoutes = () => {
         path="/inventory"
         element={
           <ProtectedRoute requiredPermission="view_inventory">
-            <Inventory />
+            <ErrorBoundary><Inventory /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -101,7 +111,7 @@ const AppRoutes = () => {
         path="/inventory-dashboard"
         element={
           <ProtectedRoute requiredPermission="view_inventory">
-            <InventoryDashboard />
+            <ErrorBoundary><InventoryDashboard /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -109,7 +119,7 @@ const AppRoutes = () => {
         path="/expenses"
         element={
           <ProtectedRoute requiredPermission="view_expenses">
-            <Expenses />
+            <ErrorBoundary><Expenses /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -117,7 +127,7 @@ const AppRoutes = () => {
         path="/expense-reports"
         element={
           <ProtectedRoute requiredPermission="view_expense_reports">
-            <ExpenseReports />
+            <ErrorBoundary><ExpenseReports /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -125,7 +135,7 @@ const AppRoutes = () => {
         path="/users"
         element={
           <ProtectedRoute requiredPermission="view_users">
-            <Users />
+            <ErrorBoundary><Users /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -133,7 +143,7 @@ const AppRoutes = () => {
         path="/profile"
         element={
           <ProtectedRoute>
-            <Profile />
+            <ErrorBoundary><Profile /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -141,7 +151,7 @@ const AppRoutes = () => {
         path="/calculator"
         element={
           <ProtectedRoute>
-            <Calculator />
+            <ErrorBoundary><Calculator /></ErrorBoundary>
           </ProtectedRoute>
         }
       />
@@ -154,7 +164,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
       <AppRoutes />
     </TooltipProvider>
   </QueryClientProvider>

@@ -21,6 +21,71 @@
   }
 }
 
+/* ===== Animations ===== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Utility classes for page transitions */
+.page-enter-animation {
+  animation: fade-in-up 0.45s ease-out;
+}
+
+.page-wrapper {
+  animation: fade-in-up 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.stagger-item {
+  animation: fade-in-up 0.35s ease-out both;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Counter pop animation */
+.counter-pop {
+  animation: scale-in 0.3s ease-out;
+}
+
 /* الوضع الداكن - أنيق ونظيف */
 .dark {
   --background: 222.2 84% 4.9%;
@@ -58,28 +123,12 @@
   color: #94a3b8 !important;
 }
 
-/* بطاقات Hover لطيفة */
-.dark .hover-lift:hover {
-  background-color: hsl(222.2 84% 9%) !important;
-}
-
-/* القوائم المنسدلة */
-.dark [role="menu"],
-.dark .DropdownMenuContent {
-  background-color: #1a1f2e !important;
-  border: 1px solid #334155 !important;
-  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5) !important;
-}
-
-.dark [role="menuitem"]:hover {
-  background-color: #2d3748 !important;
-  color: #ffffff !important;
-}
-
 /* شارات الحالة */
 .dark .bg-emerald-100 { background-color: #064e3b !important; color: #34d399 !important; }
 .dark .bg-rose-100 { background-color: #7f1d1d !important; color: #fda4af !important; }
 .dark .bg-amber-100 { background-color: #78350f !important; color: #fbbf24 !important; }
+.dark .bg-blue-100 { background-color: #1e3a5f !important; color: #93c5fd !important; }
+.dark .bg-violet-100 { background-color: #3b216b !important; color: #c4b5fd !important; }
 
 /* تحسين حقول الإدخال */
 .dark input,
@@ -90,7 +139,46 @@
   color: #f8fafc !important;
 }
 
-.dark input:focus {
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
   border-color: #6366f1 !important;
   --tw-ring-color: #818cf8;
+}
+
+/* شريط التمرير المخصص */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* تحسين النبضات */
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
 }

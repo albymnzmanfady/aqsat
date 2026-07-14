@@ -7,15 +7,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import PrintDialog from "@/components/PrintDialog";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import {
   api,
   ApiCustomer,
   ApiContract,
   ApiInstallment,
 } from "@/lib/api";
-import { showError } from "@/utils/toast";
+import { getReceiptHtml } from "@/utils/pdfExport";
+import { showError, showSuccess } from "@/utils/toast";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 import {
   ArrowRight,
@@ -40,16 +50,54 @@ import {
   BarChart3,
   PhoneCall,
   Hash,
+  Printer,
 } from "lucide-react";
 
 const CustomerProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { settings } = useAppSettings();
   const [customer, setCustomer] = useState<ApiCustomer | null>(null);
   const [contracts, setContracts] = useState<ApiContract[]>([]);
   const [allInstallments, setAllInstallments] = useState<ApiInstallment[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
+
+  // حالة السداد
+  const [confirmPayDialog, setConfirmPayDialog] = useState<{
+    installment: ApiInstallment;
+    contract: ApiContract;
+  } | null>(null);
+  const [payingId, setPayingId] = useState<number | null>(null);
+
+  // حالة الطباعة
+  const [printOpen, setPrintOpen] = useState(false);
+  const [printHtml, setPrintHtml] = useState("");
+  const [printTitle, setPrintTitle] = useState("");
+  const [printFilename, setPrintFilename] = useState("receipt.pdf");
+
+  const fetchData = async () => {
+    try {
+      const [cust, allContracts, allInst] = await Promise.all([
+        api.customers.get(Number(id)),
+        api.contracts.list(),
+        api.installments.list(),
+      ]);
+      setCustomer(cust);
+      setContracts(
+        allContracts.filter(
+          (c) =>
+            c.customer_id === Number(id) ||
+            c.customer_name === cust.name
+        )
+      );
+      setAllInstallments(allInst);
+    } catch (e: any) {
+      showError("خطأ في تحميل بيانات العميل: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) {
@@ -57,30 +105,6 @@ const CustomerProfile = () => {
       navigate("/customers");
       return;
     }
-
-    const fetchData = async () => {
-      try {
-        const [cust, allContracts, allInst] = await Promise.all([
-          api.customers.get(Number(id)),
-          api.contracts.list(),
-          api.installments.list(),
-        ]);
-        setCustomer(cust);
-        setContracts(
-          allContracts.filter(
-            (c) =>
-              c.customer_id === Number(id) ||
-              c.customer_name === cust.name
-          )
-        );
-        setAllInstallments(allInst);
-      } catch (e: any) {
-        showError("خطأ في تحميل بيانات العميل: " + e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [id, navigate]);
 
@@ -131,7 +155,6 @@ const CustomerProfile = () => {
         ? Math.round((paidInstallments / totalInstallments) * 100)
         : 0;
 
-    // حساب التأخرات
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const overdueInstallments = customerInstallments.filter(
@@ -141,7 +164,6 @@ const CustomerProfile = () => {
     );
     const totalOverdue = overdueInstallments.length;
 
-    // متوسط أيام التأخير
     let avgDelayDays = 0;
     if (overdueInstallments.length > 0) {
       const totalDays = overdueInstallments.reduce((sum, i) => {
@@ -154,7 +176,6 @@ const CustomerProfile = () => {
       avgDelayDays = Math.round(totalDays / overdueInstallments.length);
     }
 
-    // تقييم المخاطر
     let riskScore = 0;
     let riskLevel: "excellent" | "good" | "fair" | "poor" = "excellent";
 
@@ -172,7 +193,6 @@ const CustomerProfile = () => {
       riskLevel = "poor";
     }
 
-    // عدد الأقساط المدفوعة في الوقت المحدد (بدون تأخير)
     const onTimePaid = customerInstallments.filter((i) => {
       if (!i.is_paid || !i.paid_date) return false;
       const due = new Date(i.year, i.month - 1, i.day);
@@ -205,7 +225,75 @@ const CustomerProfile = () => {
     };
   }, [customerContracts, customerInstallments]);
 
-  // إرسال واتساب
+  // ===== سداد القسط =====
+  const handlePayInstallment = async () => {
+    if (!confirmPayDialog) return;
+    const { installment } = confirmPayDialog;
+    setPayingId(installment.id);
+
+    try {
+      await api.installments.update(installment.id, {
+        isPaid: true,
+        paidDate: new Date().toISOString().split("T")[0],
+      });
+      showSuccess("✅ تم تسجيل سداد القسط بنجاح");
+      setConfirmPayDialog(null);
+
+      // إعادة تحميل البيانات
+      const [allContracts, allInst] = await Promise.all([
+        api.contracts.list(),
+        api.installments.list(),
+      ]);
+      setContracts(allContracts);
+      setAllInstallments(allInst);
+    } catch (e: any) {
+      showError("خطأ في تسجيل السداد: " + e.message);
+    }
+    setPayingId(null);
+  };
+
+  // ===== طباعة الإيصال =====
+  const handlePrintReceipt = (installment: ApiInstallment, contract: ApiContract) => {
+    const html = getReceiptHtml(
+      {
+        number: installment.number,
+        amount: installment.amount,
+        paid_date: installment.paid_date || undefined,
+        day: installment.day,
+        month: installment.month,
+        year: installment.year,
+        is_paid: !!installment.is_paid,
+      },
+      {
+        id: contract.id,
+        customer_name: contract.customer_name,
+        customer_phone: contract.customer_phone,
+        product_type: contract.product_type,
+        total_price: contract.total_price,
+        down_payment: contract.down_payment,
+        number_of_receipts: contract.number_of_receipts,
+        installment_amount: contract.installment_amount,
+        start_date: contract.start_date,
+        end_date: contract.end_date,
+        guarantor_name: contract.guarantor_name,
+        guarantor_phone: contract.guarantor_phone,
+        created_at: contract.created_at,
+      },
+      {
+        appName: settings.appName,
+        companyName: settings.companyName,
+        companyPhone: settings.companyPhone,
+        companyAddress: settings.companyAddress,
+        logoUrl: settings.logoUrl,
+      }
+    );
+    setPrintHtml(html);
+    setPrintTitle(`إيصال سداد - ${contract.customer_name} - القسط ${installment.number}`);
+    setPrintFilename(`receipt-${contract.id}-${installment.number}.pdf`);
+    setPrintOpen(true);
+  };
+
+  // ===== إرسال واتساب =====
   const handleSendWhatsApp = async () => {
     if (!customer) return;
     const config = getWhatsAppConfig();
@@ -217,7 +305,7 @@ const CustomerProfile = () => {
     const msg = MESSAGE_TEMPLATES.welcome(customer.name);
     const result = await sendWhatsAppMessage(customer.phone, msg, config);
     if (result.success) {
-      showError("✅ تم إرسال رسالة الترحيب");
+      showSuccess("✅ تم إرسال رسالة الترحيب");
     } else {
       showError(result.message);
     }
@@ -309,7 +397,6 @@ const CustomerProfile = () => {
           </div>
           <CardContent className="p-6 lg:p-8 relative z-10">
             <div className="flex flex-col md:flex-row md:items-center gap-6">
-              {/* صورة واسم العميل */}
               <div className="flex items-center gap-5">
                 <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-3xl border border-white/30 shadow-lg">
                   {customer.name.charAt(0)}
@@ -330,7 +417,6 @@ const CustomerProfile = () => {
                 </div>
               </div>
 
-              {/* أزرار الإجراءات */}
               <div className="flex gap-3 md:mr-auto">
                 <Button
                   onClick={handleSendWhatsApp}
@@ -354,7 +440,6 @@ const CustomerProfile = () => {
               </div>
             </div>
 
-            {/* معلومات التواصل */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
                 <div className="flex items-center gap-2 text-white/70 text-xs mb-1">
@@ -529,7 +614,6 @@ const CustomerProfile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* نسبة السداد */}
               <div>
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-slate-600 font-medium">نسبة السداد الكلية</span>
@@ -543,7 +627,6 @@ const CustomerProfile = () => {
                 />
               </div>
 
-              {/* نسبة السداد في الموعد */}
               <div>
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-slate-600 font-medium">سداد في الموعد</span>
@@ -559,7 +642,6 @@ const CustomerProfile = () => {
 
               <div className="h-px bg-slate-100" />
 
-              {/* إحصائيات سريعة */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-emerald-50/50 rounded-xl text-center">
                   <p className="text-lg font-extrabold text-emerald-600">
@@ -688,7 +770,7 @@ const CustomerProfile = () => {
           </Card>
         </div>
 
-        {/* سجل الدفع الكامل */}
+        {/* سجل الدفع الكامل - مع زر السداد */}
         <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
           <CardHeader className="border-b border-slate-100/80">
             <div className="flex items-center justify-between">
@@ -696,9 +778,16 @@ const CustomerProfile = () => {
                 <Calendar className="h-5 w-5 text-violet-500" />
                 سجل الدفع الكامل
               </CardTitle>
-              <Badge variant="outline" className="rounded-lg">
-                {customerInstallments.length} قسط
-              </Badge>
+              <div className="flex items-center gap-2">
+                {stats.unpaidInstallments > 0 && (
+                  <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 rounded-lg text-[11px] px-2.5 py-1 font-bold">
+                    {stats.unpaidInstallments} قسط باقي
+                  </Badge>
+                )}
+                <Badge variant="outline" className="rounded-lg">
+                  {customerInstallments.length} قسط
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -714,7 +803,6 @@ const CustomerProfile = () => {
               <div className="divide-y divide-slate-100/80">
                 {customerInstallments
                   .sort((a, b) => {
-                    // ترتيب حسب التاريخ
                     const dateA = new Date(a.year, a.month - 1, a.day);
                     const dateB = new Date(b.year, b.month - 1, b.day);
                     return dateB.getTime() - dateA.getTime();
@@ -743,14 +831,14 @@ const CustomerProfile = () => {
                       <div
                         key={inst.id}
                         className={cn(
-                          "flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors",
+                          "flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-slate-50/50 transition-colors",
                           isOverdue && "bg-rose-50/30 border-r-4 border-r-rose-400"
                         )}
                       >
                         <div className="flex items-center gap-4">
                           <div
                             className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm",
+                              "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0",
                               inst.is_paid
                                 ? "bg-gradient-to-br from-emerald-500 to-teal-500"
                                 : isOverdue
@@ -807,17 +895,107 @@ const CustomerProfile = () => {
                           </div>
                         </div>
 
-                        <p
-                          className={cn(
-                            "font-extrabold text-lg",
-                            inst.is_paid ? "text-emerald-600" : isOverdue ? "text-rose-600" : "text-slate-800"
-                          )}
-                        >
-                          {inst.amount.toLocaleString()}{" "}
-                          <span className="text-xs font-medium text-slate-400">
-                            ج.م
-                          </span>
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <p
+                            className={cn(
+                              "font-extrabold text-lg",
+                              inst.is_paid ? "text-emerald-600" : isOverdue ? "text-rose-600" : "text-slate-800"
+                            )}
+                          >
+                            {inst.amount.toLocaleString()}{" "}
+                            <span className="text-xs font-medium text-slate-400">
+                              ج.م
+                            </span>
+                          </p>
+
+                          {/* أزرار الإجراءات */}
+                          <div className="flex items-center gap-1.5">
+                            {inst.is_paid ? (
+                              <>
+                                {/* زر طباعة الإيصال */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-9 w-9 p-0 rounded-xl text-violet-500 hover:bg-violet-50 hover:text-violet-700 active:scale-90"
+                                  onClick={() => contract && handlePrintReceipt(inst, contract)}
+                                  title="طباعة الإيصال"
+                                >
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                {/* زر السداد */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={cn(
+                                    "h-9 px-3 rounded-xl gap-1.5 font-bold text-xs active:scale-90",
+                                    isOverdue
+                                      ? "text-white bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 shadow-md shadow-rose-500/20"
+                                      : "text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-md shadow-emerald-500/20"
+                                  )}
+                                  disabled={payingId === inst.id}
+                                  onClick={() =>
+                                    contract &&
+                                    setConfirmPayDialog({
+                                      installment: inst,
+                                      contract,
+                                    })
+                                  }
+                                >
+                                  {payingId === inst.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="h-4 w-4" />
+                                  )}
+                                  سداد
+                                </Button>
+
+                                {/* زر إرسال تذكير */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-9 w-9 p-0 rounded-xl text-violet-500 hover:bg-violet-50 hover:text-violet-700 active:scale-90"
+                                  onClick={async () => {
+                                    if (!contract) return;
+                                    const config = getWhatsAppConfig();
+                                    if (!config.endpoint) {
+                                      showError("يرجى إعداد واتساب من الإعدادات");
+                                      return;
+                                    }
+                                    const msg = isOverdue
+                                      ? MESSAGE_TEMPLATES.installmentOverdue(
+                                          contract.customer_name,
+                                          inst.amount,
+                                          daysOverdue,
+                                          inst.number
+                                        )
+                                      : MESSAGE_TEMPLATES.installmentDue(
+                                          contract.customer_name,
+                                          inst.amount,
+                                          dueDate,
+                                          inst.number
+                                        );
+                                    const result = await sendWhatsAppMessage(
+                                      contract.customer_phone,
+                                      msg,
+                                      config
+                                    );
+                                    if (result.success) {
+                                      showSuccess(`✅ تم إرسال تذكير للقسط #${inst.number}`);
+                                    } else {
+                                      showError(result.message);
+                                    }
+                                  }}
+                                  title="إرسال تذكير واتساب"
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -826,6 +1004,98 @@ const CustomerProfile = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* نافذة تأكيد السداد */}
+      <Dialog
+        open={confirmPayDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmPayDialog(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[420px] rounded-3xl p-0 overflow-hidden">
+          <div className="p-6 pb-4 border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <DialogTitle className="text-lg font-extrabold text-slate-800">
+                تأكيد سداد القسط
+              </DialogTitle>
+              <p className="text-xs text-slate-500 mt-1">
+                يرجى التأكد من استلام المبلغ قبل التأكيد
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {confirmPayDialog && (
+              <>
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">العميل</span>
+                    <span className="font-bold text-slate-800">
+                      {confirmPayDialog.contract.customer_name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">المنتج</span>
+                    <span className="font-bold text-slate-800">
+                      {confirmPayDialog.contract.product_type}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">رقم القسط</span>
+                    <span className="font-bold text-slate-800">
+                      #{confirmPayDialog.installment.number} من {confirmPayDialog.contract.number_of_receipts}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center border-t border-slate-200/60 pt-3">
+                    <span className="text-slate-600 font-semibold">المبلغ المطلوب سداده</span>
+                    <span className="font-extrabold text-xl text-emerald-600">
+                      {confirmPayDialog.installment.amount.toLocaleString()} ج.م
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl p-3 text-center font-medium">
+                  ⚠️ سيتم تسجيل هذا القسط كمدفوع بتاريخ اليوم
+                </p>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 pb-6 grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmPayDialog(null)}
+              className="rounded-xl h-11"
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handlePayInstallment}
+              disabled={payingId !== null}
+              className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold gap-2"
+            >
+              {payingId ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle className="h-4 w-4" />
+              )}
+              نعم، تم الاستلام
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* نافذة طباعة الإيصال */}
+      <PrintDialog
+        open={printOpen}
+        onOpenChange={setPrintOpen}
+        htmlContent={printHtml}
+        title={printTitle}
+        filename={printFilename}
+      />
     </Layout>
   );
 };

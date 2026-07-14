@@ -12,10 +12,13 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-function buildQuery(params: Record<string, string | number | undefined>): string {
+function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
+  if (!params) return '';
   const q = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== '') q.set(key, String(value));
+    if (value !== undefined && value !== null && value !== '') {
+      q.set(key, String(value));
+    }
   });
   const s = q.toString();
   return s ? `?${s}` : '';

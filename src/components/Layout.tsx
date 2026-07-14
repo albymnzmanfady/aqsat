@@ -148,15 +148,15 @@ const Layout = ({ children }: LayoutProps) => {
                   className={cn(
                     "w-full justify-center h-14 rounded-xl transition-all duration-200 relative",
                     isParentActive
-                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   <div className={cn(
                     "w-11 h-11 rounded-xl flex items-center justify-center",
                     isParentActive
                       ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                      : "bg-slate-200/70 text-slate-600"
+                      : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
                   )}>
                     <item.icon className="h-5 w-5" />
                   </div>
@@ -172,7 +172,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       return (
         <div key={item.label} className="space-y-1">
-          <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">
+          <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 tracking-wider">
             <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${item.color}`} />
             <span>{item.label}</span>
           </div>
@@ -185,8 +185,8 @@ const Layout = ({ children }: LayoutProps) => {
                   className={cn(
                     "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative pr-8",
                     subActive
-                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 font-semibold shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   {subActive && (
@@ -196,7 +196,7 @@ const Layout = ({ children }: LayoutProps) => {
                     "w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
                     subActive
                       ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                      : "bg-slate-200/70 text-slate-600"
+                      : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
                   )}>
                     <sub.icon className="h-5 w-5" />
                   </div>
@@ -221,15 +221,15 @@ const Layout = ({ children }: LayoutProps) => {
                 className={cn(
                   "w-full justify-center h-14 rounded-xl transition-all duration-200 relative",
                   isItemActive
-                    ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
-                    : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+                    ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
                 )}
               >
                 <div className={cn(
                   "w-11 h-11 rounded-xl flex items-center justify-center",
                   isItemActive
                     ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                    : "bg-slate-200/70 text-slate-600"
+                    : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
                 )}>
                   <item.icon className="h-5 w-5" />
                 </div>
@@ -253,8 +253,8 @@ const Layout = ({ children }: LayoutProps) => {
           className={cn(
             "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative active:scale-[0.98]",
             isItemActive
-              ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
-              : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
+              ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 font-semibold shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
           )}
         >
           {isItemActive && (
@@ -264,7 +264,7 @@ const Layout = ({ children }: LayoutProps) => {
             "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
             isItemActive
               ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-              : "bg-slate-200/70 text-slate-600"
+              : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
           )}>
             <item.icon className="h-5 w-5" />
           </div>
@@ -278,7 +278,7 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex dot-grid-bg dark:bg-[#05070c]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 dark:from-[#05070c] dark:via-[#0a0d14] dark:to-[#05070c] flex dot-grid-bg dark:bg-[#05070c]">
       {/* Decorative backgrounds - Hidden completely in Dark Mode */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none dark:hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
@@ -287,16 +287,16 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 z-40 shadow-sm">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 z-40 shadow-sm">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(true)}
-              className="h-10 w-10 rounded-xl active:scale-90"
+              className="h-10 w-10 rounded-xl active:scale-90 text-slate-600 dark:text-slate-400"
             >
-              <Menu className="h-5 w-5 text-slate-600" />
+              <Menu className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0 overflow-hidden">
@@ -308,7 +308,7 @@ const Layout = ({ children }: LayoutProps) => {
                   </div>
                 )}
               </div>
-              <span className="font-bold text-slate-800">{settings.appName}</span>
+              <span className="font-bold text-slate-800 dark:text-slate-100">{settings.appName}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -316,13 +316,13 @@ const Layout = ({ children }: LayoutProps) => {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-10 w-10 rounded-xl text-slate-600 active:scale-90"
+              className="h-10 w-10 rounded-xl text-slate-600 dark:text-slate-400 active:scale-90"
               title="تبديل وضع الألوان"
             >
               {theme === "dark" ? (
-                <Sun className="h-5 w-5 text-amber-500" />
+                <Sun className="h-5 w-5 text-amber-400" />
               ) : (
-                <Moon className="h-5 w-5 text-slate-600" />
+                <Moon className="h-5 w-5" />
               )}
             </Button>
             <NotificationsDropdown />
@@ -354,14 +354,14 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-slate-200 flex-col",
-          "bg-white transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50",
+          "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-slate-200 dark:border-slate-800 flex-col",
+          "bg-white dark:bg-[#0a0d14] transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50 dark:shadow-black/30",
           sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
         {/* Sidebar Header */}
         <div className={cn(
-          "p-5 border-b border-slate-100 flex items-center",
+          "p-5 border-b border-slate-100 dark:border-slate-800 flex items-center",
           sidebarCollapsed ? "justify-center" : "justify-between"
         )}>
           {sidebarCollapsed ? (
@@ -388,15 +388,15 @@ const Layout = ({ children }: LayoutProps) => {
                   )}
                 </div>
                 <div>
-                  <h1 className="font-bold text-slate-800 text-lg tracking-tight">{settings.appName}</h1>
-                  <p className="text-xs text-slate-500">نظام إدارة الأقساط</p>
+                  <h1 className="font-bold text-slate-800 dark:text-slate-100 text-lg tracking-tight">{settings.appName}</h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">نظام إدارة الأقساط</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleCollapse}
-                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 active:scale-90"
+                className="h-8 w-8 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90"
                 title="تصغير القائمة"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -461,7 +461,7 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden scroll-smooth">
           {!sidebarCollapsed && (
-            <p className="px-4 py-2 text-xs font-semibold text-slate-400 tracking-wider">القائمة الرئيسية</p>
+            <p className="px-4 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 tracking-wider">القائمة الرئيسية</p>
           )}
 
           {filteredNavItems.map(renderNavItem)}
@@ -471,7 +471,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={toggleCollapse}
-                className="w-full justify-start gap-3 h-11 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 active:scale-[0.98]"
+                className="w-full justify-start gap-3 h-11 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-[0.98]"
               >
                 <PanelLeftClose className="h-4 w-4" />
                 <span>تصغير القائمة</span>
@@ -481,14 +481,14 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className={cn("p-3 border-t border-slate-100", sidebarCollapsed ? "flex justify-center" : "")}>
+        <div className={cn("p-3 border-t border-slate-100 dark:border-slate-800", sidebarCollapsed ? "flex justify-center" : "")}>
           {sidebarCollapsed ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   onClick={logout}
-                  className="h-11 w-11 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 active:scale-90"
+                  className="h-11 w-11 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 active:scale-90"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -501,7 +501,7 @@ const Layout = ({ children }: LayoutProps) => {
             <Button
               variant="ghost"
               onClick={logout}
-              className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600 active:scale-[0.98]"
+              className="w-full justify-start gap-3 h-11 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 active:scale-[0.98]"
             >
               <LogOut className="h-4 w-4" />
               <span>تسجيل الخروج</span>
@@ -516,7 +516,7 @@ const Layout = ({ children }: LayoutProps) => {
           variant="ghost"
           size="icon"
           onClick={toggleCollapse}
-          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white shadow-md border border-slate-200 text-slate-500 hover:text-slate-700 active:scale-90"
+          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 active:scale-90"
           title="توسيع القائمة"
         >
           <PanelLeftOpen className="h-4 w-4" />

@@ -56,7 +56,7 @@ const TopBar = () => {
   };
 
   return (
-    <header className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 z-30">
+    <header className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 z-30">
       {/* Spacer for sidebar */}
       <div className="flex-1" />
 
@@ -70,28 +70,28 @@ const TopBar = () => {
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          className="h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-800 active:scale-90 transition-all"
+          className="h-10 w-10 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 active:scale-90 transition-all"
           title="تبديل وضع الألوان"
         >
           {theme === "dark" ? (
-            <Sun className="h-5 w-5 text-amber-500" />
+            <Sun className="h-5 w-5 text-amber-400" />
           ) : (
             <Moon className="h-5 w-5 text-slate-600" />
           )}
         </Button>
 
         {/* Separator */}
-        <div className="w-px h-8 bg-slate-200" />
+        <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
 
         {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 pl-3 pr-1 py-1 rounded-2xl hover:bg-slate-100 transition-all duration-200 active:scale-[0.98]">
+            <button className="flex items-center gap-3 pl-3 pr-1 py-1 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-[0.98]">
               <div className="text-left">
-                <p className="text-sm font-semibold text-slate-800 leading-tight">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight">
                   {user?.name || "مستخدم"}
                 </p>
-                <p className="text-[11px] text-slate-500 leading-tight flex items-center gap-1">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight flex items-center gap-1">
                   <Shield className="h-3 w-3 flex-shrink-0" />
                   {user ? roleLabels[user.role] || user.role : ""}
                 </p>
@@ -106,13 +106,13 @@ const TopBar = () => {
                   user?.name?.charAt(0) || "م"
                 )}
               </div>
-              <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
             </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
             align="end"
-            className="w-64 rounded-2xl p-1.5 shadow-xl border border-slate-200 bg-white"
+            className="w-64 rounded-2xl p-1.5 shadow-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
             sideOffset={8}
           >
             {/* User Info Header */}
@@ -129,8 +129,8 @@ const TopBar = () => {
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 text-sm">{user?.name}</p>
-                  <p className="text-xs text-slate-500">{user?.email}</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{user?.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
                   <Badge className="mt-1 rounded-lg border-0 text-[10px] bg-gradient-to-r from-violet-500 to-purple-600 text-white">
                     {user ? roleLabels[user.role] || user.role : ""}
                   </Badge>
@@ -138,46 +138,46 @@ const TopBar = () => {
               </div>
             </div>
 
-            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800" />
 
             <DropdownMenuItem
               onClick={() => navigate("/profile")}
-              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm"
+              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300"
             >
-              <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                <User className="h-4 w-4 text-violet-600" />
+              <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center">
+                <User className="h-4 w-4 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
                 <p className="font-medium">حسابي</p>
-                <p className="text-[10px] text-slate-400">تعديل الملف الشخصي</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">تعديل الملف الشخصي</p>
               </div>
             </DropdownMenuItem>
 
             <DropdownMenuItem
               onClick={() => navigate("/settings")}
-              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm"
+              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300"
             >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                <Settings className="h-4 w-4 text-slate-600" />
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <Settings className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </div>
               <div>
                 <p className="font-medium">الإعدادات</p>
-                <p className="text-[10px] text-slate-400">تخصيص البرنامج</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">تخصيص البرنامج</p>
               </div>
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800" />
 
             <DropdownMenuItem
               onClick={logout}
-              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm text-red-600 focus:text-red-600"
+              className="cursor-pointer rounded-xl gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
             >
-              <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
-                <LogOut className="h-4 w-4 text-red-500" />
+              <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/50 flex items-center justify-center">
+                <LogOut className="h-4 w-4 text-red-500 dark:text-red-400" />
               </div>
               <div>
                 <p className="font-medium">تسجيل الخروج</p>
-                <p className="text-[10px] text-red-400">إنهاء الجلسة</p>
+                <p className="text-[10px] text-red-400 dark:text-red-500">إنهاء الجلسة</p>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>

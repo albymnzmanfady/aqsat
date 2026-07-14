@@ -65,7 +65,7 @@ const MobileNav = () => {
   return (
     <>
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/80 safe-area-bottom shadow-xl shadow-slate-200/50">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 safe-area-bottom shadow-xl shadow-slate-200/50 dark:shadow-black/30">
         <div className="flex items-center justify-around h-16 px-1">
           
           {/* عرض الـ 4 أقسام الأساسية المفلترة */}
@@ -78,21 +78,21 @@ const MobileNav = () => {
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 py-1 rounded-xl transition-all duration-200 w-16 active:scale-95",
                   isActive
-                    ? "text-violet-600"
-                    : "text-slate-400 hover:text-slate-600"
+                    ? "text-violet-600 dark:text-violet-400"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                 )}
               >
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                   isActive
                     ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/25"
-                    : "text-slate-400"
+                    : "text-slate-400 dark:text-slate-500"
                 )}>
                   <item.icon className="h-5 w-5" />
                 </div>
                 <span className={cn(
                   "text-[10px] font-semibold leading-tight tracking-tight",
-                  isActive ? "text-violet-600" : "text-slate-400"
+                  isActive ? "text-violet-600 dark:text-violet-400" : "text-slate-400 dark:text-slate-500"
                 )}>
                   {item.label}
                 </span>
@@ -106,18 +106,18 @@ const MobileNav = () => {
               onClick={() => setSheetOpen(true)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 py-1 rounded-xl transition-all duration-200 w-16 active:scale-95",
-                sheetOpen ? "text-violet-600" : "text-slate-400 hover:text-slate-600"
+                sheetOpen ? "text-violet-600 dark:text-violet-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
               )}
             >
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                 sheetOpen
                   ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/25"
-                  : "text-slate-400"
+                  : "text-slate-400 dark:text-slate-500"
               )}>
                 <Grid3X3 className="h-5 w-5" />
               </div>
-              <span className="text-[10px] font-semibold leading-tight text-slate-400">المزيد</span>
+              <span className="text-[10px] font-semibold leading-tight text-slate-400 dark:text-slate-500">المزيد</span>
             </button>
           )}
         </div>
@@ -125,15 +125,15 @@ const MobileNav = () => {
 
       {/* Bottom Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl pb-8 max-h-[80vh] overflow-y-auto bg-slate-50 border-t border-slate-200">
+        <SheetContent side="bottom" className="rounded-t-3xl pb-8 max-h-[80vh] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
           <div className="p-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-md">
                 <Grid3X3 className="h-6 w-6 text-white" />
               </div>
               <div className="text-right">
-                <h2 className="text-lg font-extrabold text-slate-800">الأدوات والإعدادات</h2>
-                <p className="text-xs text-slate-500">الوصول السريع لبقية ميزات برنامج الأقساط</p>
+                <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-100">الأدوات والإعدادات</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">الوصول السريع لبقية ميزات برنامج الأقساط</p>
               </div>
             </div>
 
@@ -148,8 +148,8 @@ const MobileNav = () => {
                     className={cn(
                       "flex flex-col items-center gap-2 p-3.5 rounded-2xl transition-all duration-200 active:scale-95 border",
                       isActive
-                        ? "bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-200 text-violet-700 shadow-sm"
-                        : "bg-white hover:bg-slate-100/50 border-slate-100 hover:border-slate-200"
+                        ? "bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 shadow-sm"
+                        : "bg-white dark:bg-slate-800 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600"
                     )}
                   >
                     <div className={cn(
@@ -158,7 +158,7 @@ const MobileNav = () => {
                     )}>
                       <item.icon className="h-5.5 w-5.5" />
                     </div>
-                    <span className="text-[11px] font-bold text-slate-700 text-center leading-tight">
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 text-center leading-tight">
                       {item.label}
                     </span>
                   </Link>
@@ -167,11 +167,11 @@ const MobileNav = () => {
             </div>
 
             {/* زر تسجيل الخروج الأنيق في الأسفل */}
-            <div className="mt-8 pt-4 border-t border-slate-200/60">
+            <div className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800">
               <Button
                 variant="ghost"
                 onClick={() => { logout(); setSheetOpen(false); }}
-                className="w-full justify-center gap-2 h-12 rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 active:scale-95 font-bold"
+                className="w-full justify-center gap-2 h-12 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 active:scale-95 font-bold"
               >
                 <LogOut className="h-5 w-5" />
                 <span>تسجيل الخروج من النظام</span>

@@ -484,23 +484,31 @@ const InstallmentsPage = () => {
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-10 w-10 p-0 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all border border-slate-100 hover:border-slate-200 active:scale-90"
+                        >
                           <MoreHorizontal className="h-5 w-5 text-slate-500" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-xl">
+                      <DropdownMenuContent 
+                        align="end" 
+                        sideOffset={6}
+                        className="w-56 rounded-2xl p-1.5 shadow-2xl border border-slate-200 bg-white z-50 animate-in fade-in slide-in-from-top-2"
+                      >
                         <DropdownMenuItem
                           onClick={() => handleTogglePaid(installment)}
-                          className="cursor-pointer rounded-lg"
+                          className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                         >
                           {installment.is_paid ? (
                             <>
-                              <XCircle className="h-4 w-4 ml-2" />
+                              <XCircle className="h-4 w-4 ml-2 text-rose-500" />
                               إلغاء التسديد
                             </>
                           ) : (
                             <>
-                              <CheckCircle className="h-4 w-4 ml-2" />
+                              <CheckCircle className="h-4 w-4 ml-2 text-emerald-500" />
                               تسديد القسط
                             </>
                           )}
@@ -508,29 +516,29 @@ const InstallmentsPage = () => {
                         {installment.is_paid && (
                           <DropdownMenuItem
                             onClick={() => handlePrintReceipt(installment)}
-                            className="cursor-pointer rounded-lg"
+                            className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                           >
-                            <Printer className="h-4 w-4 ml-2" />
+                            <Printer className="h-4 w-4 ml-2 text-blue-500" />
                             طباعة إيصال
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
                           onClick={() => handleSendWhatsApp(installment)}
-                          className="cursor-pointer rounded-lg"
+                          className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                           disabled={sendingId === installment.id}
                         >
                           {sendingId === installment.id ? (
-                            <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                            <Loader2 className="h-4 w-4 ml-2 animate-spin text-slate-400" />
                           ) : (
-                            <Send className="h-4 w-4 ml-2" />
+                            <Send className="h-4 w-4 ml-2 text-violet-500" />
                           )}
                           إرسال إشعار واتساب
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setDeleteConfirmId(installment.id)}
-                          className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                          className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-red-600 focus:text-red-600 hover:bg-red-50 transition-colors"
                         >
-                          <Trash2 className="h-4 w-4 ml-2" />
+                          <Trash2 className="h-4 w-4 ml-2 text-red-500" />
                           حذف
                         </DropdownMenuItem>
                       </DropdownMenuContent>

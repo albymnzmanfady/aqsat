@@ -166,20 +166,28 @@ const Customers = () => {
             </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl active:scale-90">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-10 w-10 p-0 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all border border-slate-100 hover:border-slate-200 active:scale-90"
+                >
                   <MoreHorizontal className="h-5 w-5 text-slate-500" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl">
-                <DropdownMenuItem onClick={() => handleEdit(customer)} className="cursor-pointer rounded-lg">
-                  <Edit className="h-4 w-4 ml-2" />
+              <DropdownMenuContent 
+                align="end" 
+                sideOffset={6}
+                className="w-52 rounded-2xl p-1.5 shadow-2xl border border-slate-200 bg-white z-50 animate-in fade-in slide-in-from-top-2"
+              >
+                <DropdownMenuItem onClick={() => handleEdit(customer)} className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                  <Edit className="h-4 w-4 ml-2 text-violet-500" />
                   تعديل
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setDeleteConfirmId(customer.id)}
-                  className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                  className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-red-600 focus:text-red-600 hover:bg-red-50 transition-colors"
                 >
-                  <Trash2 className="h-4 w-4 ml-2" />
+                  <Trash2 className="h-4 w-4 ml-2 text-red-500" />
                   حذف
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -279,7 +287,7 @@ const Customers = () => {
         <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md">
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -294,7 +302,7 @@ const Customers = () => {
         <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md">
                 <UserCheck className="h-6 w-6 text-white" />
               </div>
               <div>

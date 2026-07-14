@@ -53,9 +53,17 @@ const getStoredAvatar = (): string => {
   return "";
 };
 
+const getCollapsedState = (): boolean => {
+  try {
+    const saved = localStorage.getItem("sidebar_collapsed");
+    if (saved === "true") return true;
+  } catch {}
+  return false;
+};
+
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(getCollapsedState);
   const location = useLocation();
   const isMobile = useIsMobile();
   const { user, logout, hasPermission } = useAuth();
@@ -63,12 +71,6 @@ const Layout = ({ children }: LayoutProps) => {
   const { theme, setTheme } = useTheme();
   const [avatar, setAvatar] = useState(getStoredAvatar);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("sidebar_collapsed");
-    if (saved === "true") setSidebarCollapsed(true);
-  }, []);
-
-  // Refresh avatar on route change
   useEffect(() => {
     setAvatar(getStoredAvatar());
   }, [location.pathname]);
@@ -88,6 +90,7 @@ const Layout = ({ children }: LayoutProps) => {
     { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500", permission: "view_customers" as const },
     { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500", permission: "view_contracts" as const },
     { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500", permission: "view_installments" as const },
+    { path: "/collection-reports", label: "تقارير التحصيل", icon: BarChart3, color: "from-violet-500 to-purple-600", permission: "view_installments" as const },
     { path: "/calculator", label: "حاسبة الأقساط", icon: Calculator, color: "from-indigo-500 to-violet-600", permission: null as string | null },
     {
       label: "المخازن",
@@ -143,17 +146,17 @@ const Layout = ({ children }: LayoutProps) => {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
+                    "w-full justify-center h-14 rounded-xl transition-all duration-200 relative",
                     isParentActive
                       ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
                       : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
                   )}
                 >
                   <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center",
+                    "w-11 h-11 rounded-xl flex items-center justify-center",
                     isParentActive
                       ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                      : "bg-slate-100 text-slate-500"
+                      : "bg-slate-200/70 text-slate-600"
                   )}>
                     <item.icon className="h-5 w-5" />
                   </div>
@@ -180,7 +183,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start gap-3 h-11 rounded-xl transition-all duration-200 relative pr-8",
+                    "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative pr-8",
                     subActive
                       ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 font-semibold shadow-sm"
                       : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
@@ -190,12 +193,12 @@ const Layout = ({ children }: LayoutProps) => {
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
                   )}
                   <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
+                    "w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
                     subActive
                       ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                      : "bg-slate-100 text-slate-500"
+                      : "bg-slate-200/70 text-slate-600"
                   )}>
-                    <sub.icon className="h-4 w-4" />
+                    <sub.icon className="h-5 w-5" />
                   </div>
                   <span className="flex-1 text-right truncate">{sub.label}</span>
                 </Button>
@@ -216,18 +219,18 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-center h-12 rounded-xl transition-all duration-200 relative",
+                  "w-full justify-center h-14 rounded-xl transition-all duration-200 relative",
                   isItemActive
                     ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 shadow-sm"
                     : "text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
                 )}
               >
                 <div className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center",
+                  "w-11 h-11 rounded-xl flex items-center justify-center",
                   isItemActive
                     ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                    : "bg-slate-100 text-slate-500"
-                  )}>
+                    : "bg-slate-200/70 text-slate-600"
+                )}>
                   <item.icon className="h-5 w-5" />
                 </div>
                 {isItemActive && (
@@ -258,10 +261,10 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-violet-500 to-purple-600 rounded-l-full" />
           )}
           <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
+            "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
             isItemActive
               ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-              : "bg-slate-100 text-slate-500"
+              : "bg-slate-200/70 text-slate-600"
           )}>
             <item.icon className="h-5 w-5" />
           </div>
@@ -276,7 +279,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex dot-grid-bg dark:bg-[#05070c]">
-      {/* Decorative backgrounds - Hidden completely in Dark Mode for deep flat velvet feel */}
+      {/* Decorative backgrounds - Hidden completely in Dark Mode */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none dark:hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-200/10 rounded-full blur-3xl" />
@@ -309,7 +312,6 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Quick Dark Mode Toggle Button for Mobile */}
             <Button
               variant="ghost"
               size="icon"
@@ -403,7 +405,7 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
 
-        {/* User Card - clickable to profile */}
+        {/* User Card */}
         {!sidebarCollapsed && (
           <div className="p-4">
             <Link to="/profile">
@@ -478,7 +480,7 @@ const Layout = ({ children }: LayoutProps) => {
           )}
         </nav>
 
-        {/* Sidebar Footer - Logout only */}
+        {/* Sidebar Footer */}
         <div className={cn("p-3 border-t border-slate-100", sidebarCollapsed ? "flex justify-center" : "")}>
           {sidebarCollapsed ? (
             <Tooltip delayDuration={300}>

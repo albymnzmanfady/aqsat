@@ -66,14 +66,14 @@ const InstallmentSchedule = ({
             className={cn(
               "flex items-center justify-between p-3 rounded-xl transition-all active:scale-[0.99]",
               installment.isPaid
-                ? "bg-emerald-50/50 border border-emerald-100/50"
-                : "bg-white/80 border border-slate-100"
+                ? "bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30"
+                : "bg-white/80 dark:bg-[#0f131a] border border-slate-100 dark:border-slate-800"
             )}
           >
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm",
+                  "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm",
                   installment.isPaid
                     ? "bg-gradient-to-br from-emerald-500 to-teal-500"
                     : "bg-gradient-to-br from-amber-500 to-orange-500"
@@ -82,10 +82,10 @@ const InstallmentSchedule = ({
                 {installment.number}
               </div>
               <div>
-                <p className="font-semibold text-sm text-slate-700">
+                <p className="font-semibold text-sm text-slate-700 dark:text-slate-200">
                   {installment.amount.toLocaleString()} ج.م
                 </p>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                   <Calendar className="h-3 w-3" />
                   {dueDate}
                 </div>
@@ -99,7 +99,7 @@ const InstallmentSchedule = ({
                   مدفوع
                 </Badge>
               ) : (
-                <Badge variant="outline" className="border-amber-200 text-amber-600 bg-amber-50 rounded-lg">
+                <Badge variant="outline" className="border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
                   <Clock className="h-3 w-3 ml-1" />
                   باقي
                 </Badge>
@@ -112,7 +112,7 @@ const InstallmentSchedule = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 active:scale-90"
+                        className="h-8 w-8 p-0 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 active:scale-90"
                         onClick={() => onMarkPaid(installment.id)}
                       >
                         <CheckCircle className="h-4 w-4" />
@@ -129,7 +129,7 @@ const InstallmentSchedule = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50 active:scale-90"
+                      className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950/30 active:scale-90"
                       onClick={() => handleSendReminder(installment)}
                       disabled={sendingTo === installment.id}
                     >
@@ -151,7 +151,7 @@ const InstallmentSchedule = ({
       })}
 
       {installments.length === 0 && (
-        <p className="text-center text-slate-500 py-8 text-sm">لا توجد أقساط</p>
+        <p className="text-center text-slate-500 dark:text-slate-400 py-8 text-sm">لا توجد أقساط</p>
       )}
     </div>
   );

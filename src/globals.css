@@ -19,7 +19,7 @@
    الوضع الداكن المطور والمتناسق بالكامل (Dark Mode Colors)
    ========================================================================== */
 .dark body {
-  background-color: #090d14 !important;
+  background-color: #05070c !important; /* لون شامواه داكن مطفأ بالكامل */
   background-image: none !important;
   color: #f8fafc !important;
 }
@@ -33,10 +33,10 @@
 .dark .bg-white\/80,
 .dark .bg-white\/70,
 .dark .bg-white\/90 {
-  background-color: #111827 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: #0e1118 !important; /* لون متناسق مع ملمس الشامواه */
+  border-color: rgba(255, 255, 255, 0.05) !important;
   color: #f8fafc !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* تنسيق النصوص وتناسقها */
@@ -63,18 +63,18 @@
 .dark .border-slate-200\/50,
 .dark .divide-slate-100,
 .dark .divide-slate-100\/80 {
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  divide-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  divide-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* الخلفيات الثانوية والقوائم */
 .dark .bg-slate-50,
 .dark .bg-slate-50\/50 {
-  background-color: #0f172a !important;
+  background-color: #080b11 !important;
 }
 
 .dark .bg-slate-100 {
-  background-color: #1e293b !important;
+  background-color: #151b26 !important;
   color: #f1f5f9 !important;
 }
 
@@ -83,9 +83,9 @@
 .dark select,
 .dark textarea,
 .dark .SelectTrigger {
-  background-color: #1e293b !important;
+  background-color: #151b26 !important;
   color: #f8fafc !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .dark input::placeholder {
@@ -95,8 +95,8 @@
 .dark header,
 .dark aside,
 .dark nav {
-  background-color: rgba(15, 23, 42, 0.95) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(14, 17, 24, 0.98) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* القوائم المنبثقة والنوافذ (Modals and Menus) */
@@ -105,63 +105,63 @@
 .dark div[role="menu"],
 .dark div[role="dialog"],
 .dark .DialogContent {
-  background-color: #0f172a !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: #0e1118 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: #f8fafc !important;
 }
 
 /* معالجة فئات الألوان المالية والتفاعلية (تجاوز الألوان الفاتحة في الوضع الداكن) */
 .dark .bg-blue-50\/50, 
 .dark .bg-blue-50 {
-  background-color: rgba(59, 130, 246, 0.15) !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
   color: #60a5fa !important;
-  border-color: rgba(59, 130, 246, 0.25) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
 }
 
 .dark .bg-emerald-50\/50, 
 .dark .bg-emerald-50, 
 .dark .bg-emerald-50\/20,
 .dark .bg-emerald-50\/10 {
-  background-color: rgba(16, 185, 129, 0.15) !important;
+  background-color: rgba(16, 185, 129, 0.1) !important;
   color: #34d399 !important;
-  border-color: rgba(16, 185, 129, 0.25) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
 }
 
 .dark .bg-amber-50\/50, 
 .dark .bg-amber-50,
 .dark .bg-amber-50\/20 {
-  background-color: rgba(245, 158, 11, 0.15) !important;
+  background-color: rgba(245, 158, 11, 0.1) !important;
   color: #fbbf24 !important;
-  border-color: rgba(245, 158, 11, 0.25) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
 }
 
 .dark .bg-violet-50\/50, 
 .dark .bg-violet-50, 
 .dark .bg-violet-50\/10 {
-  background-color: rgba(139, 92, 246, 0.15) !important;
+  background-color: rgba(139, 92, 246, 0.1) !important;
   color: #a78bfa !important;
-  border-color: rgba(139, 92, 246, 0.25) !important;
+  border-color: rgba(139, 92, 246, 0.2) !important;
 }
 
 .dark .bg-rose-50\/10, 
 .dark .bg-rose-50, 
 .dark .bg-rose-50\/20 {
-  background-color: rgba(244, 63, 94, 0.15) !important;
+  background-color: rgba(244, 63, 94, 0.1) !important;
   color: #fb7185 !important;
-  border-color: rgba(244, 63, 94, 0.25) !important;
+  border-color: rgba(244, 63, 94, 0.2) !important;
 }
 
 .dark .bg-slate-50\/50, 
 .dark .bg-slate-50 {
-  background-color: rgba(30, 41, 59, 0.5) !important;
+  background-color: rgba(30, 41, 59, 0.4) !important;
   border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* تأثير الزجاج الكريستالي الفاخر في الوضع الداكن */
 .dark .crystal,
 .dark .crystal-strong {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(135deg, rgba(14, 17, 24, 0.8) 0%, rgba(14, 17, 24, 0.4) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 /* ==========================================================================

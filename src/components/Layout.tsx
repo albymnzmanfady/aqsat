@@ -275,9 +275,9 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex dot-grid-bg">
-      {/* Decorative backgrounds */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 flex dot-grid-bg dark:bg-[#05070c]">
+      {/* Decorative backgrounds - Hidden completely in Dark Mode for deep flat velvet feel */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none dark:hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-200/10 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-200/5 rounded-full blur-3xl" />

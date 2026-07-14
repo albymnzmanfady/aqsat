@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
-// الأقساط الأساسية التي تظهر مباشرة في الشريط السفلي للموبايل
 const mainNavItems = [
   { path: "/", label: "الرئيسية", icon: LayoutDashboard, permission: null as string | null },
   { path: "/installments", label: "الأقساط", icon: CreditCard, permission: "view_installments" as const },
@@ -34,7 +33,6 @@ const mainNavItems = [
   { path: "/customers", label: "العملاء", icon: Users, permission: "view_customers" as const },
 ];
 
-// بقية العناصر والصفحات التي تظهر في قائمة "المزيد"
 const moreItems = [
   { path: "/collection-reports", label: "تقارير التحصيل", icon: BarChart3, color: "from-violet-500 to-purple-600", permission: "view_installments" as const },
   { path: "/calculator", label: "حاسبة الأقساط", icon: Calculator, color: "from-indigo-500 to-violet-600", permission: null as string | null },
@@ -44,7 +42,7 @@ const moreItems = [
   { path: "/inventory", label: "حركات المخزون", icon: ArrowDownUp, color: "from-teal-500 to-emerald-600", permission: "view_inventory" as const },
   { path: "/inventory-dashboard", label: "تقارير المخزون", icon: BarChart3, color: "from-cyan-500 to-blue-600", permission: "view_inventory" as const },
   { path: "/expense-reports", label: "تقارير المصروفات", icon: PieChart, color: "from-emerald-500 to-teal-500", permission: "view_expense_reports" as const },
-  { path: "/users", label: "المستندات والمستخدمين", icon: Users, color: "from-indigo-500 to-violet-600", permission: "view_users" as const },
+  { path: "/users", label: "المستخدمين", icon: Users, color: "from-indigo-500 to-violet-600", permission: "view_users" as const },
   { path: "/settings", label: "الإعدادات العامة", icon: Settings, color: "from-slate-500 to-gray-500", permission: "view_settings" as const },
 ];
 
@@ -53,7 +51,6 @@ const MobileNav = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { hasPermission, logout } = useAuth();
 
-  // تصفية القوائم حسب الصلاحيات الممنوحة
   const visibleMainItems = mainNavItems.filter(
     (item) => !item.permission || hasPermission(item.permission)
   );
@@ -64,11 +61,8 @@ const MobileNav = () => {
 
   return (
     <>
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 safe-area-bottom shadow-xl shadow-slate-200/50 dark:shadow-black/30">
         <div className="flex items-center justify-around h-16 px-1">
-          
-          {/* عرض الـ 4 أقسام الأساسية المفلترة */}
           {visibleMainItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -100,7 +94,6 @@ const MobileNav = () => {
             );
           })}
 
-          {/* زر المزيد لفتح بقية الأقسام المساعدة */}
           {visibleMoreItems.length > 0 && (
             <button
               onClick={() => setSheetOpen(true)}
@@ -123,7 +116,6 @@ const MobileNav = () => {
         </div>
       </nav>
 
-      {/* Bottom Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl pb-8 max-h-[80vh] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
           <div className="p-4">
@@ -166,7 +158,6 @@ const MobileNav = () => {
               })}
             </div>
 
-            {/* زر تسجيل الخروج الأنيق في الأسفل */}
             <div className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800">
               <Button
                 variant="ghost"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -49,9 +49,11 @@ import {
   Edit,
   Trash2,
   Loader2,
+  UserCog,
 } from "lucide-react";
 
 const Customers = () => {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -177,8 +179,15 @@ const Customers = () => {
               <DropdownMenuContent 
                 align="end" 
                 sideOffset={6}
-                className="w-52 rounded-2xl p-1.5 shadow-2xl border border-slate-200 bg-white z-50 animate-in fade-in slide-in-from-top-2"
+                className="w-56 rounded-2xl p-1.5 shadow-2xl border border-slate-200 bg-white z-50 animate-in fade-in slide-in-from-top-2"
               >
+                <DropdownMenuItem 
+                  onClick={() => navigate(`/customers/${customer.id}`)} 
+                  className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-violet-50 transition-colors"
+                >
+                  <UserCog className="h-4 w-4 ml-2 text-violet-500" />
+                  الملف الشامل
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleEdit(customer)} className="cursor-pointer rounded-xl gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
                   <Edit className="h-4 w-4 ml-2 text-violet-500" />
                   تعديل

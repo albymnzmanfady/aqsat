@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Customers from "./pages/Customers";
+import CustomerProfile from "./pages/CustomerProfile";
 import Contracts from "./pages/Contracts";
 import Installments from "./pages/Installments";
 import Settings from "./pages/Settings";
@@ -27,7 +28,7 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 30000, // 30 seconds
+      staleTime: 30000,
     },
   },
 });
@@ -56,6 +57,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredPermission="view_customers">
             <ErrorBoundary><Customers /></ErrorBoundary>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customers/:id"
+        element={
+          <ProtectedRoute requiredPermission="view_customers">
+            <ErrorBoundary><CustomerProfile /></ErrorBoundary>
           </ProtectedRoute>
         }
       />

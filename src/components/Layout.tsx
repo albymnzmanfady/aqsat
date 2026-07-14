@@ -279,7 +279,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 dark:from-[#05070c] dark:via-[#0a0d14] dark:to-[#05070c] flex dot-grid-bg dark:bg-[#05070c]">
-      {/* Decorative backgrounds - Hidden completely in Dark Mode */}
+      {/* Decorative backgrounds */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none dark:hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-200/10 rounded-full blur-3xl" />

@@ -1,23 +1,20 @@
-# Stage 1: Build the frontend
-FROM node:20-alpine AS build
+# Stage 1: Build frontend
+FROM node:22-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm config set onlyBuiltDependencies @swc/core esbuild --location project && pnpm install --ignore-scripts
+RUN pnpm install
 COPY . .
-RUN npm run build
+RUN npx vite build
 
-# Stage 2: Production server
-FROM node:20-alpine
+# Stage 2: Production
+FROM node:22-alpine
 WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && node -e "const p=require('./package.json');p.pnpm={onlyBuiltDependencies:['better-sqlite3','core-js','esbuild','@swc/core','inotify']};require('fs').writeFileSync('package.json',JSON.stringify(p,null,2))" && pnpm install --prod
 
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
-
-# Copy server code and built frontend
 COPY server ./server
 COPY --from=build /app/dist ./dist
-
-# Create data directory for SQLite
 RUN mkdir -p /app/data
 
 ENV NODE_ENV=production
@@ -25,4 +22,4 @@ ENV PORT=3001
 
 EXPOSE 3001
 
-CMD ["node", "--import", "tsx", "server/index.ts"]
+CMD ["npx", "--yes", "tsx", "server/index.ts"]

@@ -1,10 +1,8 @@
-version: "3.8"
-
 services:
   app:
     build: .
     ports:
-      - "80:3001"
+      - "10011:3001"
     volumes:
       - app-data:/app/data
     restart: unless-stopped

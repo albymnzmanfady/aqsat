@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
 
 export interface GeneralSettings {
   appName: string;
@@ -18,42 +19,38 @@ const DEFAULT_SETTINGS: GeneralSettings = {
   companyAddress: "",
 };
 
-const STORAGE_KEY = "app_general_settings";
+const SETTINGS_KEY = "general_settings";
 
 export function useAppSettings() {
-  const [settings, setSettings] = useState<GeneralSettings>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
-      }
-    } catch (e) {
-      console.error("Error loading settings:", e);
-    }
-    return DEFAULT_SETTINGS;
-  });
+  const [settings, setSettings] = useState<GeneralSettings>(DEFAULT_SETTINGS);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    api.getSettings(SETTINGS_KEY)
+      .then((data) => {
+        if (data) setSettings({ ...DEFAULT_SETTINGS, ...data });
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
 
   const updateSettings = useCallback((newSettings: Partial<GeneralSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      api.updateSettings(SETTINGS_KEY, updated).catch(console.error);
       return updated;
     });
   }, []);
 
-  // تحديث عنوان الصفحة
   useEffect(() => {
     document.title = settings.appName
       ? `${settings.appName} - نظام إدارة الأقساط`
       : "أقساط - نظام إدارة الأقساط";
   }, [settings.appName]);
 
-  // تحديث الأيقونة المفضلة من الشعار
   useEffect(() => {
     if (settings.logoUrl) {
-      let link = document.querySelector(
-        "link[rel~='icon']"
-      ) as HTMLLinkElement;
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
       if (!link) {
         link = document.createElement("link");
         link.rel = "icon";
@@ -63,5 +60,5 @@ export function useAppSettings() {
     }
   }, [settings.logoUrl]);
 
-  return { settings, updateSettings };
+  return { settings, updateSettings, loaded };
 }

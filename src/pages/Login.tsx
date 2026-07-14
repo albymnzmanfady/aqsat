@@ -21,7 +21,7 @@ const Login = () => {
     if (!email.trim() || !password.trim()) { showError("أدخل البريد وكلمة المرور"); return; }
     setLoading(true);
     try {
-      const user = await api.users.login(email, password);
+      const user = await api.login(email, password);
       localStorage.setItem("auth_user", JSON.stringify(user));
       window.location.href = "/";
     } catch { showError("البريد أو كلمة المرور غير صحيحة"); }

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Permission, ROLE_PERMISSIONS } from "@/types";
+import { api } from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -19,11 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem("auth_user");
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
+      try { return JSON.parse(saved); } catch { return null; }
     }
     return null;
   });
@@ -37,21 +34,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const login = async (email: string, password: string) => {
-    // Use API for login
     try {
-      const res = await fetch("/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (res.ok) {
-        const foundUser = await res.json();
-        setUser(foundUser);
-        return { success: true };
-      }
-      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
-    } catch {
-      return { success: false, error: "خطأ في الاتصال بالخادم" };
+      const foundUser = await api.login(email, password);
+      setUser(foundUser);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || "فشل تسجيل الدخول" };
     }
   };
 

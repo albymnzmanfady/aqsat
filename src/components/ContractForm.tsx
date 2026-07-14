@@ -26,20 +26,35 @@ interface ContractFormProps {
 const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initialValues }: ContractFormProps) => {
   const [localGuarantors, setLocalGuarantors] = useState<ApiCustomer[]>(guarantors);
   const [localCustomers, setLocalCustomers] = useState<ApiCustomer[]>(customers);
+  const [localProducts, setLocalProducts] = useState<ApiProduct[]>(products);
+
   const [showNewGuarantorDialog, setShowNewGuarantorDialog] = useState(false);
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [showNewProductDialog, setShowNewProductDialog] = useState(false);
 
+  // New Guarantor Form State
   const [newGuarantorName, setNewGuarantorName] = useState("");
   const [newGuarantorPhone, setNewGuarantorPhone] = useState("");
   const [newGuarantorNationalId, setNewGuarantorNationalId] = useState("");
   const [newGuarantorAddress, setNewGuarantorAddress] = useState("");
   const [guarantorErrors, setGuarantorErrors] = useState<Record<string, string>>({});
 
+  // New Customer Form State
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [newCustomerNationalId, setNewCustomerNationalId] = useState("");
   const [newCustomerAddress, setNewCustomerAddress] = useState("");
   const [customerErrors, setCustomerErrors] = useState<Record<string, string>>({});
+
+  // New Product Form State
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductCategory, setNewProductCategory] = useState("");
+  const [newProductUnit, setNewProductUnit] = useState("قطعة");
+  const [newProductCostPrice, setNewProductCostPrice] = useState("");
+  const [newProductSellingPrice, setNewProductSellingPrice] = useState("");
+  const [newProductCurrentStock, setNewProductCurrentStock] = useState("1"); // 1 default so we can buy immediately
+  const [newProductMinStock, setNewProductMinStock] = useState("0");
+  const [productErrors, setProductErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     customerId: "", 
@@ -53,18 +68,32 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Sync products prop
+  useEffect(() => {
+    setLocalProducts(products);
+  }, [products]);
+
+  // Sync customers and guarantors props
+  useEffect(() => {
+    setLocalCustomers(customers);
+  }, [customers]);
+
+  useEffect(() => {
+    setLocalGuarantors(guarantors);
+  }, [guarantors]);
+
   // محاولة اختيار المنتج المقارب للسعر المحاكى تلقائياً
   useEffect(() => {
-    if (initialValues?.price && products.length > 0) {
+    if (initialValues?.price && localProducts.length > 0) {
       // إيجاد أقرب منتج لسعر البيع المحاكى
-      let closestProduct = products[0];
-      let minDiff = Math.abs(products[0].selling_price - initialValues.price);
+      let closestProduct = localProducts[0];
+      let minDiff = Math.abs(localProducts[0].selling_price - initialValues.price);
 
-      for (let i = 1; i < products.length; i++) {
-        const diff = Math.abs(products[i].selling_price - initialValues.price);
-        if (diff < minDiff && products[i].current_stock > 0) {
+      for (let i = 1; i < localProducts.length; i++) {
+        const diff = Math.abs(localProducts[i].selling_price - initialValues.price);
+        if (diff < minDiff && localProducts[i].current_stock > 0) {
           minDiff = diff;
-          closestProduct = products[i];
+          closestProduct = localProducts[i];
         }
       }
 
@@ -72,9 +101,9 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
         setFormData((prev) => ({ ...prev, productId: closestProduct.id.toString() }));
       }
     }
-  }, [initialValues, products]);
+  }, [initialValues, localProducts]);
 
-  const selectedProduct = products.find((p) => p.id === Number(formData.productId));
+  const selectedProduct = localProducts.find((p) => p.id === Number(formData.productId));
   const total = selectedProduct?.selling_price || 0;
   const down = Number(formData.downPayment) || 0;
   const receipts = Number(formData.numberOfReceipts) || 1;
@@ -83,6 +112,11 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
   const handleCustomerSelect = (value: string) => {
     if (value === "new") { setShowNewCustomerDialog(true); return; }
     setFormData({ ...formData, customerId: value });
+  };
+
+  const handleProductSelect = (value: string) => {
+    if (value === "new") { setShowNewProductDialog(true); return; }
+    setFormData({ ...formData, productId: value });
   };
 
   const validateNewCustomer = () => {
@@ -137,6 +171,37 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
       showSuccess("✅ تم إضافة الضامن");
       setNewGuarantorName(""); setNewGuarantorPhone(""); setNewGuarantorNationalId(""); setNewGuarantorAddress(""); setGuarantorErrors({});
       setShowNewGuarantorDialog(false);
+    } catch (e: any) { showError("خطأ: " + e.message); }
+  };
+
+  const validateNewProduct = () => {
+    const errs: Record<string, string> = {};
+    if (!newProductName.trim()) errs.name = "اسم المنتج مطلوب";
+    if (!newProductCategory.trim()) errs.category = "التصنيف مطلوب";
+    if (!newProductCostPrice || Number(newProductCostPrice) <= 0) errs.costPrice = "سعر التكلفة غير صحيح";
+    if (!newProductSellingPrice || Number(newProductSellingPrice) <= 0) errs.sellingPrice = "سعر البيع غير صحيح";
+    if (!newProductCurrentStock || Number(newProductCurrentStock) < 0) errs.currentStock = "الكمية الحالية غير صحيحة";
+    setProductErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleAddNewProduct = async () => {
+    if (!validateNewProduct()) return;
+    try {
+      const newProd = await api.products.create({
+        name: newProductName.trim(),
+        category: newProductCategory.trim(),
+        unit: newProductUnit.trim() || "قطعة",
+        costPrice: Number(newProductCostPrice),
+        sellingPrice: Number(newProductSellingPrice),
+        currentStock: Number(newProductCurrentStock),
+        minStock: Number(newProductMinStock),
+      });
+      setLocalProducts((prev) => [...prev, newProd]);
+      setFormData({ ...formData, productId: newProd.id.toString() });
+      showSuccess("✅ تم إضافة المنتج بنجاح وتحديده");
+      setNewProductName(""); setNewProductCategory(""); setNewProductCostPrice(""); setNewProductSellingPrice(""); setNewProductCurrentStock("1"); setNewProductMinStock("0"); setProductErrors({});
+      setShowNewProductDialog(false);
     } catch (e: any) { showError("خطأ: " + e.message); }
   };
 
@@ -206,10 +271,11 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
 
         <div className="space-y-1.5">
           <Label className="text-sm font-medium text-slate-600 flex items-center gap-2"><Package className="h-3.5 w-3.5 text-slate-400" />المنتج</Label>
-          <Select value={formData.productId} onValueChange={(val) => setFormData({ ...formData, productId: val })}>
+          <Select value={formData.productId} onValueChange={handleProductSelect}>
             <SelectTrigger className={errors.productId ? "border-red-300" : ""}><SelectValue placeholder="اختر المنتج" /></SelectTrigger>
             <SelectContent>
-              {products.map((p) => <SelectItem key={p.id} value={p.id.toString()} disabled={p.current_stock <= 0}>{p.name} ({p.current_stock} {p.unit})</SelectItem>)}
+              {localProducts.map((p) => <SelectItem key={p.id} value={p.id.toString()} disabled={p.current_stock <= 0}>{p.name} ({p.current_stock} {p.unit})</SelectItem>)}
+              <SelectItem value="new"><div className="flex items-center gap-2 text-violet-600 font-semibold"><Plus className="h-3.5 w-3.5" />منتج جديد</div></SelectItem>
             </SelectContent>
           </Select>
           {errors.productId && <p className="text-xs text-red-500">{errors.productId}</p>}
@@ -270,6 +336,52 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
           <DialogFooter className="px-2">
             <Button variant="outline" onClick={() => { setShowNewGuarantorDialog(false); setNewGuarantorName(""); setNewGuarantorPhone(""); setNewGuarantorNationalId(""); setNewGuarantorAddress(""); setGuarantorErrors({}); }} className="rounded-xl h-11">إلغاء</Button>
             <Button onClick={handleAddNewGuarantor} className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 h-11 gap-2" disabled={!newGuarantorName.trim() || !newGuarantorPhone.trim() || !newGuarantorNationalId.trim()}><Plus className="h-4 w-4" />إضافة واختيار</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: New Product */}
+      <Dialog open={showNewProductDialog} onOpenChange={(open) => { setShowNewProductDialog(open); if (!open) { setNewProductName(""); setNewProductCategory(""); setNewProductCostPrice(""); setNewProductSellingPrice(""); setNewProductCurrentStock("1"); setNewProductMinStock("0"); setProductErrors({}); } }}>
+        <DialogContent className="sm:max-w-[450px] rounded-3xl">
+          <DialogHeader><DialogTitle className="text-xl flex items-center gap-2"><Plus className="h-5 w-5 text-violet-500" />منتج جديد</DialogTitle></DialogHeader>
+          <div className="space-y-4 px-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600">اسم المنتج</Label>
+              <Input value={newProductName} onChange={(e) => setNewProductName(e.target.value)} placeholder="مثال: تلفزيون LG 55" className={productErrors.name ? "border-red-300" : ""} />
+              {productErrors.name && <p className="text-xs text-red-500">{productErrors.name}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-slate-600">التصنيف</Label>
+              <Input value={newProductCategory} onChange={(e) => setNewProductCategory(e.target.value)} placeholder="مثال: إلكترونيات" className={productErrors.category ? "border-red-300" : ""} />
+              {productErrors.category && <p className="text-xs text-red-500">{productErrors.category}</p>}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">سعر التكلفة</Label>
+                <Input type="number" value={newProductCostPrice} onChange={(e) => setNewProductCostPrice(e.target.value)} placeholder="0" className={productErrors.costPrice ? "border-red-300" : ""} />
+                {productErrors.costPrice && <p className="text-xs text-red-500">{productErrors.costPrice}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">سعر البيع</Label>
+                <Input type="number" value={newProductSellingPrice} onChange={(e) => setNewProductSellingPrice(e.target.value)} placeholder="0" className={productErrors.sellingPrice ? "border-red-300" : ""} />
+                {productErrors.sellingPrice && <p className="text-xs text-red-500">{productErrors.sellingPrice}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">الكمية الحالية</Label>
+                <Input type="number" value={newProductCurrentStock} onChange={(e) => setNewProductCurrentStock(e.target.value)} placeholder="1" className={productErrors.currentStock ? "border-red-300" : ""} />
+                {productErrors.currentStock && <p className="text-xs text-red-500">{productErrors.currentStock}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">الوحدة</Label>
+                <Input value={newProductUnit} onChange={(e) => setNewProductUnit(e.target.value)} placeholder="قطعة" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="px-2">
+            <Button variant="outline" onClick={() => { setShowNewProductDialog(false); setNewProductName(""); setNewProductCategory(""); setNewProductCostPrice(""); setNewProductSellingPrice(""); setNewProductCurrentStock("1"); setNewProductMinStock("0"); setProductErrors({}); }} className="rounded-xl h-11">إلغاء</Button>
+            <Button onClick={handleAddNewProduct} className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 h-11 gap-2" disabled={!newProductName.trim() || !newProductCategory.trim() || !newProductCostPrice || !newProductSellingPrice}><Plus className="h-4 w-4" />إضافة واختيار</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

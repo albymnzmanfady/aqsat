@@ -20,6 +20,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import Calculator from "./pages/Calculator";
+import CollectionReports from "./pages/CollectionReports";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredPermission="view_installments">
             <Installments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collection-reports"
+        element={
+          <ProtectedRoute requiredPermission="view_installments">
+            <CollectionReports />
           </ProtectedRoute>
         }
       />

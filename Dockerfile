@@ -1,24 +1,19 @@
+# Stage 1: Build frontend
 FROM node:20-alpine AS builder
-
 WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
+COPY package.json ./
+RUN npm install --legacy-peer-deps
 COPY . .
+RUN ls -la /app/src/ && ls /app/*.json /app/*.ts /app/*.html
 RUN npm run build
 
-# Production stage
+# Stage 2: Production
 FROM node:20-alpine
-
 WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
+COPY package.json ./
+RUN npm install --omit=dev --legacy-peer-deps && npm install tsx --legacy-peer-deps
 COPY server/ ./server/
 COPY --from=builder /app/dist ./dist/
-
 RUN mkdir -p data
 
 EXPOSE 3001

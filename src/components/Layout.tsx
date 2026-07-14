@@ -148,14 +148,14 @@ const Layout = ({ children }: LayoutProps) => {
                   className={cn(
                     "w-full justify-center h-14 rounded-xl transition-all duration-200 relative",
                     isParentActive
-                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 shadow-sm"
+                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400"
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   <div className={cn(
                     "w-11 h-11 rounded-xl flex items-center justify-center",
                     isParentActive
-                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
+                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
                       : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
                   )}>
                     <item.icon className="h-5 w-5" />
@@ -185,7 +185,7 @@ const Layout = ({ children }: LayoutProps) => {
                   className={cn(
                     "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative pr-8",
                     subActive
-                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 font-semibold shadow-sm"
+                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 font-semibold"
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
@@ -195,7 +195,7 @@ const Layout = ({ children }: LayoutProps) => {
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0",
                     subActive
-                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
+                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
                       : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
                   )}>
                     <sub.icon className="h-5 w-5" />
@@ -221,14 +221,14 @@ const Layout = ({ children }: LayoutProps) => {
                 className={cn(
                   "w-full justify-center h-14 rounded-xl transition-all duration-200 relative",
                   isItemActive
-                    ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 shadow-sm"
+                    ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
                 )}
               >
                 <div className={cn(
                   "w-11 h-11 rounded-xl flex items-center justify-center",
                   isItemActive
-                    ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
+                    ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
                     : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
                 )}>
                   <item.icon className="h-5 w-5" />
@@ -253,7 +253,7 @@ const Layout = ({ children }: LayoutProps) => {
           className={cn(
             "w-full justify-start gap-3 h-12 rounded-xl transition-all duration-200 relative active:scale-[0.98]",
             isItemActive
-              ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 font-semibold shadow-sm"
+              ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 font-semibold"
               : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-800 dark:hover:text-slate-200"
           )}
         >
@@ -263,7 +263,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
             isItemActive
-              ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
+              ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
               : "bg-slate-200/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300"
           )}>
             <item.icon className="h-5 w-5" />
@@ -287,7 +287,7 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 z-40 shadow-sm">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-[#0a0d14]/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 z-40">
         <div className="flex items-center justify-between px-4 h-full">
           <div className="flex items-center gap-3">
             <Button
@@ -299,7 +299,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0 overflow-hidden">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {settings.logoUrl ? (
                   <img src={settings.logoUrl} alt={settings.appName} className="w-full h-full object-cover" />
                 ) : (
@@ -317,7 +317,6 @@ const Layout = ({ children }: LayoutProps) => {
               size="icon"
               onClick={toggleTheme}
               className="h-10 w-10 rounded-xl active:scale-90 text-slate-600 dark:text-slate-400"
-              title="تبديل وضع الألوان"
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5 text-amber-400" />
@@ -328,8 +327,8 @@ const Layout = ({ children }: LayoutProps) => {
             <NotificationsDropdown />
             <Link to="/profile">
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br overflow-hidden",
-                "from-amber-500 to-orange-500"
+                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm overflow-hidden",
+                "bg-gradient-to-br from-amber-500 to-orange-500"
               )}>
                 {avatar ? (
                   <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
@@ -355,7 +354,7 @@ const Layout = ({ children }: LayoutProps) => {
       <aside
         className={cn(
           "hidden lg:flex fixed top-0 right-0 h-full z-50 border-l border-slate-200 dark:border-slate-800 flex-col",
-          "bg-white dark:bg-[#0a0d14] transition-all duration-300 ease-out shadow-2xl shadow-slate-200/50 dark:shadow-black/30",
+          "bg-white dark:bg-[#0a0d14] transition-all duration-300 ease-out",
           sidebarCollapsed ? "w-20" : "w-72"
         )}
       >
@@ -365,7 +364,7 @@ const Layout = ({ children }: LayoutProps) => {
           sidebarCollapsed ? "justify-center" : "justify-between"
         )}>
           {sidebarCollapsed ? (
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 overflow-hidden flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
               {settings.logoUrl ? (
                 <img src={settings.logoUrl} alt={settings.appName} className="w-full h-full object-cover" />
               ) : (
@@ -377,13 +376,12 @@ const Layout = ({ children }: LayoutProps) => {
           ) : (
             <>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 overflow-hidden flex-shrink-0 relative">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
                   {settings.logoUrl ? (
                     <img src={settings.logoUrl} alt={settings.appName} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center relative">
-                      <Sparkles className="h-6 w-6 text-white relative z-10" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    <div className="w-full h-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-white" />
                     </div>
                   )}
                 </div>
@@ -397,7 +395,6 @@ const Layout = ({ children }: LayoutProps) => {
                 size="icon"
                 onClick={toggleCollapse}
                 className="h-8 w-8 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90"
-                title="تصغير القائمة"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -409,7 +406,7 @@ const Layout = ({ children }: LayoutProps) => {
         {!sidebarCollapsed && (
           <div className="p-4">
             <Link to="/profile">
-              <div className="rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 p-4 hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]">
+              <div className="rounded-2xl relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 p-4 hover:opacity-90 transition-opacity cursor-pointer active:scale-[0.98]">
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
                   <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
@@ -442,7 +439,7 @@ const Layout = ({ children }: LayoutProps) => {
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
                 <Link to="/profile">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
                     {avatar ? (
                       <img src={avatar} alt="الصورة" className="w-full h-full object-cover" />
                     ) : (
@@ -516,8 +513,7 @@ const Layout = ({ children }: LayoutProps) => {
           variant="ghost"
           size="icon"
           onClick={toggleCollapse}
-          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 active:scale-90"
-          title="توسيع القائمة"
+          className="hidden lg:flex fixed top-4 right-[88px] z-50 h-8 w-8 rounded-lg bg-white dark:bg-[#0a0d14] border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 active:scale-90"
         >
           <PanelLeftOpen className="h-4 w-4" />
         </Button>
@@ -539,10 +535,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </main>
 
-      {/* Scroll to top button */}
       <ScrollToTop />
-
-      {/* Mobile Navigation */}
       <MobileNav />
     </div>
   );

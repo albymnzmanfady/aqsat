@@ -16,13 +16,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Sun,
-  Moon,
   Settings,
   LogOut,
   User,
   ChevronDown,
   Shield,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
@@ -56,22 +56,17 @@ const TopBar = () => {
   };
 
   return (
-    <header className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 z-30">
-      {/* Spacer for sidebar */}
+    <header className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-[#0a0d14]/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 z-30">
       <div className="flex-1" />
 
-      {/* Right side actions */}
       <div className="flex items-center gap-3 px-6">
-        {/* Notifications */}
         <NotificationsDropdown />
 
-        {/* Theme Toggle - Direct Toggle Button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
           className="h-10 w-10 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 active:scale-90 transition-all"
-          title="تبديل وضع الألوان"
         >
           {theme === "dark" ? (
             <Sun className="h-5 w-5 text-amber-400" />
@@ -80,10 +75,8 @@ const TopBar = () => {
           )}
         </Button>
 
-        {/* Separator */}
         <div className="w-px h-8 bg-slate-200 dark:bg-slate-700" />
 
-        {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-3 pl-3 pr-1 py-1 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-[0.98]">
@@ -97,7 +90,8 @@ const TopBar = () => {
                 </p>
               </div>
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg bg-gradient-to-br flex-shrink-0 overflow-hidden",
+                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden",
+                "bg-gradient-to-br",
                 roleColors[user?.role || "admin"]
               )}>
                 {avatar ? (
@@ -112,14 +106,14 @@ const TopBar = () => {
 
           <DropdownMenuContent
             align="end"
-            className="w-64 rounded-2xl p-1.5 shadow-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            className="w-64 rounded-2xl p-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a0d14]"
             sideOffset={8}
           >
-            {/* User Info Header */}
             <div className="px-3 py-3 mb-1">
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg bg-gradient-to-br flex-shrink-0 overflow-hidden",
+                  "w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 overflow-hidden",
+                  "bg-gradient-to-br",
                   roleColors[user?.role || "admin"]
                 )}>
                   {avatar ? (

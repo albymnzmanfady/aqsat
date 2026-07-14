@@ -188,8 +188,8 @@ const Expenses = () => {
                         </div>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {category && <Badge className={cn("rounded-lg border-0 text-xs", catColor)}>{category.name}</Badge>}
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1"><Calendar className="h-3 w-3" />{expense.date}</span>
-                          {expense.note && <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{expense.note}</span>}
+                          <span className="text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3" />{expense.date}</span>
+                          {expense.note && <span className="text-xs text-slate-500">{expense.note}</span>}
                         </div>
                       </div>
                     </div>

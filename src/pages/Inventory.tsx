@@ -399,14 +399,14 @@ const Inventory = () => {
                         </Badge>
                       </div>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                        <span className="text-xs text-slate-500">
                           الكمية: {Math.abs(transaction.quantity)}
                         </span>
-                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
                           <FileText className="h-3 w-3" />
                           {transaction.reference}
                         </span>
-                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {transaction.date}
                         </span>

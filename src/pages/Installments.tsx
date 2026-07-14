@@ -521,14 +521,14 @@ const InstallmentsPage = () => {
                       </div>
                       
                       <div className="flex flex-wrap gap-2 text-xs text-slate-500 mt-1">
-                        <span className="bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1" dir="ltr">
+                        <span className="px-2 py-0.5 rounded-md flex items-center gap-1" dir="ltr">
                           <Phone className="h-3 w-3 text-slate-400" />
                           {item.contract.customer_phone}
                         </span>
-                        <span className="bg-slate-100 px-2 py-0.5 rounded-md font-semibold text-violet-600">
+                        <span className="font-semibold text-violet-600">
                           {item.contract.product_type}
                         </span>
-                        <span className="bg-slate-100 px-2 py-0.5 rounded-md">
+                        <span>
                           تم سداد {item.paidCount} قسط من {item.totalCount}
                         </span>
                       </div>

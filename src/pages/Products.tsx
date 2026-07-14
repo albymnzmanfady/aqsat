@@ -264,9 +264,9 @@ const Products = () => {
                         </div>
                         <p className="text-sm text-slate-500 mt-1">{product.category}</p>
                         <div className="flex flex-wrap gap-3 mt-2">
-                          <span className="text-xs bg-slate-100 px-2 py-1 rounded-md">التكلفة: {product.cost_price.toLocaleString()} ج.م</span>
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md">البيع: {product.selling_price.toLocaleString()} ج.م</span>
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md">الربح: {profit.toLocaleString()} ج.م ({profitPercent}%)</span>
+                          <span className="text-xs">التكلفة: {product.cost_price.toLocaleString()} ج.م</span>
+                          <span className="text-xs text-emerald-700">البيع: {product.selling_price.toLocaleString()} ج.م</span>
+                          <span className="text-xs text-blue-700">الربح: {profit.toLocaleString()} ج.م ({profitPercent}%)</span>
                         </div>
                       </div>
                     </div>

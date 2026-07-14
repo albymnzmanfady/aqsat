@@ -20,7 +20,7 @@ const CustomerLink = ({ customerId, customerName, className, showOnHover = false
   return (
     <button
       onClick={(e) => {
-        e.stopPropagation();
+        // لا نستخدم stopPropagation حتى يصل النقر للأب أيضاً
         navigate(`/customers/${customerId}`);
       }}
       className={cn(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import CustomerLink from "@/components/CustomerLink";
 import { cn } from "@/lib/utils";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api, ApiContract, ApiInstallment, ApiCustomer } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { showSuccess, showError } from "@/utils/toast";
@@ -281,14 +282,14 @@ const Index = () => {
         </div>
 
         {/* البحث السريع */}
-        <Card className="border-0 bg-white/90 backdrop-blur-sm overflow-hidden p-5 shadow-lg border-r-4 border-r-violet-500">
+        <Card className="border-0 bg-white/90 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden p-5 shadow-lg dark:shadow-black/40 border-r-4 border-r-violet-500">
           <div className="space-y-3">
             <div className="text-right">
-              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-500" />
                 البحث السريع والتحصيل الفوري للأقساط ⚡
               </h3>
-              <p className="text-xs text-slate-500 mt-1">اكتب اسم العميل أو جزء من هاتفه لتحصيل أي قسط بضغطة واحدة</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">اكتب اسم العميل أو جزء من هاتفه لتحصيل أي قسط بضغطة واحدة</p>
             </div>
 
             <div className="relative">
@@ -296,14 +297,14 @@ const Index = () => {
               <Input
                 type="text"
                 placeholder="ابحث باسم العميل أو رقم الهاتف للتحصيل..."
-                className="pr-12 rounded-2xl h-12 bg-white border-slate-200"
+                className="pr-12 rounded-2xl h-12 bg-white dark:bg-[#0a0d14] border-slate-200 dark:border-slate-700"
                 value={quickSearch}
                 onChange={(e) => setQuickSearch(e.target.value)}
               />
               {quickSearch && (
                 <button
                   onClick={() => setQuickSearch("")}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-500"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors text-slate-500"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -311,17 +312,21 @@ const Index = () => {
             </div>
 
             {quickSearch && (
-              <div className="mt-3 p-2 bg-slate-50/50 rounded-2xl border border-slate-100 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="mt-3 p-2 bg-slate-50/50 dark:bg-[#0a0d14] rounded-2xl border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in slide-in-from-top-2 duration-200 shadow-lg dark:shadow-black/50">
                 {quickSearchResults.map((inst) => (
-                  <div key={inst.id} className="flex items-center justify-between p-3 first:pt-2 last:pb-2">
+                  <div
+                    key={inst.id}
+                    className="flex items-center justify-between p-3 first:pt-2 last:pb-2 rounded-xl cursor-pointer hover:bg-violet-50/70 dark:hover:bg-violet-950/30 active:scale-[0.99] transition-all duration-150"
+                    onClick={() => inst.customerId && navigate(`/customers/${inst.customerId}`)}
+                  >
                     <div className="text-right space-y-1">
-                      <CustomerLink customerId={inst.customerId} customerName={inst.customerName} className="text-sm font-bold text-slate-800" />
+                      <CustomerLink customerId={inst.customerId} customerName={inst.customerName} className="text-sm font-bold text-slate-800 dark:text-slate-100" />
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">{inst.productType}</span>
-                        <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-100">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{inst.productType}</span>
+                        <span className="text-[10px] bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold border border-amber-100 dark:border-amber-800">
                           القسط #{inst.number}
                         </span>
-                        <span className="text-[10px] text-slate-400" dir="ltr">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500" dir="ltr">
                           استحقاق: {inst.day}/{inst.month}/{inst.year}
                         </span>
                       </div>
@@ -329,12 +334,12 @@ const Index = () => {
                     
                     <div className="flex items-center gap-2">
                       <div className="text-left ml-2">
-                        <p className="text-xs text-slate-400">القيمة</p>
-                        <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">القيمة</p>
+                        <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">{inst.amount.toLocaleString()} ج.م</p>
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => askPayConfirmation(inst)}
+                        onClick={(e) => { e.stopPropagation(); askPayConfirmation(inst); }}
                         className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold gap-1 active:scale-95"
                       >
                         <CheckCircle className="h-4 w-4" />
@@ -344,7 +349,7 @@ const Index = () => {
                   </div>
                 ))}
                 {quickSearchResults.length === 0 && (
-                  <p className="text-center text-xs text-slate-400 py-6">لا توجد أقساط مستحقة مطابقة لهذا البحث</p>
+                  <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-6">لا توجد أقساط مستحقة مطابقة لهذا البحث</p>
                 )}
               </div>
             )}
@@ -354,11 +359,11 @@ const Index = () => {
         {/* المؤشرات المالية */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-md font-bold text-slate-700 flex items-center gap-2 px-1">
+            <h2 className="text-md font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 px-1">
               <Coins className="h-5 w-5 text-violet-600" />
               مؤشرات شهر {currentMonthStats.monthName} المالي <span className="text-xs font-normal text-slate-400 mr-1">(اضغط لعرض التفاصيل)</span>
             </h2>
-            <Badge variant="outline" className="border-violet-200 text-violet-700 bg-violet-50 font-bold rounded-lg px-3 py-1">
+            <Badge variant="outline" className="border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/50 font-bold rounded-lg px-3 py-1">
               تفاعلي ذكي ⚡
             </Badge>
           </div>
@@ -371,16 +376,16 @@ const Index = () => {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("total"); }}
               className="cursor-pointer active:scale-[0.99] transition-all"
             >
-              <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+              <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden group shadow-sm dark:shadow-black/40">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="space-y-1 text-right">
-                    <p className="text-xs font-semibold text-slate-500 group-hover:text-violet-600 transition-colors">إجمالي مستحقات الشهر</p>
-                    <p className="text-2xl font-extrabold text-slate-800">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">إجمالي مستحقات الشهر</p>
+                    <p className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">
                       <AnimatedCounter value={currentMonthStats.totalToCollect} duration={800} formatter={(v) => v.toLocaleString()} />
                       <span className="text-xs font-medium text-slate-400 mr-1">ج.م</span>
                     </p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
                     <Wallet className="h-6 w-6" />
                   </div>
                 </CardContent>
@@ -394,16 +399,16 @@ const Index = () => {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("collected"); }}
               className="cursor-pointer active:scale-[0.99] transition-all"
             >
-              <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500 group">
+              <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500 group shadow-sm dark:shadow-black/40">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="space-y-1 text-right">
-                    <p className="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">تم تحصيله بنجاح</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">تم تحصيله بنجاح</p>
                     <p className="text-2xl font-extrabold text-emerald-600">
                       <AnimatedCounter value={currentMonthStats.collected} duration={800} formatter={(v) => v.toLocaleString()} />
                       <span className="text-xs font-medium text-emerald-400 mr-1">ج.م</span>
                     </p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                     <CheckCircle className="h-6 w-6" />
                   </div>
                 </CardContent>
@@ -417,16 +422,16 @@ const Index = () => {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("remaining"); }}
               className="cursor-pointer active:scale-[0.99] transition-all"
             >
-              <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500 group">
+              <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500 group shadow-sm dark:shadow-black/40">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="space-y-1 text-right">
-                    <p className="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">المتبقي المطلوب تحصيله</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">المتبقي المطلوب تحصيله</p>
                     <p className="text-2xl font-extrabold text-amber-600">
                       <AnimatedCounter value={currentMonthStats.remaining} duration={800} formatter={(v) => v.toLocaleString()} />
                       <span className="text-xs font-medium text-amber-400 mr-1">ج.م</span>
                     </p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
                     <Clock className="h-6 w-6" />
                   </div>
                 </CardContent>
@@ -436,46 +441,46 @@ const Index = () => {
         </div>
 
         {/* شريط التقدم */}
-        <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden p-6 hover-lift">
+        <Card className="border-0 bg-white/80 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden p-6 hover-lift shadow-sm dark:shadow-black/40">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="text-right">
-              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
                 <TrendingUp className="h-4.5 w-4.5 text-emerald-500" />
                 مستهدف إنجاز التحصيل لشهر {currentMonthStats.monthName}
               </h3>
-              <p className="text-xs text-slate-500 mt-1">نسبة التحصيل الفعلي المحقق مقابل مستحقات الشهر الكاملة</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">نسبة التحصيل الفعلي المحقق مقابل مستحقات الشهر الكاملة</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
+              <span className="text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-800">
                 محصل: {currentMonthStats.collected.toLocaleString()} ج.م
               </span>
-              <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-3 py-1 rounded-full border border-violet-100">
+              <span className="text-xs font-semibold bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 px-3 py-1 rounded-full border border-violet-100 dark:border-violet-800">
                 مستهدف: {currentMonthStats.totalToCollect.toLocaleString()} ج.م
               </span>
             </div>
           </div>
           
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
               <span>نسبة الإنجاز الفعلي</span>
               <span className="text-emerald-600">{currentMonthStats.progressPercent}%</span>
             </div>
-            <Progress value={currentMonthStats.progressPercent} className="h-3 rounded-full bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-emerald-400 [&>div]:to-teal-500" />
+            <Progress value={currentMonthStats.progressPercent} className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 [&>div]:bg-gradient-to-r [&>div]:from-emerald-400 [&>div]:to-teal-500" />
           </div>
         </Card>
 
         {/* المؤشرات العامة */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <div onClick={() => setActiveModal("overdue")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("overdue"); }} className="cursor-pointer active:scale-[0.99] transition-all">
-            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+            <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden group shadow-sm dark:shadow-black/40">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">متأخرات عاجلة (خارج الشهر الحالي)</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">متأخرات عاجلة (خارج الشهر الحالي)</p>
                   <p className="text-lg font-bold text-rose-600">
                     <AnimatedCounter value={overdueInstallments.length} duration={800} /> قسط
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 dark:bg-rose-950/50 flex items-center justify-center text-rose-600">
                   <AlertTriangle className="h-5 w-5 animate-pulse" />
                 </div>
               </CardContent>
@@ -483,15 +488,15 @@ const Index = () => {
           </div>
 
           <div onClick={() => setActiveModal("today")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("today"); }} className="cursor-pointer active:scale-[0.99] transition-all">
-            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+            <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden group shadow-sm dark:shadow-black/40">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">مستحقات اليوم الفردية</p>
-                  <p className="text-lg font-bold text-slate-800">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">مستحقات اليوم الفردية</p>
+                  <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
                     <AnimatedCounter value={todayInstallments.length} duration={800} /> قسط
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
                   <Clock className="h-5 w-5" />
                 </div>
               </CardContent>
@@ -499,15 +504,15 @@ const Index = () => {
           </div>
 
           <div onClick={() => setActiveModal("activeContracts")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveModal("activeContracts"); }} className="cursor-pointer active:scale-[0.99] transition-all col-span-2 lg:col-span-1">
-            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden group">
+            <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden group shadow-sm dark:shadow-black/40">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">العقود النشطة بالبرنامج</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">العقود النشطة بالبرنامج</p>
                   <p className="text-lg font-bold text-violet-600">
                     <AnimatedCounter value={contracts.filter(c => c.status === "active").length} duration={800} /> عقد
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600">
+                <div className="w-10 h-10 rounded-xl bg-violet-500/10 dark:bg-violet-950/50 flex items-center justify-center text-violet-600">
                   <FileText className="h-5 w-5" />
                 </div>
               </CardContent>
@@ -517,13 +522,13 @@ const Index = () => {
 
         {/* التبويبات */}
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 px-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-slate-800 pb-3">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 px-1">
               <CheckCircle2 className="h-5 w-5 text-violet-600" />
               المهام والحركات النشطة
             </h2>
             
-            <div className="flex gap-2 self-start sm:self-auto bg-slate-100 p-1 rounded-xl">
+            <div className="flex gap-2 self-start sm:self-auto bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
               {[
                 { id: "overdue", label: "متأخرات حرجة", count: overdueInstallments.length },
                 { id: "today", label: "مستحقات اليوم", count: todayInstallments.length },
@@ -535,8 +540,8 @@ const Index = () => {
                   className={cn(
                     "px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200",
                     activeTab === tab.id
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   <div className="flex items-center gap-1.5">
@@ -544,7 +549,7 @@ const Index = () => {
                     {tab.count !== null && (
                       <span className={cn(
                         "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border",
-                        activeTab === tab.id ? "bg-slate-800 text-white" : "bg-slate-200 text-slate-600"
+                        activeTab === tab.id ? "bg-slate-800 dark:bg-slate-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                       )}>
                         {tab.count}
                       </span>
@@ -563,18 +568,22 @@ const Index = () => {
                   const contract = contracts.find(c => c.id === inst.contract_id);
                   const dueDate = `${inst.day}/${inst.month}/${inst.year}`;
                   return (
-                    <div key={inst.id} className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div
+                      key={inst.id}
+                      className="stagger-item bg-white/90 dark:bg-[#0f131a] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm dark:shadow-black/40 hover:shadow-md dark:hover:shadow-black/60 transition-all cursor-pointer hover:border-violet-200 dark:hover:border-violet-800 active:scale-[0.99]"
+                      onClick={() => contract?.customer_id && navigate(`/customers/${contract.customer_id}`)}
+                    >
                       <div className="flex items-center gap-4 text-right">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500/10 flex items-center justify-center text-rose-500 shadow-sm flex-shrink-0">
                           <AlertTriangle className="h-5 w-5" />
                         </div>
                         <div>
-                          <CustomerLink customerId={contract?.customer_id} customerName={contract?.customer_name || ""} className="font-bold text-sm text-slate-800" />
+                          <CustomerLink customerId={contract?.customer_id} customerName={contract?.customer_name || ""} className="font-bold text-sm text-slate-800 dark:text-slate-100" />
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                               {contract?.product_type}
                             </span>
-                            <span className="text-xs text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md font-semibold">
+                            <span className="text-xs text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-md font-semibold">
                               متأخر منذ {dueDate}
                             </span>
                           </div>
@@ -583,20 +592,23 @@ const Index = () => {
                       
                       <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0">
                         <div className="text-right">
-                          <p className="text-xs text-slate-400 leading-tight">القيمة</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 leading-tight">القيمة</p>
                           <p className="text-sm font-extrabold text-rose-600">{inst.amount.toLocaleString()} ج.م</p>
                         </div>
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
                             className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
-                            onClick={() => askPayConfirmation({
-                              id: inst.id,
-                              customerName: contract?.customer_name,
-                              productType: contract?.product_type,
-                              amount: inst.amount,
-                              number: inst.number
-                            })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              askPayConfirmation({
+                                id: inst.id,
+                                customerName: contract?.customer_name,
+                                productType: contract?.product_type,
+                                amount: inst.amount,
+                                number: inst.number
+                              });
+                            }}
                           >
                             تسجيل تحصيل
                           </Button>
@@ -604,18 +616,21 @@ const Index = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 gap-1.5"
+                              className="rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 gap-1.5"
                               disabled={sendingId === inst.id}
-                              onClick={() => handleQuickWhatsApp({
-                                id: inst.id,
-                                customerName: contract.customer_name,
-                                amount: inst.amount,
-                                day: inst.day,
-                                month: inst.month,
-                                year: inst.year,
-                                number: inst.number,
-                                customerPhone: contract.customer_phone
-                              })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickWhatsApp({
+                                  id: inst.id,
+                                  customerName: contract.customer_name,
+                                  amount: inst.amount,
+                                  day: inst.day,
+                                  month: inst.month,
+                                  year: inst.year,
+                                  number: inst.number,
+                                  customerPhone: contract.customer_phone
+                                });
+                              }}
                             >
                               {sendingId === inst.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 text-violet-500" />}
                               تذكير
@@ -633,9 +648,9 @@ const Index = () => {
                   </Button>
                 )}
                 {overdueInstallments.length === 0 && (
-                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50">
+                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50 dark:border-slate-800">
                     <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-700">ممتاز! لا توجد أقساط متأخرة</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">ممتاز! لا توجد أقساط متأخرة</p>
                     <p className="text-xs text-slate-400 mt-1">كافة العملاء منتظمين تماماً بالسداد</p>
                   </div>
                 )}
@@ -647,18 +662,22 @@ const Index = () => {
                 {todayInstallments.slice(0, 5).map(inst => {
                   const contract = contracts.find(c => c.id === inst.contract_id);
                   return (
-                    <div key={inst.id} className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div
+                      key={inst.id}
+                      className="stagger-item bg-white/90 dark:bg-[#0f131a] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm dark:shadow-black/40 hover:shadow-md dark:hover:shadow-black/60 transition-all cursor-pointer hover:border-violet-200 dark:hover:border-violet-800 active:scale-[0.99]"
+                      onClick={() => contract?.customer_id && navigate(`/customers/${contract.customer_id}`)}
+                    >
                       <div className="flex items-center gap-4 text-right">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500/10 flex items-center justify-center text-amber-500 shadow-sm flex-shrink-0">
                           <Clock className="h-5 w-5" />
                         </div>
                         <div>
-                          <CustomerLink customerId={contract?.customer_id} customerName={contract?.customer_name || ""} className="font-bold text-sm text-slate-800" />
+                          <CustomerLink customerId={contract?.customer_id} customerName={contract?.customer_name || ""} className="font-bold text-sm text-slate-800 dark:text-slate-100" />
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                               {contract?.product_type}
                             </span>
-                            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md font-semibold">
+                            <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-md font-semibold">
                               تستحق اليوم
                             </span>
                           </div>
@@ -667,20 +686,23 @@ const Index = () => {
                       
                       <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0">
                         <div className="text-right">
-                          <p className="text-xs text-slate-400 leading-tight">القيمة المطلوب سدادها</p>
-                          <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 leading-tight">القيمة المطلوب سدادها</p>
+                          <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">{inst.amount.toLocaleString()} ج.م</p>
                         </div>
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
                             className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
-                            onClick={() => askPayConfirmation({
-                              id: inst.id,
-                              customerName: contract?.customer_name,
-                              productType: contract?.product_type,
-                              amount: inst.amount,
-                              number: inst.number
-                            })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              askPayConfirmation({
+                                id: inst.id,
+                                customerName: contract?.customer_name,
+                                productType: contract?.product_type,
+                                amount: inst.amount,
+                                number: inst.number
+                              });
+                            }}
                           >
                             تسجيل سداد
                           </Button>
@@ -688,18 +710,21 @@ const Index = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 gap-1.5"
+                              className="rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 gap-1.5"
                               disabled={sendingId === inst.id}
-                              onClick={() => handleQuickWhatsApp({
-                                id: inst.id,
-                                customerName: contract.customer_name,
-                                amount: inst.amount,
-                                day: inst.day,
-                                month: inst.month,
-                                year: inst.year,
-                                number: inst.number,
-                                customerPhone: contract.customer_phone
-                              })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickWhatsApp({
+                                  id: inst.id,
+                                  customerName: contract.customer_name,
+                                  amount: inst.amount,
+                                  day: inst.day,
+                                  month: inst.month,
+                                  year: inst.year,
+                                  number: inst.number,
+                                  customerPhone: contract.customer_phone
+                                });
+                              }}
                             >
                               {sendingId === inst.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 text-violet-500" />}
                               تذكير
@@ -717,9 +742,9 @@ const Index = () => {
                   </Button>
                 )}
                 {todayInstallments.length === 0 && (
-                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50">
+                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50 dark:border-slate-800">
                     <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-700">لا توجد أقساط مستحقة اليوم</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">لا توجد أقساط مستحقة اليوم</p>
                     <p className="text-xs text-slate-400 mt-1">لا توجد تحصيلات مطلوبة لهذا التاريخ</p>
                   </div>
                 )}
@@ -729,18 +754,22 @@ const Index = () => {
             {activeTab === "recent" && (
               <>
                 {recentContracts.map(contract => (
-                  <div key={contract.id} className="stagger-item bg-white/90 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div
+                    key={contract.id}
+                    className="stagger-item bg-white/90 dark:bg-[#0f131a] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm dark:shadow-black/40 hover:shadow-md dark:hover:shadow-black/60 transition-all cursor-pointer hover:border-violet-200 dark:hover:border-violet-800 active:scale-[0.99]"
+                    onClick={() => contract.customer_id && navigate(`/customers/${contract.customer_id}`)}
+                  >
                     <div className="flex items-center gap-4 text-right">
                       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500/10 flex items-center justify-center text-violet-600 shadow-sm flex-shrink-0">
                         <FileText className="h-5 w-5" />
                       </div>
                       <div>
-                        <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="font-bold text-sm text-slate-800" />
+                        <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="font-bold text-sm text-slate-800 dark:text-slate-100" />
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                             {contract.product_type}
                           </span>
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                             {contract.number_of_receipts} شهر
                           </span>
                         </div>
@@ -749,14 +778,14 @@ const Index = () => {
                     
                     <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0">
                       <div className="text-right">
-                        <p className="text-xs text-slate-400 leading-tight">إجمالي العقد</p>
-                        <p className="text-sm font-extrabold text-slate-800">{contract.total_price.toLocaleString()} ج.م</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 leading-tight">إجمالي العقد</p>
+                        <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">{contract.total_price.toLocaleString()} ج.م</p>
                       </div>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="rounded-xl border-violet-200 hover:bg-violet-50 text-violet-600"
-                        onClick={() => navigate("/contracts")}
+                        className="rounded-xl border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/50 text-violet-600 dark:text-violet-400"
+                        onClick={(e) => { e.stopPropagation(); navigate("/contracts"); }}
                       >
                         عرض العقد
                       </Button>
@@ -764,9 +793,9 @@ const Index = () => {
                   </div>
                 ))}
                 {recentContracts.length === 0 && (
-                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50">
+                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50 dark:border-slate-800">
                     <FileText className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-700">لا توجد عقود حتى الآن</p>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">لا توجد عقود حتى الآن</p>
                     <p className="text-xs text-slate-400 mt-1">سجل أول عقد للبدء في تنظيم الأقساط</p>
                   </div>
                 )}
@@ -792,9 +821,9 @@ const Index = () => {
 
       {/* نافذة التفاصيل المالية */}
       <Dialog open={activeModal !== null} onOpenChange={(open) => { if (!open) setActiveModal(null); }}>
-        <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden bg-white">
-          <DialogHeader className="p-6 pb-4 border-b border-slate-100 text-right bg-gradient-to-r from-violet-50 to-slate-50">
-            <DialogTitle className="text-lg font-extrabold text-slate-800 flex items-center gap-2 justify-start">
+        <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden bg-white dark:bg-[#0f131a]">
+          <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 text-right bg-gradient-to-r from-violet-50 to-slate-50 dark:from-violet-950/30 dark:to-[#0a0d14]">
+            <DialogTitle className="text-lg font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2 justify-start">
               {activeModal === "total" && (
                 <>
                   <Wallet className="h-5 w-5 text-violet-600" />
@@ -832,7 +861,7 @@ const Index = () => {
                 </>
               )}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500 text-right mt-1">
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 text-right mt-1">
               {activeModal === "total" && `إجمالي المطلوب تحصيله: ${currentMonthStats.totalToCollect.toLocaleString()} ج.م`}
               {activeModal === "collected" && `إجمالي المبالغ المحصلة: ${currentMonthStats.collected.toLocaleString()} ج.م`}
               {activeModal === "remaining" && `المتبقي المطلوب تحصيله: ${currentMonthStats.remaining.toLocaleString()} ج.م`}
@@ -842,28 +871,36 @@ const Index = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 p-4">
+          <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 p-4">
             {activeModal === "activeContracts" ? (
               activeContractsList.map((contract) => (
-                <div key={contract.id} className="flex items-center justify-between py-3.5 px-2 hover:bg-slate-50 rounded-xl transition-all">
+                <div
+                  key={contract.id}
+                  className="flex items-center justify-between py-3.5 px-2 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 rounded-xl transition-all cursor-pointer active:scale-[0.98]"
+                  onClick={() => { contract.customer_id && navigate(`/customers/${contract.customer_id}`); setActiveModal(null); }}
+                >
                   <div className="flex items-center gap-3 text-right">
-                    <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-xs">
+                    <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center text-violet-600 font-bold text-xs">
                       #{contract.id}
                     </div>
                     <div>
-                      <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="text-sm font-bold text-slate-800" />
-                      <p className="text-[10px] text-slate-400">{contract.product_type} - {contract.number_of_receipts} قسط</p>
+                      <CustomerLink customerId={contract.customer_id} customerName={contract.customer_name} className="text-sm font-bold text-slate-800 dark:text-slate-100" />
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">{contract.product_type} - {contract.number_of_receipts} قسط</p>
                     </div>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-extrabold text-slate-800">{contract.total_price.toLocaleString()} ج.م</p>
-                    <p className="text-[10px] text-slate-400">مقدم: {contract.down_payment.toLocaleString()} ج.م</p>
+                    <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">{contract.total_price.toLocaleString()} ج.م</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">مقدم: {contract.down_payment.toLocaleString()} ج.م</p>
                   </div>
                 </div>
               ))
             ) : (
               modalInstallmentsList.map((inst) => (
-                <div key={inst.id} className="flex items-center justify-between py-3 px-2 hover:bg-slate-50 rounded-xl transition-all">
+                <div
+                  key={inst.id}
+                  className="flex items-center justify-between py-3 px-2 hover:bg-violet-50/50 dark:hover:bg-violet-950/20 rounded-xl transition-all cursor-pointer active:scale-[0.98]"
+                  onClick={() => { (inst as any).customerId && navigate(`/customers/${(inst as any).customerId}`); setActiveModal(null); }}
+                >
                   <div className="flex items-center gap-3 text-right">
                     <div className={cn(
                       "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white",
@@ -872,23 +909,24 @@ const Index = () => {
                       #{inst.number}
                     </div>
                     <div>
-                      <CustomerLink customerId={(inst as any).customerId} customerName={inst.customerName} className="text-sm font-bold text-slate-800" />
-                      <p className="text-[10px] text-slate-400">{inst.productType}</p>
+                      <CustomerLink customerId={(inst as any).customerId} customerName={inst.customerName} className="text-sm font-bold text-slate-800 dark:text-slate-100" />
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">{inst.productType}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 text-left">
                     <div>
-                      <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
-                      <p className="text-[10px] text-slate-400" dir="ltr">{inst.day}/{inst.month}/{inst.year}</p>
+                      <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100">{inst.amount.toLocaleString()} ج.م</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500" dir="ltr">{inst.day}/{inst.month}/{inst.year}</p>
                     </div>
 
                     {!inst.is_paid && (
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                        onClick={() => {
+                        className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           askPayConfirmation({
                             id: inst.id,
                             customerName: inst.customerName,
@@ -916,7 +954,7 @@ const Index = () => {
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#0a0d14] flex justify-end">
             <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setActiveModal(null)}>
               إغلاق النافذة
             </Button>
@@ -926,23 +964,23 @@ const Index = () => {
 
       {/* نافذة تأكيد التحصيل */}
       <Dialog open={confirmPayInstallment !== null} onOpenChange={(open) => { if (!open) setConfirmPayInstallment(null); }}>
-        <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
+        <DialogContent className="sm:max-w-[400px] rounded-3xl p-6 bg-white dark:bg-[#0f131a]">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-amber-50 border border-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-500 animate-bounce">
+            <div className="w-16 h-16 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-full flex items-center justify-center mx-auto text-amber-500 animate-bounce">
               <AlertTriangle className="h-8 w-8" />
             </div>
-            <h3 className="font-extrabold text-lg text-slate-800">تأكيد عملية تحصيل مالي 🪙</h3>
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-right text-sm space-y-2">
+            <h3 className="font-extrabold text-lg text-slate-800 dark:text-slate-100">تأكيد عملية تحصيل مالي 🪙</h3>
+            <div className="p-4 bg-slate-50 dark:bg-[#0a0d14] rounded-2xl border border-slate-100 dark:border-slate-800 text-right text-sm space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">العميل المستلم منه:</span>
-                <span className="font-bold text-slate-800">{confirmPayInstallment?.customerName}</span>
+                <span className="text-slate-500 dark:text-slate-400">العميل المستلم منه:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{confirmPayInstallment?.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">رقم الدفعة / السلعة:</span>
-                <span className="font-bold text-slate-800">القسط #{confirmPayInstallment?.number} - {confirmPayInstallment?.productType}</span>
+                <span className="text-slate-500 dark:text-slate-400">رقم الدفعة / السلعة:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">القسط #{confirmPayInstallment?.number} - {confirmPayInstallment?.productType}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2 mt-2">
-                <span className="text-slate-600 font-semibold">المبلغ النقدي الفعلي:</span>
+              <div className="flex justify-between border-t border-slate-200/60 dark:border-slate-800 pt-2 mt-2">
+                <span className="text-slate-600 dark:text-slate-300 font-semibold">المبلغ النقدي الفعلي:</span>
                 <span className="font-extrabold text-base text-emerald-600">{confirmPayInstallment?.amount?.toLocaleString()} ج.م</span>
               </div>
             </div>

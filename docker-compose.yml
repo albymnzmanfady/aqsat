@@ -19,6 +19,23 @@ services:
       retries: 3
       start_period: 15s
 
+  nginx:
+    image: nginx:alpine
+    container_name: aqsat-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "10011:10011"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx-certs:/etc/nginx/certs:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   app-data:
+    driver: local
+  nginx-certs:
     driver: local

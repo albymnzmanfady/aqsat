@@ -21,8 +21,6 @@ import {
   User,
   ChevronDown,
   Shield,
-  Sun,
-  Moon,
 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
@@ -69,9 +67,9 @@ const TopBar = () => {
           className="h-10 w-10 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 active:scale-90 transition-all"
         >
           {theme === "dark" ? (
-            <Sun className="h-5 w-5 text-amber-400" />
+            <span className="text-amber-400 text-lg">☀</span>
           ) : (
-            <Moon className="h-5 w-5 text-slate-600" />
+            <span className="text-lg">☾</span>
           )}
         </Button>
 

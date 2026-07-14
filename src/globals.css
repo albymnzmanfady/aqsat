@@ -23,14 +23,8 @@
 
 /* ===== Animations ===== */
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in {
@@ -41,16 +35,6 @@
 @keyframes scale-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
 }
 
 .page-enter-animation {
@@ -78,13 +62,13 @@
   animation: scale-in 0.3s ease-out;
 }
 
-/* ===== الوضع الداكن - تصميم نظيف بدون ظلال ===== */
+/* ===== الوضع الداكن ===== */
 .dark {
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
 }
 
-/* خلفيات البطاقات - أوضح بدون شفافية */
+/* خلفيات البطاقات */
 .dark .bg-white\/70,
 .dark .bg-white\/80,
 .dark .bg-white\/90,
@@ -93,70 +77,40 @@
   color: #f1f5f9 !important;
 }
 
-/* إزالة كاملة لجميع الظلال في الوضع الداكن */
-.dark .shadow-sm {
+/* إزالة شاملة ونهائية لجميع الظلال في الوضع الداكن */
+.dark * {
   box-shadow: none !important;
 }
 
-.dark .shadow-md {
-  box-shadow: none !important;
-}
-
-.dark .shadow-lg {
-  box-shadow: none !important;
-}
-
-.dark .shadow-xl {
-  box-shadow: none !important;
-}
-
+/* إعادة تأكيد إزالة الظلال */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl,
 .dark .shadow-2xl {
   box-shadow: none !important;
 }
 
-/* إزالة ظلال الأيقونات الملونة */
-.dark [class*="bg-gradient-to-br"][class*="shadow-"] {
-  box-shadow: none !important;
-}
-
-/* إزالة ظلال البحث السريع */
-.dark [class*="bg-white/90"] {
-  box-shadow: none !important;
-}
-
-/* إزالة ظلال شريط البحث */
-.dark .border-r-4 {
-  box-shadow: none !important;
-}
-
 /* إزالة ظلال hover */
-.dark .hover\:shadow-md:hover {
-  box-shadow: none !important;
-}
-
-.dark .hover\:shadow-lg:hover {
-  box-shadow: none !important;
-}
-
+.dark .hover\:shadow-sm:hover,
+.dark .hover\:shadow-md:hover,
+.dark .hover\:shadow-lg:hover,
 .dark .hover\:shadow-xl:hover {
   box-shadow: none !important;
 }
 
-.dark [class*="bg-white/90"][class*="shadow-sm"]:hover {
+/* إزالة ظلال focus */
+.dark .focus\:shadow-md:focus,
+.dark .focus-visible\:shadow-md:focus-visible {
   box-shadow: none !important;
 }
 
-/* إزالة ظلال الشريط الجانبي */
-.dark aside {
+/* إزالة الظلال الملونة */
+.dark [class*="shadow-"] {
   box-shadow: none !important;
 }
 
-/* إزالة ظلال الهيدر */
-.dark header {
-  box-shadow: none !important;
-}
-
-/* تحسين الحدود - بدل الظلال */
+/* الحدود */
 .dark .border-slate-200\/80,
 .dark .border-slate-200,
 .dark .border-slate-100,
@@ -172,12 +126,11 @@
   border-color: hsl(217 33% 12%) !important;
 }
 
-/* إضافة حدود رفيعة للبطاقات في الوضع الداكن */
 .dark .bg-white\/70 {
   border: 1px solid hsl(217 33% 13%) !important;
 }
 
-/* نصوص - تباين أعلى */
+/* النصوص */
 .dark .text-slate-800,
 .dark .text-slate-700,
 .dark .font-bold.text-slate-800 {
@@ -193,7 +146,7 @@
   color: #94a3b8 !important;
 }
 
-/* شارات الحالة - أوضح */
+/* شارات الحالة */
 .dark .bg-emerald-100 { background-color: #064e3b !important; color: #34d399 !important; }
 .dark .bg-rose-100 { background-color: #7f1d1d !important; color: #fda4af !important; }
 .dark .bg-amber-100 { background-color: #78350f !important; color: #fbbf24 !important; }
@@ -216,7 +169,7 @@
   --tw-ring-color: #818cf8;
 }
 
-/* شريط التمرير المخصص */
+/* شريط التمرير */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

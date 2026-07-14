@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import cors from 'cors';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import db, { initDatabase, seedDatabase } from './db.js';
 
 // تهيئة قاعدة البيانات والبيانات الأولية
@@ -487,13 +488,22 @@ app.put('/api/settings/:key', (req, res) => {
   }
 });
 
-// الخدمة الثابتة للـ Frontend
-const distPath = path.join(process.cwd(), "dist");
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+// في بيئة التطوير، يتم تمرير الطلبات تلقائياً لخادم Vite على منفذ 8080
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/', createProxyMiddleware({
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    ws: true, // دعم WebSocket لتحديث الكود الفوري (HMR)
+  }));
+} else {
+  // الخدمة الثابتة للـ Frontend في الإنتاج
+  const distPath = path.join(process.cwd(), "dist");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
 }
 
 app.listen(PORT, () => {

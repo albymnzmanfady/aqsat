@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -14,9 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { showSuccess, showError } from "@/utils/toast";
 import { 
   Plus, CreditCard, Users, FileText, AlertTriangle, 
-  CheckCircle2, Clock, MessageSquareText, Loader2,
-  TrendingUp, Wallet, Sparkles, Calendar, ArrowUpRight,
-  UserCheck, ChevronLeft, Send
+  CheckCircle2, Clock, Loader2,
+  TrendingUp, Wallet, Sparkles, Calendar,
+  ChevronLeft, Send, CheckCircle, Coins
 } from "lucide-react";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 
@@ -79,21 +79,33 @@ const Index = () => {
       .slice(0, 5);
   }, [contracts]);
 
-  // إحصائيات الشهر الحالي
+  // إحصائيات الشهر الحالي بالتفصيل
   const currentMonthStats = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
+    // جميع أقساط هذا الشهر
     const monthInsts = installments.filter(i => i.month === currentMonth && i.year === currentYear);
+    
+    // إجمالي المستحقات (المطلوب تحصيله) للشهر الحالي
     const totalToCollect = monthInsts.reduce((sum, i) => sum + i.amount, 0);
+    
+    // ما تم تحصيله بنجاح هذا الشهر
     const collected = monthInsts.filter(i => i.is_paid).reduce((sum, i) => sum + i.amount, 0);
+    
+    // المتبقي للتحصيل هذا الشهر
+    const remaining = Math.max(0, totalToCollect - collected);
+    
+    // نسبة الإنجاز والتحصيل
     const progressPercent = totalToCollect > 0 ? Math.round((collected / totalToCollect) * 100) : 0;
 
     return {
       totalToCollect,
       collected,
-      progressPercent
+      remaining,
+      progressPercent,
+      monthName: now.toLocaleDateString("ar-EG", { month: "long" })
     };
   }, [installments]);
 
@@ -183,103 +195,69 @@ const Index = () => {
           </div>
         </div>
 
-        {/* شبكة المؤشرات المالية المتطورة */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* محصل هذا الشهر */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
+        {/* المؤشرات المالية المخصصة لشهر التحصيل الحالي */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-md font-bold text-slate-700 flex items-center gap-2 px-1">
+              <Coins className="h-5 w-5 text-violet-600" />
+              مؤشرات شهر {currentMonthStats.monthName} المالي
+            </h2>
+            <Badge variant="outline" className="border-violet-200 text-violet-700 bg-violet-50 font-bold rounded-lg px-3 py-1">
+              متابعة حية
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            {/* المستحقات الكلية */}
+            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
+              <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">مجموع التحصيل (الشهر)</p>
-                  <p className="text-xl font-extrabold text-emerald-600">
-                    <AnimatedCounter value={currentMonthStats.collected} duration={800} formatter={(v) => v.toLocaleString()} />
+                  <p className="text-xs font-semibold text-slate-500">إجمالي مستحقات الشهر</p>
+                  <p className="text-2xl font-extrabold text-slate-800">
+                    <AnimatedCounter value={currentMonthStats.totalToCollect} duration={800} formatter={(v) => v.toLocaleString()} />
                     <span className="text-xs font-medium text-slate-400 mr-1">ج.م</span>
                   </p>
                 </div>
-                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                  <TrendingUp className="h-5 w-5" />
+                <div className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600">
+                  <Wallet className="h-6 w-6" />
                 </div>
-              </div>
-              <div className="mt-3 text-xs text-slate-500 text-right flex items-center gap-1">
-                <span>المستهدف الكلي:</span>
-                <span className="font-bold text-slate-700">{currentMonthStats.totalToCollect.toLocaleString()} ج.م</span>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* المتأخرات الكلية */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
+            {/* ما تم تحصيله */}
+            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-emerald-500">
+              <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">متأخرات عاجلة</p>
-                  <p className="text-xl font-extrabold text-rose-600">
-                    <AnimatedCounter value={overdueInstallments.length} duration={800} />
-                    <span className="text-xs font-medium text-slate-400 mr-1">قسط</span>
+                  <p className="text-xs font-semibold text-slate-500">تم تحصيله بنجاح</p>
+                  <p className="text-2xl font-extrabold text-emerald-600">
+                    <AnimatedCounter value={currentMonthStats.collected} duration={800} formatter={(v) => v.toLocaleString()} />
+                    <span className="text-xs font-medium text-emerald-400 mr-1">ج.م</span>
                   </p>
                 </div>
-                <div className="w-11 h-11 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-600">
-                  <AlertTriangle className="h-5 w-5 animate-pulse" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                  <CheckCircle className="h-6 w-6" />
                 </div>
-              </div>
-              <div className="mt-3 text-xs text-slate-500 text-right flex items-center gap-1">
-                <span>القيمة الكلية المتأخرة:</span>
-                <span className="font-extrabold text-rose-700">
-                  {overdueInstallments.reduce((sum, i) => sum + i.amount, 0).toLocaleString()} ج.م
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* يستحق اليوم */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
+            {/* المتبقي للتحصيل */}
+            <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden border-r-4 border-r-amber-500">
+              <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">يستحق اليوم</p>
-                  <p className="text-xl font-extrabold text-amber-600">
-                    <AnimatedCounter value={todayInstallments.length} duration={800} />
-                    <span className="text-xs font-medium text-slate-400 mr-1">قسط</span>
+                  <p className="text-xs font-semibold text-slate-500">المتبقي المطلوب تحصيله</p>
+                  <p className="text-2xl font-extrabold text-amber-600">
+                    <AnimatedCounter value={currentMonthStats.remaining} duration={800} formatter={(v) => v.toLocaleString()} />
+                    <span className="text-xs font-medium text-amber-400 mr-1">ج.م</span>
                   </p>
                 </div>
-                <div className="w-11 h-11 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                  <Clock className="h-5 w-5" />
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                  <Clock className="h-6 w-6" />
                 </div>
-              </div>
-              <div className="mt-3 text-xs text-slate-500 text-right flex items-center gap-1">
-                <span>مطلوب تحصيله اليوم:</span>
-                <span className="font-bold text-slate-700">
-                  {todayInstallments.reduce((sum, i) => sum + i.amount, 0).toLocaleString()} ج.م
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* العقود النشطة */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1 text-right">
-                  <p className="text-xs font-semibold text-slate-500">العقود النشطة</p>
-                  <p className="text-xl font-extrabold text-violet-600">
-                    <AnimatedCounter value={contracts.filter(c => c.status === "active").length} duration={800} />
-                    <span className="text-xs font-medium text-slate-400 mr-1">عقد</span>
-                  </p>
-                </div>
-                <div className="w-11 h-11 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-600">
-                  <FileText className="h-5 w-5" />
-                </div>
-              </div>
-              <div className="mt-3 text-xs text-slate-500 text-right flex items-center gap-1">
-                <span>مجموع العملاء الكلي:</span>
-                <span className="font-bold text-slate-700">
-                  {customers.filter(c => c.type === "customer").length} عملاء
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
+          </div>
         </div>
 
         {/* شريط تقدم تحصيل مستهدفات الشهر الكلية */}
@@ -287,10 +265,10 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="text-right">
               <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                <Wallet className="h-4.5 w-4.5 text-violet-500" />
-                مستهدف تحصيل الشهر الحالي
+                <TrendingUp className="h-4.5 w-4.5 text-emerald-500" />
+                مستهدف إنجاز التحصيل لشهر {currentMonthStats.monthName}
               </h3>
-              <p className="text-xs text-slate-500 mt-1">يتم قياس الأقساط المحصلة مقابل المطلوبة لهذا الشهر</p>
+              <p className="text-xs text-slate-500 mt-1">نسبة التحصيل الفعلي المحقق مقابل مستحقات الشهر الكاملة</p>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
@@ -304,12 +282,60 @@ const Index = () => {
           
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-              <span>نسبة الإنجاز</span>
-              <span className="text-violet-600">{currentMonthStats.progressPercent}%</span>
+              <span>نسبة الإنجاز الفعلي</span>
+              <span className="text-emerald-600">{currentMonthStats.progressPercent}%</span>
             </div>
             <Progress value={currentMonthStats.progressPercent} className="h-3 rounded-full bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-emerald-400 [&>div]:to-teal-500" />
           </div>
         </Card>
+
+        {/* المؤشرات العامة للنظام */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* المتأخرات الكلية */}
+          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div className="space-y-1 text-right">
+                <p className="text-xs font-semibold text-slate-500">متأخرات عاجلة (خارج الشهر الحالي)</p>
+                <p className="text-lg font-bold text-rose-600">
+                  <AnimatedCounter value={overdueInstallments.length} duration={800} /> قسط
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
+                <AlertTriangle className="h-5 w-5 animate-pulse" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* يستحق اليوم */}
+          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div className="space-y-1 text-right">
+                <p className="text-xs font-semibold text-slate-500">مستحقات اليوم الفردية</p>
+                <p className="text-lg font-bold text-slate-800">
+                  <AnimatedCounter value={todayInstallments.length} duration={800} /> قسط
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                <Clock className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* العقود النشطة */}
+          <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift relative overflow-hidden col-span-2 lg:col-span-1">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div className="space-y-1 text-right">
+                <p className="text-xs font-semibold text-slate-500">العقود النشطة بالبرنامج</p>
+                <p className="text-lg font-bold text-violet-600">
+                  <AnimatedCounter value={contracts.filter(c => c.status === "active").length} duration={800} /> عقد
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600">
+                <FileText className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* التبويبات التفاعلية للمهام اليومية والعقود */}
         <div className="space-y-4">
@@ -322,9 +348,9 @@ const Index = () => {
             {/* التبويبات */}
             <div className="flex gap-2 self-start sm:self-auto bg-slate-100 p-1 rounded-xl">
               {[
-                { id: "overdue", label: "متأخرات حرجة", count: overdueInstallments.length, color: "text-rose-600 bg-rose-50 border-rose-100" },
-                { id: "today", label: "مستحقات اليوم", count: todayInstallments.length, color: "text-amber-600 bg-amber-50 border-amber-100" },
-                { id: "recent", label: "أحدث العقود", count: null, color: "" }
+                { id: "overdue", label: "متأخرات حرجة", count: overdueInstallments.length },
+                { id: "today", label: "مستحقات اليوم", count: todayInstallments.length },
+                { id: "recent", label: "أحدث العقود", count: null }
               ].map(tab => (
                 <button
                   key={tab.id}

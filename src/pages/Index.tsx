@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
@@ -23,7 +24,7 @@ import {
   Plus, CreditCard, Users, FileText, AlertTriangle, 
   CheckCircle2, Clock, Loader2,
   TrendingUp, Wallet, Sparkles, Calendar,
-  ChevronLeft, Send, CheckCircle, Coins, ArrowLeftRight
+  ChevronLeft, Send, CheckCircle, Coins, Search, X
 } from "lucide-react";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 
@@ -36,6 +37,9 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overdue" | "today" | "recent">("overdue");
   const [sendingId, setSendingId] = useState<number | null>(null);
+
+  // البحث السريع للتحصيل
+  const [quickSearch, setQuickSearch] = useState("");
 
   // حالة التحكم في النوافذ المنبثقة لجميع المؤشرات المالية
   const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | "overdue" | "today" | "activeContracts" | null>(null);
@@ -126,6 +130,30 @@ const Index = () => {
       });
   }, [installments, contracts, currentMonth, currentYear]);
 
+  // تصفية ذكية للأقساط غير المسددة للتحصيل السريع
+  const quickSearchResults = useMemo(() => {
+    if (!quickSearch.trim()) return [];
+    const query = quickSearch.trim().toLowerCase();
+    
+    // إيجاد كافة الأقساط غير المسددة
+    return installments
+      .filter(i => !i.is_paid)
+      .map(i => {
+        const contract = contracts.find(c => c.id === i.contract_id);
+        return {
+          ...i,
+          customerName: contract?.customer_name || "",
+          customerPhone: contract?.customer_phone || "",
+          productType: contract?.product_type || ""
+        };
+      })
+      .filter(i => 
+        i.customerName.toLowerCase().includes(query) || 
+        i.customerPhone.includes(query)
+      )
+      .slice(0, 5); // أقصى حد 5 نتائج للحفاظ على بساطة الواجهة
+  }, [quickSearch, installments, contracts]);
+
   // أقساط المتأخرات بالتفاصيل الكاملة
   const overdueInstallmentsWithDetails = useMemo(() => {
     return overdueInstallments.map(i => {
@@ -175,6 +203,7 @@ const Index = () => {
         paidDate: new Date().toISOString().split("T")[0]
       });
       showSuccess("✅ تم تحصيل القسط بنجاح");
+      setQuickSearch(""); // إعادة تصفير البحث الفوري
       
       // تحديث البيانات فوراً
       const [c, i] = await Promise.all([api.contracts.list(), api.installments.list()]);
@@ -252,6 +281,78 @@ const Index = () => {
             </div>
           </div>
         </div>
+
+        {/* قسم التحصيل السريع والمباشر - Quick Collector Widget */}
+        <Card className="border-0 bg-white/90 backdrop-blur-sm overflow-hidden p-5 shadow-lg border-r-4 border-r-violet-500">
+          <div className="space-y-3">
+            <div className="text-right">
+              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-violet-500" />
+                البحث السريع والتحصيل الفوري للأقساط ⚡
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">اكتب اسم العميل أو جزء من هاتفه لتحصيل أي قسط بضغطة واحدة</p>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="ابحث باسم العميل أو رقم الهاتف للتحصيل..."
+                className="pr-12 rounded-2xl h-12 bg-white border-slate-200"
+                value={quickSearch}
+                onChange={(e) => setQuickSearch(e.target.value)}
+              />
+              {quickSearch && (
+                <button
+                  onClick={() => setQuickSearch("")}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-500"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* عرض نتائج البحث الفوري */}
+            {quickSearch && (
+              <div className="mt-3 p-2 bg-slate-50/50 rounded-2xl border border-slate-100 divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                {quickSearchResults.map((inst) => (
+                  <div key={inst.id} className="flex items-center justify-between p-3 first:pt-2 last:pb-2">
+                    <div className="text-right space-y-1">
+                      <p className="text-sm font-bold text-slate-800">{inst.customerName}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500">{inst.productType}</span>
+                        <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-100">
+                          القسط #{inst.number}
+                        </span>
+                        <span className="text-[10px] text-slate-400" dir="ltr">
+                          استحقاق: {inst.day}/{inst.month}/{inst.year}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <div className="text-left ml-2">
+                        <p className="text-xs text-slate-400">القيمة</p>
+                        <p className="text-sm font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleQuickPay(inst.id)}
+                        className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold gap-1 active:scale-95"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        سدد الآن
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {quickSearchResults.length === 0 && (
+                  <p className="text-center text-xs text-slate-400 py-6">لا توجد أقساط مستحقة مطابقة لهذا البحث</p>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
 
         {/* المؤشرات المالية المخصصة لشهر التحصيل الحالي */}
         <div className="space-y-4">

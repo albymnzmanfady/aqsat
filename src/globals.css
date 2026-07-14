@@ -2,278 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dot grid background pattern */
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50;
+    @apply bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 transition-colors duration-300;
   }
   .dot-grid-bg {
     background-image: radial-gradient(circle, #cbd5e1 0.5px, transparent 0.5px);
     background-size: 24px 24px;
-    background-position: 0 0;
-    background-repeat: repeat;
   }
 }
 
-/* ==========================================================================
-   الوضع الداكن المطور والمتناسق بالكامل (Dark Mode Colors)
-   ========================================================================== */
 .dark body {
-  background-color: #05070c !important; /* لون شامواه داكن مطفأ بالكامل */
-  background-image: none !important;
-  color: #f8fafc !important;
+  background-color: #05070c !important;
+  color: #e2e8f0 !important;
 }
 
-.dark .dot-grid-bg {
-  background-image: none !important;
-}
-
-/* حماية البطاقات من اللون الأبيض وضبط تباينها */
+/* بطاقات ذات تباين عالٍ ومريح */
 .dark .bg-white,
 .dark .bg-white\/80,
 .dark .bg-white\/70,
 .dark .bg-white\/90 {
-  background-color: #0e1118 !important; /* لون متناسق مع ملمس الشامواه */
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  color: #f8fafc !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* تنسيق النصوص وتناسقها */
-.dark .text-slate-800,
-.dark .text-slate-700,
-.dark .text-slate-900 {
-  color: #f8fafc !important;
-}
-
-.dark .text-slate-600,
-.dark .text-slate-500 {
-  color: #94a3b8 !important;
-}
-
-.dark .text-slate-400 {
-  color: #64748b !important;
-}
-
-/* الحدود والفواصل */
-.dark .border-slate-100,
-.dark .border-slate-200,
-.dark .border-slate-200\/60,
-.dark .border-slate-200\/80,
-.dark .border-slate-200\/50,
-.dark .divide-slate-100,
-.dark .divide-slate-100\/80 {
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  divide-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* الخلفيات الثانوية والقوائم */
-.dark .bg-slate-50,
-.dark .bg-slate-50\/50 {
-  background-color: #080b11 !important;
-}
-
-.dark .bg-slate-100 {
-  background-color: #151b26 !important;
+  background-color: #0f131a !important;
+  border: 1px solid #1e293b !important;
   color: #f1f5f9 !important;
 }
 
-/* معالجة الحقول والمدخلات والقوائم المنسدلة */
-.dark input,
-.dark select,
-.dark textarea,
-.dark .SelectTrigger {
-  background-color: #151b26 !important;
+/* تحسين تباين النصوص */
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* تحسين القوائم المنسدلة */
+.dark [role="menu"],
+.dark .DropdownMenuContent {
+  background-color: #1a1f2e !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5) !important;
+}
+
+.dark [role="menuitem"]:hover {
+  background-color: #2d3748 !important;
+  color: #ffffff !important;
+}
+
+/* تحسين ملمس الـ Hover للبطاقات */
+.dark .hover-lift:hover {
+  background-color: #161b22 !important;
+  border-color: #334155 !important;
+}
+
+/* عناصر الحالة */
+.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.dark input, .dark select, .dark textarea {
+  background-color: #0f131a !important;
+  border: 1px solid #334155 !important;
   color: #f8fafc !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.dark input::placeholder {
-  color: #475569 !important;
+.dark input:focus {
+  border-color: #6366f1 !important;
+  ring: 2px solid #818cf8 !important;
 }
 
-.dark header,
-.dark aside,
-.dark nav {
-  background-color: rgba(14, 17, 24, 0.98) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* القوائم المنبثقة والنوافذ (Modals and Menus) */
-.dark .DropdownMenuContent,
-.dark .dropdown-menu-content,
-.dark div[role="menu"],
-.dark div[role="dialog"],
-.dark .DialogContent {
-  background-color: #0e1118 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  color: #f8fafc !important;
-}
-
-/* معالجة فئات الألوان المالية والتفاعلية (تجاوز الألوان الفاتحة في الوضع الداكن) */
-.dark .bg-blue-50\/50, 
-.dark .bg-blue-50 {
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  color: #60a5fa !important;
-  border-color: rgba(59, 130, 246, 0.2) !important;
-}
-
-.dark .bg-emerald-50\/50, 
-.dark .bg-emerald-50, 
-.dark .bg-emerald-50\/20,
-.dark .bg-emerald-50\/10 {
-  background-color: rgba(16, 185, 129, 0.1) !important;
-  color: #34d399 !important;
-  border-color: rgba(16, 185, 129, 0.2) !important;
-}
-
-.dark .bg-amber-50\/50, 
-.dark .bg-amber-50,
-.dark .bg-amber-50\/20 {
-  background-color: rgba(245, 158, 11, 0.1) !important;
-  color: #fbbf24 !important;
-  border-color: rgba(245, 158, 11, 0.2) !important;
-}
-
-.dark .bg-violet-50\/50, 
-.dark .bg-violet-50, 
-.dark .bg-violet-50\/10 {
-  background-color: rgba(139, 92, 246, 0.1) !important;
-  color: #a78bfa !important;
-  border-color: rgba(139, 92, 246, 0.2) !important;
-}
-
-.dark .bg-rose-50\/10, 
-.dark .bg-rose-50, 
-.dark .bg-rose-50\/20 {
-  background-color: rgba(244, 63, 94, 0.1) !important;
-  color: #fb7185 !important;
-  border-color: rgba(244, 63, 94, 0.2) !important;
-}
-
-.dark .bg-slate-50\/50, 
-.dark .bg-slate-50 {
-  background-color: rgba(30, 41, 59, 0.4) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* تأثير الزجاج الكريستالي الفاخر في الوضع الداكن */
-.dark .crystal,
-.dark .crystal-strong {
-  background: linear-gradient(135deg, rgba(14, 17, 24, 0.8) 0%, rgba(14, 17, 24, 0.4) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-/* ==========================================================================
-   تأثيرات الواجهة والتحريك
-   ========================================================================== */
-.crystal {
-  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.3);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
-}
-
-.crystal-strong {
-  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.4);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
-}
-
-.crystal-gradient {
-  background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(249,115,22,0.15));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(251,191,36,0.3);
-  box-shadow: 0 8px 32px rgba(251,191,36,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
-}
-
-.crystal-card {
-  @apply crystal rounded-2xl;
-}
-
-.active-scale:active,
-button:active:not(:disabled) {
-  transform: scale(0.97);
-  transition: transform 0.1s ease;
-}
-
-@keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-enter-animation {
-  animation: page-enter 0.35s ease-out forwards;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
-}
-
-@keyframes stagger-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.stagger-item {
-  animation: stagger-fade-in 0.35s ease-out forwards;
-  opacity: 0;
-}
-
-@keyframes counter-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
-
-.counter-pop {
-  animation: counter-pop 0.3s ease-out;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 12px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.page-wrapper {
-  min-height: 100vh;
-  position: relative;
-}
-
-.crystal-select {
-  @apply crystal rounded-xl;
-}
+/* إصلاح تباين الشارات (Badges) */
+.dark .bg-emerald-100 { background-color: #064e3b !important; color: #34d399 !important; }
+.dark .bg-rose-100 { background-color: #7f1d1d !important; color: #fda4af !important; }
+.dark .bg-amber-100 { background-color: #78350f !important; color: #fbbf24 !important; }

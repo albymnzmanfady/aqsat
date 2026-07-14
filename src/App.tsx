@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import Calculator from "./pages/Calculator";
 import CollectionReports from "./pages/CollectionReports";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +90,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredPermission="view_installments">
             <ErrorBoundary><CollectionReports /></ErrorBoundary>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <ErrorBoundary><Reports /></ErrorBoundary>
           </ProtectedRoute>
         }
       />

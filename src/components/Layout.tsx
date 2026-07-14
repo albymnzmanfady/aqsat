@@ -92,7 +92,8 @@ const Layout = ({ children }: LayoutProps) => {
     { path: "/customers", label: "العملاء", icon: Users, color: "from-blue-500 to-cyan-500", permission: "view_customers" as const },
     { path: "/contracts", label: "العقود", icon: FileText, color: "from-emerald-500 to-teal-500", permission: "view_contracts" as const },
     { path: "/installments", label: "الأقساط", icon: CreditCard, color: "from-amber-500 to-orange-500", permission: "view_installments" as const },
-    { path: "/collection-reports", label: "تقارير التحصيل", icon: BarChart3, color: "from-violet-500 to-purple-600", permission: "view_installments" as const },
+    { path: "/reports", label: "التقارير الشاملة", icon: BarChart3, color: "from-indigo-500 to-violet-600", permission: null as string | null },
+    { path: "/collection-reports", label: "تقارير التحصيل", icon: PieChart, color: "from-violet-500 to-purple-600", permission: "view_installments" as const },
     { path: "/calculator", label: "حاسبة الأقساط", icon: Calculator, color: "from-indigo-500 to-violet-600", permission: null as string | null },
     {
       label: "المخازن",

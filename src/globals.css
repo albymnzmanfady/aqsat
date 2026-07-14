@@ -18,8 +18,12 @@
 /* الوضع الداكن الشامل والأنيق */
 .dark body {
   background-color: #0b0f17 !important;
-  background-image: radial-gradient(circle, #1e293b 0.5px, transparent 0.5px) !important;
+  background-image: none !important; /* إلغاء شبكة النقاط بالوضع الداكن */
   color: #f1f5f9 !important;
+}
+
+.dark .dot-grid-bg {
+  background-image: none !important; /* إلغاء شبكة النقاط بالوضع الداكن للمكونات */
 }
 
 .dark .bg-white,

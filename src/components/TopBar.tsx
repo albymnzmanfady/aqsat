@@ -18,7 +18,6 @@ import {
 import {
   Sun,
   Moon,
-  Monitor,
   Settings,
   LogOut,
   User,
@@ -50,10 +49,11 @@ const TopBar = () => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const [themeOpen, setThemeOpen] = useState(false);
   const [avatar, setAvatar] = useState(getStoredAvatar);
 
-  const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
     <header className="hidden lg:flex fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 z-30">
@@ -65,62 +65,20 @@ const TopBar = () => {
         {/* Notifications */}
         <NotificationsDropdown />
 
-        {/* Theme Toggle */}
-        <DropdownMenu open={themeOpen} onOpenChange={setThemeOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-800 active:scale-90 transition-all"
-            >
-              <ThemeIcon className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-48 rounded-2xl p-1.5 shadow-xl border border-slate-200 bg-white"
-            sideOffset={8}
-          >
-            {[
-              { value: "light", label: "فاتح", icon: Sun, desc: "واجهة فاتحة" },
-              { value: "dark", label: "داكن", icon: Moon, desc: "واجهة داكنة" },
-              { value: "system", label: "تلقائي", icon: Monitor, desc: "حسب الجهاز" },
-            ].map((t) => {
-              const Icon = t.icon;
-              const isActive = theme === t.value;
-              return (
-                <button
-                  key={t.value}
-                  onClick={() => setTheme(t.value)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-right",
-                    isActive
-                      ? "bg-gradient-to-l from-violet-500/10 to-purple-500/10 text-violet-600"
-                      : "text-slate-600 hover:bg-slate-50"
-                  )}
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                    isActive
-                      ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md"
-                      : "bg-slate-100 text-slate-500"
-                  )}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="text-right">
-                    <p className={cn("text-sm font-medium", isActive ? "text-violet-600" : "text-slate-700")}>
-                      {t.label}
-                    </p>
-                    <p className="text-[10px] text-slate-400">{t.desc}</p>
-                  </div>
-                  {isActive && (
-                    <div className="w-2 h-2 rounded-full bg-violet-500 mr-auto flex-shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Theme Toggle - Direct Toggle Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-10 w-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-800 active:scale-90 transition-all"
+          title="تبديل وضع الألوان"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5 text-amber-500" />
+          ) : (
+            <Moon className="h-5 w-5 text-slate-600" />
+          )}
+        </Button>
 
         {/* Separator */}
         <div className="w-px h-8 bg-slate-200" />

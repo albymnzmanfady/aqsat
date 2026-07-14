@@ -19,6 +19,7 @@ import Users from "./pages/Users";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import Calculator from "./pages/Calculator";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/calculator"
+        element={
+          <ProtectedRoute>
+            <Calculator />
           </ProtectedRoute>
         }
       />

@@ -686,7 +686,7 @@ const Index = () => {
                   </Button>
                 )}
                 {overdueInstallments.length === 0 && (
-                  <div className="text-center py-10 bg-white/40 border border-dashed rounded-2xl">
+                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50">
                     <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
                     <p className="text-sm font-bold text-slate-700">ممتاز! لا توجد أقساط متأخرة</p>
                     <p className="text-xs text-slate-400 mt-1">كافة العملاء منتظمين تماماً بالسداد</p>
@@ -778,7 +778,7 @@ const Index = () => {
                   </Button>
                 )}
                 {todayInstallments.length === 0 && (
-                  <div className="text-center py-10 bg-white/40 border border-dashed rounded-2xl">
+                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50">
                     <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
                     <p className="text-sm font-bold text-slate-700">لا توجد أقساط مستحقة اليوم</p>
                     <p className="text-xs text-slate-400 mt-1">لا توجد تحصيلات مطلوبة لهذا التاريخ</p>
@@ -829,7 +829,7 @@ const Index = () => {
                   </div>
                 ))}
                 {recentContracts.length === 0 && (
-                  <div className="text-center py-10 bg-white/40 border border-dashed rounded-2xl">
+                  <div className="text-center py-10 border border-dashed rounded-2xl border-slate-200/50">
                     <FileText className="h-10 w-10 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm font-bold text-slate-700">لا توجد عقود حتى الآن</p>
                     <p className="text-xs text-slate-400 mt-1">سجل أول عقد للبدء في تنظيم الأقساط</p>

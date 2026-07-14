@@ -89,7 +89,6 @@ const Installments = () => {
         guarantor_name: contract.guarantor_name,
         guarantor_phone: contract.guarantor_phone,
         created_at: contract.created_at,
-        customer_phone: contract.customer_phone,
       },
       {
         appName: settings.appName,

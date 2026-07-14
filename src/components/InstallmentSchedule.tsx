@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Installment } from "@/types";
-import { CheckCircle, Clock, Calendar, Send, Loader2, ChevronDown, ChevronUp, CreditCard } from "lucide-react";
+import { CheckCircle, Clock, Calendar, Send, Loader2, ChevronDown, CreditCard } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 
@@ -95,20 +94,51 @@ const InstallmentSchedule = ({
                 {totalCount} قسط
               </Badge>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
                 ✓ {paidCount} مدفوع
               </span>
               {unpaidCount > 0 && (
-                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
-                  ◷ {unpaidCount} باقي
-                </span>
+                <>
+                  <span className="text-[11px] text-slate-400">•</span>
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                    ◷ {unpaidCount} باقي
+                  </span>
+                </>
               )}
               <span className="text-[11px] text-slate-400">•</span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {progressPercent}%
               </span>
             </div>
+            {/* المتبقي المالي */}
+            {unpaidCount > 0 && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">المتبقي:</span>
+                <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                  {remainingAmount.toLocaleString()} ج.م
+                </span>
+                {nextUnpaid && (
+                  <>
+                    <span className="text-[11px] text-slate-400">•</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      القسط #{nextUnpaid.number}
+                    </span>
+                    <span className="text-[11px] text-slate-400">•</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400" dir="ltr">
+                      {nextUnpaid.day}/{nextUnpaid.month}/{nextUnpaid.year}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+            {unpaidCount === 0 && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                  ✓ تم السداد بالكامل - لا يوجد متبقي
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -124,36 +154,13 @@ const InstallmentSchedule = ({
           <div className={cn(
             "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
             expanded
-              ? "bg-violet-500 text-white rotate-180"
+              ? "bg-violet-500 text-white"
               : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/50 group-hover:text-violet-600"
           )}>
-            <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+            <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-180")} />
           </div>
         </div>
       </button>
-
-      {/* ملخص مالي سريع */}
-      {!expanded && unpaidCount > 0 && nextUnpaid && (
-        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">القسط التالي:</span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              #{nextUnpaid.number}
-            </span>
-            <span className="text-[11px] text-slate-400">•</span>
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-              {nextUnpaid.amount.toLocaleString()} ج.م
-            </span>
-            <span className="text-[11px] text-slate-400">•</span>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400" dir="ltr">
-              {nextUnpaid.day}/{nextUnpaid.month}/{nextUnpaid.year}
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-400">
-            المتبقي: {remainingAmount.toLocaleString()} ج.م
-          </span>
-        </div>
-      )}
 
       {/* قائمة الأقساط المنسدلة */}
       <div className={cn(

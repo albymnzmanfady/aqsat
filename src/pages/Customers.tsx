@@ -140,12 +140,12 @@ const Customers = () => {
             </div>
             <div>
               <h3 className="font-semibold text-slate-800">{customer.name}</h3>
-              <div className="flex flex-wrap gap-2 mt-1">
-                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                <span className="text-xs text-slate-500 flex items-center gap-1">
                   <Phone className="h-3 w-3" />
                   {customer.phone}
                 </span>
-                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <span className="text-xs text-slate-500 flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {customer.address}
                 </span>

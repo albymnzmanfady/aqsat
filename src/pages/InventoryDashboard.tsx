@@ -47,39 +47,26 @@ const InventoryDashboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // ========== حسابات القيمة ==========
-  /**
-   * قيمة المخزون الحالي:
-   * totalStockValueCost  = مجموع (الرصيد الحالي * سعر التكلفة)
-   * totalStockValueSell  = مجموع (الرصيد الحالي * سعر البيع)
-   * الربح المتوقع        = totalStockValueSell - totalStockValueCost
-   */
   const totalStockValueCost = products.reduce((sum, p) => sum + p.current_stock * p.cost_price, 0);
   const totalStockValueSell = products.reduce((sum, p) => sum + p.current_stock * p.selling_price, 0);
   const potentialProfit = totalStockValueSell - totalStockValueCost;
 
-  // ========== مؤشرات المبيعات والمشتريات ==========
-  /** إجمالي تكلفة المشتريات (Transactions من نوع purchase) */
   const totalPurchaseCost = transactions
     .filter((t) => t.type === "purchase")
     .reduce((s, t) => s + t.total, 0);
 
-  /** إجمالي إيرادات المبيعات (Transactions من نوع sale) */
   const totalSalesRevenue = transactions
     .filter((t) => t.type === "sale")
-    .reduce((s, t) => s + Math.abs(t.total), 0); // استعمال Math.abs لأن total سالب في المبيعات
+    .reduce((s, t) => s + Math.abs(t.total), 0);
 
-  /** عدد الوحدات المباعة (مجموع القيم المطلقة لكميات المبيعات) */
   const totalSalesUnits = Math.abs(
     transactions
       .filter((t) => t.type === "sale")
-      .reduce((s, t) => s + t.quantity, 0) // quantity سالبة في المبيعات
+      .reduce((s, t) => s + t.quantity, 0)
   );
 
-  // ========== تحذير المنتجات المنخفضة ==========
   const lowStockProducts = products.filter((p) => p.current_stock <= p.min_stock);
 
-  // ========== تجميع التصنيفات ==========
   const categories = [...new Set(products.map((p) => p.category))];
   const categoryData: CategoryData[] = categories.map((cat) => ({
     name: cat,
@@ -101,7 +88,7 @@ const InventoryDashboard = () => {
     <Layout>
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/30">
+        <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center">
           <BarChart3 className="h-7 w-7 text-white" />
         </div>
         <div>
@@ -112,53 +99,53 @@ const InventoryDashboard = () => {
 
       {/* Main Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
+        <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">إجمالي المنتجات</p>
-                <p className="text-2xl font-bold text-slate-800">{products.length}</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{products.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-md flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
                 <Box className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
+        <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">قيمة المخزون (تكلفة)</p>
-                <p className="text-2xl font-bold text-slate-800">{totalStockValueCost.toLocaleString()} ج.م</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{totalStockValueCost.toLocaleString()} ج.م</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                 <Warehouse className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
+        <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">قيمة المخزون (بيع)</p>
                 <p className="text-2xl font-bold text-emerald-600">{totalStockValueSell.toLocaleString()} ج.م</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
                 <DollarSign className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm hover-lift">
+        <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">المنتجات المنخفضة</p>
                 <p className="text-2xl font-bold text-amber-600">{lowStockProducts.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
                 <AlertTriangle className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -168,21 +155,21 @@ const InventoryDashboard = () => {
 
       {/* Low Stock Alert */}
       {lowStockProducts.length > 0 && (
-        <div className="mb-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl hover-lift">
+        <div className="mb-8 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-2xl">
           <div className="flex items-center gap-3 mb-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
-            <h3 className="font-bold text-amber-800">منتجات تحتاج إعادة طلب</h3>
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <h3 className="font-bold text-amber-800 dark:text-amber-200">منتجات تحتاج إعادة طلب</h3>
           </div>
           <div className="grid gap-2">
             {lowStockProducts.map((p) => (
-              <div key={p.id} className="flex items-center justify-between bg-white/60 rounded-xl p-3 hover-lift">
+              <div key={p.id} className="flex items-center justify-between bg-white/60 dark:bg-slate-800/50 rounded-xl p-3">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-700">{p.name}</span>
-                  <Badge className={cn("rounded-lg", p.current_stock <= 0 ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700")}>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">{p.name}</span>
+                  <Badge className={cn("rounded-lg border-0", p.current_stock <= 0 ? "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300" : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300")}>
                     {p.current_stock <= 0 ? "نفذ بالكامل" : `متبقي ${p.current_stock}`}
                   </Badge>
                 </div>
-                <span className="text-sm text-slate-500">الحد الأدنى: {p.min_stock}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">الحد الأدنى: {p.min_stock}</span>
               </div>
             ))}
           </div>
@@ -191,29 +178,29 @@ const InventoryDashboard = () => {
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         {/* Financial Summary */}
-        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
+        <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden hover-lift">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                 <PieChart className="h-4 w-4 text-white" />
               </div>
-              <h3 className="font-bold text-slate-800">الملخص المالي للمخزون</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">الملخص المالي للمخزون</h3>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl hover-lift">
-                <span className="text-sm text-slate-600">إجمالي المشتريات</span>
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+                <span className="text-sm text-slate-600 dark:text-slate-300">إجمالي المشتريات</span>
                 <span className="font-bold text-blue-600">{totalPurchaseCost.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-emerald-50/50 rounded-xl hover-lift">
-                <span className="text-sm text-slate-600">إجمالي المبيعات</span>
+              <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl">
+                <span className="text-sm text-slate-600 dark:text-slate-300">إجمالي المبيعات</span>
                 <span className="font-bold text-emerald-600">{totalSalesRevenue.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-amber-50/50 rounded-xl hover-lift">
-                <span className="text-sm text-slate-600">الربح المحتمل (المخزون الحالي)</span>
+              <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+                <span className="text-sm text-slate-600 dark:text-slate-300">الربح المحتمل (المخزون الحالي)</span>
                 <span className="font-bold text-amber-600">{potentialProfit.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-violet-50/50 rounded-xl hover-lift">
-                <span className="text-sm text-slate-600">عدد المنتجات المباعة</span>
+              <div className="flex items-center justify-between p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl">
+                <span className="text-sm text-slate-600 dark:text-slate-300">عدد المنتجات المباعة</span>
                 <span className="font-bold text-violet-600">{totalSalesUnits} وحدة</span>
               </div>
             </div>
@@ -221,26 +208,26 @@ const InventoryDashboard = () => {
         </Card>
 
         {/* Categories Breakdown */}
-        <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift">
+        <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden hover-lift">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
                 <Layers className="h-4 w-4 text-white" />
               </div>
-              <h3 className="font-bold text-slate-800">توزيع المخزون حسب التصنيف</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">توزيع المخزون حسب التصنيف</h3>
             </div>
             <div className="space-y-3">
               {categoryData.map((cat) => (
-                <div key={cat.name} className="p-3 bg-slate-50/50 rounded-xl hover-lift">
+                <div key={cat.name} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-slate-700 text-sm">{cat.name}</span>
-                    <span className="text-xs text-slate-500">{cat.count} منتجات</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm">{cat.name}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{cat.count} منتجات</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">المخزون: <strong>{cat.stock}</strong></span>
-                    <span className="text-slate-500">القيمة: <strong className="text-emerald-600">{cat.value.toLocaleString()} ج.م</strong></span>
+                    <span className="text-slate-500 dark:text-slate-400">المخزون: <strong className="text-slate-700 dark:text-slate-200">{cat.stock}</strong></span>
+                    <span className="text-slate-500 dark:text-slate-400">القيمة: <strong className="text-emerald-600">{cat.value.toLocaleString()} ج.م</strong></span>
                   </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-l from-cyan-500 to-blue-600 rounded-full"
                       style={{ width: `${totalStockValueSell > 0 ? (cat.value / totalStockValueSell) * 100 : 0}%` }}
@@ -257,41 +244,41 @@ const InventoryDashboard = () => {
       </div>
 
       {/* Products Table */}
-      <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden hover-lift mb-6">
+      <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden hover-lift mb-6">
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
               <Package className="h-4 w-4 text-white" />
             </div>
-            <h3 className="font-bold text-slate-800">تفاصيل المنتجات</h3>
+            <h3 className="font-bold text-slate-800 dark:text-slate-100">تفاصيل المنتجات</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-right py-3 px-3 text-slate-600 font-semibold">المنتج</th>
-                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">التصنيف</th>
-                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">التكلفة</th>
-                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">البيع</th>
-                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">الرصيد</th>
-                  <th className="text-center py-3 px-3 text-slate-600 font-semibold">الحالة</th>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-right py-3 px-3 text-slate-600 dark:text-slate-300 font-semibold">المنتج</th>
+                  <th className="text-center py-3 px-3 text-slate-600 dark:text-slate-300 font-semibold">التصنيف</th>
+                  <th className="text-center py-3 px-3 text-slate-600 dark:text-slate-300 font-semibold">التكلفة</th>
+                  <th className="text-center py-3 px-3 text-slate-600 dark:text-slate-300 font-semibold">البيع</th>
+                  <th className="text-center py-3 px-3 text-slate-600 dark:text-slate-300 font-semibold">الرصيد</th>
+                  <th className="text-center py-3 px-3 text-slate-600 dark:text-slate-300 font-semibold">الحالة</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((p) => {
                   const stockStatus =
                     p.current_stock <= 0
-                      ? { label: "نفذ", color: "bg-rose-100 text-rose-700" }
+                      ? { label: "نفذ", color: "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300" }
                       : p.current_stock <= p.min_stock
-                      ? { label: "منخفض", color: "bg-amber-100 text-amber-700" }
-                      : { label: "متوفر", color: "bg-emerald-100 text-emerald-700" };
+                      ? { label: "منخفض", color: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300" }
+                      : { label: "متوفر", color: "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300" };
                   return (
-                    <tr key={p.id} className="border-b border-slate-100/80 hover:bg-slate-50/50">
-                      <td className="py-3 px-3 font-medium text-slate-700">{p.name}</td>
-                      <td className="py-3 px-3 text-center text-slate-500">{p.category}</td>
-                      <td className="py-3 px-3 text-center">{p.cost_price.toLocaleString()} ج.م</td>
+                    <tr key={p.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                      <td className="py-3 px-3 font-medium text-slate-700 dark:text-slate-200">{p.name}</td>
+                      <td className="py-3 px-3 text-center text-slate-500 dark:text-slate-400">{p.category}</td>
+                      <td className="py-3 px-3 text-center text-slate-700 dark:text-slate-300">{p.cost_price.toLocaleString()} ج.م</td>
                       <td className="py-3 px-3 text-center text-emerald-600 font-semibold">{p.selling_price.toLocaleString()} ج.م</td>
-                      <td className="py-3 px-3 text-center font-bold">{p.current_stock} {p.unit}</td>
+                      <td className="py-3 px-3 text-center font-bold text-slate-800 dark:text-slate-100">{p.current_stock} {p.unit}</td>
                       <td className="py-3 px-3 text-center">
                         <Badge className={cn("rounded-lg border-0 text-xs", stockStatus.color)}>
                           {stockStatus.label}

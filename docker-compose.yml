@@ -6,7 +6,7 @@ services:
     container_name: aqsat-app
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -24,13 +24,29 @@ services:
     container_name: aqsat-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "10011:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
     depends_on:
       app:
         condition: service_healthy
 
+  certbot:
+    image: certbot/certbot
+    container_name: aqsat-certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
 volumes:
   app-data:
     driver: local
+  certbot-etc:
+  certbot-var:
+  certbot-www:

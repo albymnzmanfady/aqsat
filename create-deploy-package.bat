@@ -19,7 +19,7 @@ mkdir "%DEPLOY_DIR%\server"
 
 echo [1/4] Copying root files...
 
-for %%f in (package.json package-lock.json Dockerfile docker-compose.yml nginx.conf deploy.sh .dockerignore index.html vite.config.ts tailwind.config.ts postcss.config.js tsconfig.json components.json vercel.json eslint.config.js tsconfig.app.json tsconfig.node.json) do (
+for %%f in (package.json package-lock.json Dockerfile docker-compose.yml nginx.conf nginx-initial.conf deploy.sh .dockerignore index.html vite.config.ts tailwind.config.ts postcss.config.js tsconfig.json components.json vercel.json eslint.config.js tsconfig.app.json tsconfig.node.json) do (
     if exist "%%f" copy "%%f" "%DEPLOY_DIR%\" >nul 2>&1
 )
 
@@ -52,6 +52,10 @@ if exist "%ARCHIVE_NAME%" (
     echo    cd aqsat
     echo    chmod +x deploy.sh
     echo    ./deploy.sh
+    echo.
+    echo    App will be at:
+    echo    http://92.5.115.174:10011
+    echo    https://demo5.amantech-eg.com
     echo ========================================
 ) else (
     echo ERROR: Failed to create package.

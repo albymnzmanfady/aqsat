@@ -16,7 +16,7 @@ import { showSuccess } from "@/utils/toast";
 import {
   Calculator, Sparkles, DollarSign, Calendar, Percent, Printer, FileText,
   ArrowRight, Info, GitCompareArrows, CheckCircle2, Zap,
-  Wallet, Clock,
+  Wallet, Clock, TrendingDown, TrendingUp, Minus,
 } from "lucide-react";
 
 interface Scenario {
@@ -154,7 +154,7 @@ const CalculatorPage = () => {
       {/* ===== التخطيط الرئيسي: عمودان ===== */}
       <div className="grid lg:grid-cols-2 gap-6">
 
-        {/* === العمود الأيسر: محددات التمويل + المقارنة + النصيحة === */}
+        {/* === العمود الأيسر === */}
         <div className="space-y-6">
           {/* محددات التمويل */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
@@ -187,7 +187,7 @@ const CalculatorPage = () => {
             </CardContent>
           </Card>
 
-          {/* مقارنة السيناريوهات */}
+          {/* مقارنة السيناريوهات الكبيرة */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-5">
@@ -238,7 +238,7 @@ const CalculatorPage = () => {
             </CardContent>
           </Card>
 
-          {/* نصيحة الاستشاري */}
+          {/* نصيحة */}
           {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
             <div className="p-4 bg-violet-50 border border-violet-200 rounded-2xl flex items-start gap-3 text-sm text-violet-800">
               <Sparkles className="h-5 w-5 text-violet-500 mt-0.5 flex-shrink-0" />
@@ -247,7 +247,7 @@ const CalculatorPage = () => {
           )}
         </div>
 
-        {/* === العمود الأيمن: جدول الأقساط + مقارنة سريعة + نصائح === */}
+        {/* === العمود الأيمن === */}
         <div className="space-y-6">
           {/* جدول الأقساط */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
@@ -275,67 +275,152 @@ const CalculatorPage = () => {
             </CardContent>
           </Card>
 
-          {/* مقارنة سريعة + نصائح */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* مقارنة سريعة */}
-            <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-4">
+          {/* ===== المقارنة السريعة - التصميم الجديد ===== */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-0">
+              {/* العنوان */}
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
                     <GitCompareArrows className="h-4 w-4 text-white" />
                   </div>
                   <h3 className="font-bold text-sm text-slate-800">مقارنة سريعة</h3>
                 </div>
-                <div className="space-y-2">
-                  {scenarios.map((s) => {
-                    const isActive = selectedScenario === s.months;
-                    const isBest = bestScenario?.months === s.months;
-                    return (
-                      <div key={s.months} className={cn("flex items-center justify-between p-3 rounded-xl transition-all text-xs",
-                        isActive ? "bg-violet-50 border border-violet-200" : "bg-slate-50 border border-transparent hover:border-slate-200")}>
-                        <div className="flex items-center gap-2">
-                          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold",
-                            isActive ? "bg-violet-500 text-white" : "bg-slate-200 text-slate-500")}>{s.months}</div>
-                          <div>
-                            <span className="font-semibold text-slate-700">{s.label}</span>
-                            {isBest && <span className="text-[9px] font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded-full mr-1">الأفضل</span>}
-                          </div>
-                        </div>
-                        <div className="text-left">
-                          <span className="font-bold text-slate-800">{s.monthly.toLocaleString()} ج.م</span>
-                          <p className="text-[9px] text-rose-400">فوائد: {s.totalInterest.toLocaleString()}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                <Badge className="bg-indigo-50 text-indigo-600 border-0 rounded-lg text-[10px]">3 خيارات</Badge>
+              </div>
 
-            {/* نصائح التمويل */}
-            <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                    <Info className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="font-bold text-sm text-slate-800">نصائح ذكية</h3>
+              {/* جدول المقارنة */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80">
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500">المدة</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500">القسط الشهري</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500">الفوائد</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500">الإجمالي</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-500">التقييم</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scenarios.map((s) => {
+                      const isActive = selectedScenario === s.months;
+                      const isBest = bestScenario?.months === s.months;
+                      const isCheapest = cheapestScenario?.months === s.months;
+                      return (
+                        <tr
+                          key={s.months}
+                          onClick={() => applyScenario(s)}
+                          className={cn(
+                            "border-b border-slate-50 cursor-pointer transition-all duration-200 active:scale-[0.99]",
+                            isActive
+                              ? "bg-gradient-to-l from-violet-50 to-indigo-50 border-l-2 border-l-violet-500"
+                              : "hover:bg-slate-50/80"
+                          )}
+                        >
+                          <td className="py-3.5 px-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className={cn(
+                                "w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-extrabold transition-all",
+                                isActive
+                                  ? "bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm"
+                                  : "bg-slate-100 text-slate-600"
+                              )}>
+                                {s.months}
+                              </div>
+                              <div className="text-right">
+                                <p className={cn("font-bold text-slate-800", isActive && "text-violet-700")}>{s.label}</p>
+                                <p className="text-[9px] text-slate-400">{s.tag}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <p className={cn("font-extrabold", isActive ? "text-violet-700 text-sm" : "text-slate-800 text-xs")}>
+                              {s.monthly.toLocaleString()}
+                            </p>
+                            <p className="text-[9px] text-slate-400">ج.م شهرياً</p>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <p className="font-bold text-rose-500 text-xs">
+                              {s.totalInterest.toLocaleString()}
+                            </p>
+                            <p className="text-[9px] text-slate-400">ج.م فوائد</p>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <p className="font-extrabold text-slate-800 text-xs">
+                              {s.totalPayback.toLocaleString()}
+                            </p>
+                            <p className="text-[9px] text-slate-400">ج.م</p>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              {isBest && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                  <TrendingDown className="h-2.5 w-2.5" />أقل فوائد
+                                </span>
+                              )}
+                              {isCheapest && !isBest && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                  <Minus className="h-2.5 w-2.5" />أخف قسط
+                                </span>
+                              )}
+                              {isActive && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+                                  <CheckCircle2 className="h-2.5 w-2.5" />محدد
+                                </span>
+                              )}
+                              {!isBest && !isCheapest && !isActive && (
+                                <span className="text-[9px] text-slate-400">—</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* الفرق */}
+              <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <Info className="h-3.5 w-3.5 text-blue-500" />
+                  الفرق بين الأقل والأعلى فوائد:
+                  <strong className="text-rose-600">
+                    {(Math.max(...scenarios.map(s => s.totalInterest)) - Math.min(...scenarios.map(s => s.totalInterest))).toLocaleString()} ج.م
+                  </strong>
                 </div>
-                <div className="space-y-3">
-                  {calculations.downPaymentPercent < 15 ? (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 leading-relaxed">⚠️ <strong>مقدم منخفض ({calculations.downPaymentPercent}%):</strong> يُنصح برفع المقدم لتقليل الفوائد.</div>
-                  ) : (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 leading-relaxed">✓ <strong>مقدم ممتاز ({calculations.downPaymentPercent}%):</strong> يقلل التكلفة الإجمالية.</div>
-                  )}
-                  {months > 24 && <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 leading-relaxed">💡 المدة الطويلة ({months} شهر) تزيد الفوائد.</div>}
-                  {selectedScenario && bestScenario && selectedScenario === bestScenario.months && <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 leading-relaxed">🎯 <strong>اختيار مثالي!</strong> أقل فترة = أقل فوائد.</div>}
-                  {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
-                    <div className="p-3 bg-violet-50 border border-violet-200 rounded-xl text-xs text-violet-800 leading-relaxed">💎 لو اختارت <strong>{bestScenario.label}</strong> بدلاً من <strong>{selectedScenario} شهر</strong>، هتوفر <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong></div>
-                  )}
+                {selectedScenario && (
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedScenario(null)} className="text-[10px] text-violet-600 h-6 rounded-lg">
+                    إعادة تعيين
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* نصائح التمويل */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                  <Info className="h-4 w-4 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <h3 className="font-bold text-sm text-slate-800">نصائح ذكية</h3>
+              </div>
+              <div className="space-y-3">
+                {calculations.downPaymentPercent < 15 ? (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 leading-relaxed">⚠️ <strong>مقدم منخفض ({calculations.downPaymentPercent}%):</strong> يُنصح برفع المقدم لتقليل الفوائد.</div>
+                ) : (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 leading-relaxed">✓ <strong>مقدم ممتاز ({calculations.downPaymentPercent}%):</strong> يقلل التكلفة الإجمالية.</div>
+                )}
+                {months > 24 && <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 leading-relaxed">💡 المدة الطويلة ({months} شهر) تزيد الفوائد.</div>}
+                {selectedScenario && bestScenario && selectedScenario === bestScenario.months && <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 leading-relaxed">🎯 <strong>اختيار مثالي!</strong> أقل فترة = أقل فوائد.</div>}
+                {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
+                  <div className="p-3 bg-violet-50 border border-violet-200 rounded-xl text-xs text-violet-800 leading-relaxed">💎 لو اختارت <strong>{bestScenario.label}</strong> بدلاً من <strong>{selectedScenario} شهر</strong>، هتوفر <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong></div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

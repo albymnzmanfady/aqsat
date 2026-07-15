@@ -14,7 +14,6 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 export function initDatabase() {
-  // إنشاء الجداول الأساسية
   db.exec(`
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,8 +52,6 @@ export function initDatabase() {
       end_date TEXT NOT NULL,
       status TEXT DEFAULT 'active',
       guarantor_id INTEGER DEFAULT NULL,
-      guarantor_name TEXT DEFAULT '',
-      guarantor_phone TEXT DEFAULT '',
       created_at TEXT DEFAULT (date('now')),
       FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
@@ -130,7 +127,6 @@ export function initDatabase() {
     console.log("[db] 🔄 Upgrading contracts table: adding guarantor_id column...");
     try {
       db.exec("ALTER TABLE contracts ADD COLUMN guarantor_id INTEGER DEFAULT NULL");
-      // محاولة إضافة foreign key (لن يعمل في SQLite لكن لا مشكلة)
       console.log("[db] ✅ guarantor_id column added successfully");
     } catch (e: any) {
       console.log("[db] ⚠️ guarantor_id migration skipped:", e.message);
@@ -170,15 +166,15 @@ export function seedDatabase() {
   for (const p of products) insertProduct.run(...p);
 
   const insertContract = db.prepare(
-    `INSERT INTO contracts (customer_id, customer_name, customer_phone, product_type, product_id, total_price, down_payment, number_of_receipts, installment_amount, start_date, end_date, status, guarantor_id, guarantor_name, guarantor_phone, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO contracts (customer_id, customer_name, customer_phone, product_type, product_id, total_price, down_payment, number_of_receipts, installment_amount, start_date, end_date, status, guarantor_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const contracts = [
-    [1, "أحمد محمد", "01012345678", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-01-15", "2026-01-15", "active", 6, "علي أحمد", "01067890123", "2025-01-15"],
-    [2, "محمود علي", "01023456789", "غسالة", 2, 18000, 3000, 10, 1500, "2025-02-01", "2025-12-01", "active", 7, "حسن مصطفى", "01078901234", "2025-02-01"],
-    [3, "محمد إبراهيم", "01034567890", "تلفاز", 3, 12000, 2000, 8, 1250, "2025-02-15", "2025-10-15", "active", 8, "كريم عبد الرحمن", "01089012345", "2025-02-15"],
-    [4, "خالد حسن", "01045678901", "مكيف", 4, 32000, 7000, 15, 1667, "2025-03-01", "2026-06-01", "active", 6, "علي أحمد", "01067890123", "2025-03-01"],
-    [5, "سعيد عبد الله", "01056789012", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-03-01", "2026-03-01", "active", 7, "حسن مصطفى", "01078901234", "2025-03-01"],
+    [1, "أحمد محمد", "01012345678", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-01-15", "2026-01-15", "active", 6, "2025-01-15"],
+    [2, "محمود علي", "01023456789", "غسالة", 2, 18000, 3000, 10, 1500, "2025-02-01", "2025-12-01", "active", 7, "2025-02-01"],
+    [3, "محمد إبراهيم", "01034567890", "تلفاز", 3, 12000, 2000, 8, 1250, "2025-02-15", "2025-10-15", "active", 8, "2025-02-15"],
+    [4, "خالد حسن", "01045678901", "مكيف", 4, 32000, 7000, 15, 1667, "2025-03-01", "2026-06-01", "active", 6, "2025-03-01"],
+    [5, "سعيد عبد الله", "01056789012", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-03-01", "2026-03-01", "active", 7, "2025-03-01"],
   ];
   for (const c of contracts) insertContract.run(...c);
 

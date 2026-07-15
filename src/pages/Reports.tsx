@@ -35,7 +35,6 @@ const Reports = () => {
   const [expenses, setExpenses] = useState<ApiExpense[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // فلترة
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,7 +72,6 @@ const Reports = () => {
     return d;
   }, []);
 
-  // ===== تصفية البيانات حسب التاريخ إن وجد =====
   const filteredInstallments = useMemo(() => {
     if (!dateFrom && !dateTo) return installments;
     const from = dateFrom ? new Date(dateFrom) : null;
@@ -100,7 +98,6 @@ const Reports = () => {
     });
   }, [expenses, dateFrom, dateTo]);
 
-  // ===== حسابات الخزنة =====
   const treasury = useMemo(() => {
     const totalInstallmentsDue = filteredInstallments.reduce((s, i) => s + i.amount, 0);
     const totalCollected = filteredInstallments.filter((i) => i.is_paid).reduce((s, i) => s + i.amount, 0);
@@ -122,7 +119,6 @@ const Reports = () => {
     };
   }, [filteredInstallments, filteredExpenses, contracts]);
 
-  // ===== حسابات الأقساط =====
   const installmentStats = useMemo(() => {
     const overdue = filteredInstallments.filter(
       (i) => !i.is_paid && new Date(i.year, i.month - 1, i.day) < today
@@ -145,7 +141,6 @@ const Reports = () => {
     };
   }, [filteredInstallments, today]);
 
-  // ===== حسابات العقود =====
   const contractStats = useMemo(() => {
     const active = contracts.filter((c) => c.status === "active");
     const completed = contracts.filter((c) => c.status === "completed");
@@ -163,7 +158,6 @@ const Reports = () => {
     };
   }, [contracts]);
 
-  // ===== حسابات العملاء =====
   const customerStats = useMemo(() => {
     const realCustomers = customers.filter((c) => c.type === "customer");
     const guarantors = customers.filter((c) => c.type === "guarantor");
@@ -175,7 +169,6 @@ const Reports = () => {
     };
   }, [customers]);
 
-  // ===== حسابات المخزون =====
   const inventoryStats = useMemo(() => {
     const totalStockValue = products.reduce((s, p) => s + p.current_stock * p.cost_price, 0);
     const totalSellingValue = products.reduce((s, p) => s + p.current_stock * p.selling_price, 0);
@@ -194,7 +187,6 @@ const Reports = () => {
     };
   }, [products]);
 
-  // ===== بيانات الرسوم البيانية الشهرية =====
   const monthlyData = useMemo(() => {
     const currentYear = new Date().getFullYear();
     return MONTHS.map((name, idx) => {
@@ -214,14 +206,12 @@ const Reports = () => {
     });
   }, [filteredInstallments, filteredExpenses]);
 
-  // ===== بيانات توزيع الحالات =====
   const statusDistribution = useMemo(() => [
     { name: "مدفوع", value: installmentStats.paidCount, color: "#10B981" },
     { name: "باقي", value: installmentStats.pendingCount, color: "#F59E0B" },
     { name: "متأخر", value: installmentStats.overdueCount, color: "#EF4444" },
   ], [installmentStats]);
 
-  // ===== بيانات المصروفات حسب الفئات =====
   const expenseByCategory = useMemo(() => {
     const categoryMap: Record<string, number> = {};
     filteredExpenses.forEach((e) => {
@@ -233,7 +223,6 @@ const Reports = () => {
       .sort((a, b) => b.value - a.value);
   }, [filteredExpenses]);
 
-  // ===== بحث شامل =====
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return null;
     const q = searchQuery.toLowerCase();
@@ -350,7 +339,6 @@ const Reports = () => {
             </div>
           </div>
 
-          {/* لوحة نتائج البحث */}
           {searchResults && (
             <div className="mt-5 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between mb-3">
@@ -380,28 +368,43 @@ const Reports = () => {
         </CardContent>
       </Card>
 
-      {/* شريط التبويبات التفاعلي الأنيق */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-        <TabsList className="bg-white/80 dark:bg-[#0f131a] backdrop-blur-sm border border-slate-100 dark:border-slate-800 p-1 rounded-2xl mb-8 flex-nowrap overflow-x-auto">
-          <TabsTrigger value="treasury" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white gap-2 font-bold px-5">
-            <Wallet className="h-4 w-4" /> الخزنة والأرباح
-          </TabsTrigger>
-          <TabsTrigger value="installments" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white gap-2 font-bold px-5">
-            <CreditCard className="h-4 w-4" /> الأقساط والتحصيل
-          </TabsTrigger>
-          <TabsTrigger value="contracts" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-violet-600 data-[state=active]:text-white gap-2 font-bold px-5">
-            <FileText className="h-4 w-4" /> العقود والمبيعات
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white gap-2 font-bold px-5">
-            <Package className="h-4 w-4" /> المخزون والسلع
-          </TabsTrigger>
-          <TabsTrigger value="expenses" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-pink-500 data-[state=active]:text-white gap-2 font-bold px-5">
-            <Receipt className="h-4 w-4" /> المصروفات والنثريات
-          </TabsTrigger>
-        </TabsList>
+      {/* ===== شريط التبويبات المُنقّح ===== */}
+      <div className="mb-8">
+        <div className="bg-white/80 dark:bg-[#0f131a] backdrop-blur-sm border border-slate-100 dark:border-slate-800 rounded-2xl p-1.5 shadow-sm overflow-x-auto">
+          <div className="flex gap-1 min-w-max">
+            {[
+              { value: "treasury", label: "الخزنة والأرباح", icon: Wallet, color: "from-emerald-500 to-teal-500", iconColor: "text-emerald-500" },
+              { value: "installments", label: "الأقساط والتحصيل", icon: CreditCard, color: "from-amber-500 to-orange-500", iconColor: "text-amber-500" },
+              { value: "contracts", label: "العقود والمبيعات", icon: FileText, color: "from-indigo-500 to-violet-600", iconColor: "text-indigo-500" },
+              { value: "inventory", label: "المخزون والسلع", icon: Package, color: "from-orange-500 to-red-500", iconColor: "text-orange-500" },
+              { value: "expenses", label: "المصروفات والنثريات", icon: Receipt, color: "from-rose-500 to-pink-500", iconColor: "text-rose-500" },
+            ].map((tab) => {
+              const isActive = activeTab === tab.value;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "flex items-center justify-center gap-2 px-4 lg:px-5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-sm font-bold transition-all duration-200 whitespace-nowrap flex-shrink-0 active:scale-[0.97]",
+                    isActive
+                      ? `bg-gradient-to-r ${tab.color} text-white shadow-md`
+                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200"
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4", isActive ? "text-white" : tab.iconColor)} />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
-        {/* ==================== 1. الخزنة والأرباح ==================== */}
-        <TabsContent value="treasury" className="mt-0 space-y-6">
+      {/* ==================== 1. الخزنة والأرباح ==================== */}
+      {activeTab === "treasury" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm hover-lift relative overflow-hidden">
               <CardContent className="p-5">
@@ -470,7 +473,6 @@ const Reports = () => {
             </Card>
           </div>
 
-          {/* البانر المالي الشامل */}
           <Card className="border-0 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white overflow-hidden relative shadow-md">
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-xl animate-pulse" />
@@ -507,7 +509,6 @@ const Reports = () => {
             </CardContent>
           </Card>
 
-          {/* الرسوم البيانية للخزنة */}
           <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden">
             <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -539,10 +540,12 @@ const Reports = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* ==================== 2. الأقساط والتحصيل ==================== */}
-        <TabsContent value="installments" className="mt-0 space-y-6">
+      {/* ==================== 2. الأقساط والتحصيل ==================== */}
+      {activeTab === "installments" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm">
               <CardContent className="p-5">
@@ -606,7 +609,6 @@ const Reports = () => {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            {/* حالة التحصيل تفصيلية */}
             <Card className="border-0 bg-white/80 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-5">
@@ -635,7 +637,6 @@ const Reports = () => {
               </CardContent>
             </Card>
 
-            {/* تقدم التحصيل بالبرنامج */}
             <Card className="border-0 bg-white/80 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-5">
@@ -681,10 +682,12 @@ const Reports = () => {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* ==================== 3. العقود والمبيعات ==================== */}
-        <TabsContent value="contracts" className="mt-0 space-y-6">
+      {/* ==================== 3. العقود والمبيعات ==================== */}
+      {activeTab === "contracts" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm">
               <CardContent className="p-5">
@@ -772,10 +775,12 @@ const Reports = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* ==================== 4. المخزون والسلع ==================== */}
-        <TabsContent value="inventory" className="mt-0 space-y-6">
+      {/* ==================== 4. المخزون والسلع ==================== */}
+      {activeTab === "inventory" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm">
               <CardContent className="p-5">
@@ -834,7 +839,6 @@ const Reports = () => {
             </Card>
           </div>
 
-          {/* التنبيهات الذكية للمخازن */}
           {(inventoryStats.lowStock.length > 0 || inventoryStats.outOfStock.length > 0) && (
             <Card className="border-0 bg-white/80 dark:bg-[#0f131a] backdrop-blur-sm overflow-hidden">
               <CardContent className="p-5">
@@ -858,10 +862,12 @@ const Reports = () => {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        {/* ==================== 5. المصروفات والنثريات ==================== */}
-        <TabsContent value="expenses" className="mt-0 space-y-6">
+      {/* ==================== 5. المصروفات والنثريات ==================== */}
+      {activeTab === "expenses" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="border-0 bg-white/70 dark:bg-[#0f131a] backdrop-blur-sm">
               <CardContent className="p-5">
@@ -924,8 +930,8 @@ const Reports = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </Layout>
   );
 };

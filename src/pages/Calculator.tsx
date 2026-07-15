@@ -175,33 +175,68 @@ const CalculatorPage = () => {
         </div>
       </div>
 
-      {/* بطاقات الملخص العلوية */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white relative overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/10 rounded-full" />
-          <p className="text-[11px] text-violet-100 font-medium mb-1">القسط الشهري</p>
-          <p className="text-2xl font-extrabold">{calculations.monthlyInstallment.toLocaleString()}</p>
-          <p className="text-[10px] text-violet-200">ج.م / شهرياً</p>
+      {/* ===== الكارت البنفسجي الرئيسي - كامل العرض ===== */}
+      <Card className="border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative shadow-lg shadow-violet-500/20 mb-6">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-16 -right-16 w-56 h-56 bg-white/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-indigo-400/15 rounded-full blur-2xl" />
         </div>
-        <div className="p-4 rounded-2xl bg-white/80 border border-slate-100">
-          <p className="text-[11px] text-slate-500 font-medium mb-1">مبلغ التمويل</p>
-          <p className="text-2xl font-extrabold text-slate-800">{calculations.principal.toLocaleString()}</p>
-          <p className="text-[10px] text-slate-400">بعد خصم المقدم</p>
-        </div>
-        <div className="p-4 rounded-2xl bg-white/80 border border-slate-100">
-          <p className="text-[11px] text-slate-500 font-medium mb-1">إجمالي الفوائد</p>
-          <p className="text-2xl font-extrabold text-rose-600">+{calculations.totalInterest.toLocaleString()}</p>
-          <p className="text-[10px] text-slate-400">{interestRate}% سنوياً × {months} شهر</p>
-        </div>
-        <div className="p-4 rounded-2xl bg-white/80 border border-slate-100">
-          <p className="text-[11px] text-slate-500 font-medium mb-1">الإجمالي الكلي للسداد</p>
-          <p className="text-2xl font-extrabold text-emerald-600">{calculations.totalPayback.toLocaleString()}</p>
-          <p className="text-[10px] text-slate-400">تمويل + فوائد</p>
-        </div>
-      </div>
+        <CardContent className="p-6 sm:p-8 relative z-10">
+          {/* الجزء العلوي: القسط الشهري + أزرار */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 mb-6">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20 flex-shrink-0">
+                <Wallet className="h-8 w-8 sm:h-10 sm:w-10" />
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm text-purple-100 font-semibold mb-1">القسط الشهري المقدر</p>
+                <p className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-none">
+                  {calculations.monthlyInstallment.toLocaleString()}
+                </p>
+                <p className="text-sm text-purple-200 mt-1.5 font-medium">
+                  ج.م / شهرياً × {months} شهر
+                </p>
+              </div>
+            </div>
 
+            <div className="flex gap-2.5 sm:flex-shrink-0">
+              <Button onClick={handlePrintQuote} variant="secondary" className="rounded-xl h-11 bg-white/95 hover:bg-white text-slate-800 shadow-md gap-2 font-bold text-sm active:scale-[0.97]">
+                <Printer className="h-4 w-4" />طباعة العرض
+              </Button>
+              <Button onClick={handleConvertToContract} className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border-0 gap-2 font-bold text-sm active:scale-[0.97]">
+                <ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد
+              </Button>
+            </div>
+          </div>
+
+          {/* الخط الفاصل */}
+          <div className="h-px bg-white/15 mb-6" />
+
+          {/* البيانات المالية الأربعة */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3.5 border border-white/10 text-center">
+              <p className="text-[10px] sm:text-[11px] text-purple-200 mb-1">سعر المنتج</p>
+              <p className="font-extrabold text-sm sm:text-base">{productPrice.toLocaleString()} <span className="text-[10px] font-medium text-purple-200">ج.م</span></p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3.5 border border-white/10 text-center">
+              <p className="text-[10px] sm:text-[11px] text-purple-200 mb-1">المقدم ({calculations.downPaymentPercent}%)</p>
+              <p className="font-extrabold text-sm sm:text-base">{downPayment.toLocaleString()} <span className="text-[10px] font-medium text-purple-200">ج.م</span></p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3.5 border border-white/10 text-center">
+              <p className="text-[10px] sm:text-[11px] text-purple-200 mb-1">مبلغ التمويل</p>
+              <p className="font-extrabold text-sm sm:text-base">{calculations.principal.toLocaleString()} <span className="text-[10px] font-medium text-purple-200">ج.م</span></p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3.5 border border-white/10 text-center">
+              <p className="text-[10px] sm:text-[11px] text-purple-200 mb-1">الإجمالي الكلي</p>
+              <p className="font-extrabold text-sm sm:text-base text-amber-300">{calculations.totalPayback.toLocaleString()} <span className="text-[10px] font-medium text-amber-200">ج.م</span></p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== المحتوى الرئيسي: عمودين ===== */}
       <div className="grid lg:grid-cols-12 gap-6">
-        {/* العمود الأيسر */}
+        {/* العمود الأيسر: المحددات + السيناريوهات + جدول */}
         <div className="lg:col-span-7 space-y-5">
           {/* محددات التمويل */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
@@ -305,6 +340,7 @@ const CalculatorPage = () => {
             </CardContent>
           </Card>
 
+          {/* نصيحة الاستشاري */}
           {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
             <div className="p-3 bg-violet-50 border border-violet-200 rounded-2xl flex items-start gap-2 text-xs text-violet-800">
               <Sparkles className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
@@ -334,43 +370,9 @@ const CalculatorPage = () => {
           </Card>
         </div>
 
-        {/* العمود الأيمن */}
+        {/* العمود الأيمن: نصائح + مقارنة سريعة */}
         <div className="lg:col-span-5 space-y-5">
-          {/* الكارت البنفسجي */}
-          <Card className="border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative shadow-lg shadow-violet-500/20">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-xl" />
-              <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-400/20 rounded-full blur-xl" />
-            </div>
-            <CardContent className="p-6 relative z-10 space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-purple-100 font-semibold mb-1">القسط الشهري المقدر</p>
-                  <p className="text-4xl font-extrabold tracking-tight leading-none">{calculations.monthlyInstallment.toLocaleString()}</p>
-                  <p className="text-sm text-purple-200 mt-1 font-medium">ج.م / شهرياً × {months} شهر</p>
-                </div>
-                <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20"><Wallet className="h-8 w-8" /></div>
-              </div>
-              <div className="h-px bg-white/20" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">سعر المنتج</p><p className="font-bold text-sm">{productPrice.toLocaleString()} ج.م</p></div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">المقدم ({calculations.downPaymentPercent}%)</p><p className="font-bold text-sm">{downPayment.toLocaleString()} ج.م</p></div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">مبلغ التمويل</p><p className="font-bold text-sm">{calculations.principal.toLocaleString()} ج.م</p></div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">الفوائد ({interestRate}%)</p><p className="font-bold text-sm text-amber-300">+{calculations.totalInterest.toLocaleString()} ج.م</p></div>
-              </div>
-              <div className="h-px bg-white/20" />
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/15 text-center">
-                <p className="text-xs text-purple-200 mb-1">إجمالي المبلغ المطلوب سداده</p>
-                <p className="text-2xl font-extrabold">{calculations.totalPayback.toLocaleString()} <span className="text-sm font-bold text-purple-200">ج.م</span></p>
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={handlePrintQuote} variant="secondary" className="rounded-xl h-12 bg-white hover:bg-slate-50 text-slate-800 shadow-md flex-1 gap-2 font-bold text-sm"><Printer className="h-4 w-4" />طباعة العرض</Button>
-                <Button onClick={handleConvertToContract} className="rounded-xl h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border-0 flex-1 gap-2 font-bold text-sm"><ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* نصائح التمويل */}
+          {/* نصائح التمويل الذكية */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center gap-2 mb-1"><Info className="h-4 w-4 text-blue-500" /><h3 className="font-bold text-xs text-slate-700">نصائح التمويل الذكية</h3></div>

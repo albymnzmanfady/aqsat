@@ -37,6 +37,7 @@ const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [settings, setSettings] = useState<GeneralSettings>(DEFAULT_SETTINGS);
   const [settingsLoading, setSettingsLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   // WhatsApp config
   const [config, setConfig] = useState(getWhatsAppConfig());
@@ -92,7 +93,28 @@ const Settings = () => {
 
   const removeLogo = () => { setSettings({ ...settings, logoUrl: "" }); if (fileInputRef.current) fileInputRef.current.value = ""; };
 
-  // التعامل مع استيراد النسخة الاحتياطية
+  // === تصدير النسخة الاحتياطية من Supabase ===
+  const handleExportBackup = async () => {
+    setExporting(true);
+    try {
+      const data = await api.backup.exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `aqsat-backup-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showSuccess("✅ تم تصدير النسخة الاحتياطية بنجاح");
+    } catch (e: any) {
+      showError("❌ خطأ في التصدير: " + e.message);
+    }
+    setExporting(false);
+  };
+
+  // === استيراد النسخة الاحتياطية ===
   const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -262,6 +284,7 @@ const Settings = () => {
                 </div>
                 <div>
                   <CardTitle className="text-lg text-slate-800">النسخ الاحتياطي واستيراد البيانات</CardTitle>
+                  <p className="text-xs text-slate-500 mt-1">البيانات محفوظة في Supabase Cloud</p>
                 </div>
               </div>
             </CardHeader>
@@ -272,7 +295,7 @@ const Settings = () => {
                   تنبيه أمان مالي هام ⚠️
                 </h4>
                 <p className="text-xs text-indigo-700 leading-relaxed">
-                  يرجى الاحتفاظ بنسخة احتياطية من بياناتك بشكل دوري. تصدير البيانات سينتج ملفاً بصيغة JSON يحتوي على كافة الحسابات والعملاء والعقود والمصروفات والمستخدمين، ويمكنك استيراده في أي وقت لاستعادة بياناتك بالكامل في حال حدوث أي طارئ.
+                  جميع البيانات محفوظة في قاعدة بيانات Supabase السحابية. يمكنك تصدير نسخة احتياطية كملف JSON للاحتفاظ بها على جهازك، أو استيراد نسخة سابقة لاستعادة البيانات بالكامل.
                 </p>
               </div>
 
@@ -284,14 +307,16 @@ const Settings = () => {
                   </div>
                   <div className="space-y-1">
                     <h5 className="font-bold text-sm text-slate-800">تصدير النسخة الاحتياطية</h5>
-                    <p className="text-xs text-slate-400">تحميل نسخة كاملة من كافة جداول النظام وحفظها بجهازك</p>
+                    <p className="text-xs text-slate-400">تحميل نسخة كاملة من جميع جداول Supabase وحفظها بجهازك</p>
                   </div>
-                  <a href={api.backup.exportUrl()} download="aqsat-backup.json" className="block">
-                    <Button className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 gap-2 active:scale-95 transition-transform">
-                      <Download className="h-4 w-4" />
-                      تصدير وحفظ البيانات (.json)
-                    </Button>
-                  </a>
+                  <Button
+                    onClick={handleExportBackup}
+                    disabled={exporting}
+                    className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 gap-2 active:scale-95 transition-transform"
+                  >
+                    {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    {exporting ? "جاري التصدير..." : "تصدير وحفظ البيانات (.json)"}
+                  </Button>
                 </div>
 
                 {/* Import */}
@@ -301,7 +326,7 @@ const Settings = () => {
                   </div>
                   <div className="space-y-1">
                     <h5 className="font-bold text-sm text-slate-800">استيراد النسخة الاحتياطية</h5>
-                    <p className="text-xs text-slate-400">استعادة البيانات من ملف نسخة احتياطية تم تصديره سابقاً</p>
+                    <p className="text-xs text-slate-400">استعادة البيانات من ملف نسخة احتياطية تم تصديره سابقاً إلى Supabase</p>
                   </div>
                   <div className="relative">
                     <input 

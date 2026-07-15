@@ -3,19 +3,20 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import PrintDialog from "@/components/PrintDialog";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { showSuccess } from "@/utils/toast";
 import {
   Calculator, Sparkles, DollarSign, Calendar, Percent, Printer, FileText,
-  ArrowRight, Info, GitCompareArrows, CheckCircle2, Circle, Zap,
-  TrendingDown, TrendingUp, ArrowLeft, Clock, Wallet,
+  ArrowRight, Info, GitCompareArrows, CheckCircle2, Zap,
+  TrendingDown, Wallet, Clock,
 } from "lucide-react";
 
 interface Scenario {
@@ -32,16 +33,11 @@ const CalculatorPage = () => {
   const navigate = useNavigate();
   const { settings } = useAppSettings();
 
-  // Simulation inputs
   const [productPrice, setProductPrice] = useState<number>(30000);
   const [downPayment, setDownPayment] = useState<number>(5000);
   const [interestRate, setInterestRate] = useState<number>(15);
   const [months, setMonths] = useState<number>(12);
-
-  // Scenario selection
   const [selectedScenario, setSelectedScenario] = useState<number | null>(null);
-
-  // Print quote state
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
 
@@ -61,14 +57,17 @@ const CalculatorPage = () => {
       schedule.push({
         number: i,
         amount: monthlyInstallment,
-        date: dueDate.toLocaleDateString("ar-EG", { day: 'numeric', month: 'numeric', year: 'numeric' })
+        principal: Math.round(principal / months),
+        interest: Math.round(totalInterest / months),
+        balance: Math.round(principal - (principal / months) * i + (totalInterest - totalInterest / months * i)),
+        date: dueDate.toLocaleDateString("ar-EG", { day: 'numeric', month: 'short' })
       });
     }
 
     return { principal, totalInterest, totalPayback, monthlyInstallment, downPaymentPercent, schedule };
   }, [productPrice, downPayment, interestRate, months]);
 
-  // ===== Scenarios Comparison =====
+  // ===== Scenarios =====
   const scenarios = useMemo<Scenario[]>(() => {
     const principal = Math.max(0, productPrice - downPayment);
     const options = [
@@ -76,486 +75,473 @@ const CalculatorPage = () => {
       { months: 18, label: "18 شهر", tag: "خيار وسط" },
       { months: 24, label: "24 شهر", tag: "أشهر راحة" },
     ];
-
     return options.map((opt) => {
       const totalInterest = Math.round(principal * (interestRate / 100) * (opt.months / 12));
       const totalPayback = principal + totalInterest;
       const monthly = opt.months > 0 ? Math.ceil(totalPayback / opt.months) : 0;
-      return {
-        months: opt.months,
-        label: opt.label,
-        monthly,
-        totalInterest,
-        totalPayback,
-        principal,
-        tag: opt.tag,
-      };
+      return { months: opt.months, label: opt.label, monthly, totalInterest, totalPayback, principal, tag: opt.tag };
     });
   }, [productPrice, downPayment, interestRate]);
 
-  // Best scenario logic
   const bestScenario = useMemo(() => {
-    if (scenarios.length === 0) return null;
+    if (!scenarios.length) return null;
     return scenarios.reduce((best, s) => s.totalInterest < best.totalInterest ? s : best, scenarios[0]);
   }, [scenarios]);
 
   const cheapestScenario = useMemo(() => {
-    if (scenarios.length === 0) return null;
+    if (!scenarios.length) return null;
     return scenarios.reduce((cheapest, s) => s.monthly < cheapest.monthly ? s : cheapest, scenarios[0]);
   }, [scenarios]);
 
-  // Apply scenario to calculator
   const applyScenario = (scenario: Scenario) => {
     setMonths(scenario.months);
     setSelectedScenario(scenario.months);
   };
 
-  // Print quote handler
+  // ===== Print =====
   const handlePrintQuote = () => {
     const rows = calculations.schedule
       .map((inst) => `
       <tr>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:600;">القسط ${inst.number}</td>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center;">${inst.date}</td>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; color:#4f46e5;">${inst.amount.toLocaleString()} ج.م</td>
-      </tr>`
-      ).join("");
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;">${inst.number}</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;">${inst.date}</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;color:#4f46e5;font-weight:700;">${inst.amount.toLocaleString()} ج.م</td>
+      </tr>`).join("");
 
-    // Scenario comparison rows for print
     const scenarioRows = scenarios.map((s) => `
       <tr>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:600;">${s.label}</td>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center;">${s.monthly.toLocaleString()} ج.م</td>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center; color:#ef4444;">${s.totalInterest.toLocaleString()} ج.م</td>
-        <td style="padding:10px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700;">${s.totalPayback.toLocaleString()} ج.م</td>
-      </tr>`
-    ).join("");
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;">${s.label}</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;">${s.monthly.toLocaleString()} ج.م</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;color:#ef4444;">${s.totalInterest.toLocaleString()} ج.م</td>
+        <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:700;">${s.totalPayback.toLocaleString()} ج.م</td>
+      </tr>`).join("");
 
     const html = `
       <div style="font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;max-width:750px;margin:0 auto;padding:20px;">
-        <div style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #6366f1;">
-          <h1 style="font-size:24px;font-weight:bold;color:#1e293b;margin:0 0 5px;">${settings.companyName || settings.appName}</h1>
-          <h2 style="font-size:18px;font-weight:600;color:#4f46e5;margin:0;">عرض سعر ومحاكاة تقسيط ذكية</h2>
-          <p style="font-size:12px;color:#64748b;margin-top:5px;">هذا المستند هو محاكاة تقريبية صالحة لمدة 15 يوماً من تاريخ الطباعة</p>
+        <div style="text-align:center;margin-bottom:25px;padding-bottom:15px;border-bottom:3px solid #6366f1;">
+          <h1 style="font-size:22px;font-weight:bold;margin:0 0 4px;">${settings.companyName || settings.appName}</h1>
+          <h2 style="font-size:16px;font-weight:600;color:#4f46e5;margin:0;">عرض سعر ومحاكاة تقسيط</h2>
+          <p style="font-size:11px;color:#64748b;margin-top:4px;">صالح لمدة 15 يوماً من تاريخ الطباعة</p>
         </div>
-
-        <!-- Scenario Comparison -->
-        <div style="margin-bottom:25px;">
-          <h3 style="font-size:14px;font-weight:bold;color:#4f46e5;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;">مقارنة سيناريوهات التمويل</h3>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;">
-            <thead>
-              <tr style="background:#4f46e5;color:white;">
-                <th style="padding:10px;text-align:center;">المدة</th>
-                <th style="padding:10px;text-align:center;">القسط الشهري</th>
-                <th style="padding:10px;text-align:center;">إجمالي الفوائد</th>
-                <th style="padding:10px;text-align:center;">الإجمالي</th>
-              </tr>
-            </thead>
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:13px;font-weight:bold;color:#4f46e5;margin-bottom:10px;">مقارنة السيناريوهات</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #e2e8f0;">
+            <thead><tr style="background:#4f46e5;color:white;"><th style="padding:8px;text-align:center;">المدة</th><th style="padding:8px;text-align:center;">القسط</th><th style="padding:8px;text-align:center;">الفوائد</th><th style="padding:8px;text-align:center;">الإجمالي</th></tr></thead>
             <tbody>${scenarioRows}</tbody>
           </table>
         </div>
-
-        <div style="margin-bottom:25px;">
-          <h3 style="font-size:14px;font-weight:bold;color:#4f46e5;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;">ملخص العرض المالي (${months} شهر)</h3>
-          <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #e2e8f0;">
-            <tr>
-              <td style="padding:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;width:40%;">سعر السلعة الأصلي</td>
-              <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;">${productPrice.toLocaleString()} ج.م</td>
-            </tr>
-            <tr>
-              <td style="padding:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">الدفعة المقدمة</td>
-              <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;color:#10b981;">${downPayment.toLocaleString()} ج.م (${calculations.downPaymentPercent}%)</td>
-            </tr>
-            <tr>
-              <td style="padding:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">مبلغ التمويل</td>
-              <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;">${calculations.principal.toLocaleString()} ج.م</td>
-            </tr>
-            <tr>
-              <td style="padding:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">نسبة الفائدة السنوية</td>
-              <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;color:#f59e0b;">${interestRate}%</td>
-            </tr>
-            <tr>
-              <td style="padding:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">إجمالي الفوائد</td>
-              <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;color:#ef4444;">${calculations.totalInterest.toLocaleString()} ج.م</td>
-            </tr>
-            <tr style="background:#f5f3ff;">
-              <td style="padding:12px;border:1px solid #ddd6fe;color:#4f46e5;font-weight:bold;">القسط الشهري</td>
-              <td style="padding:12px;border:1px solid #ddd6fe;font-weight:extrabold;color:#6366f1;font-size:16px;">${calculations.monthlyInstallment.toLocaleString()} ج.م</td>
-            </tr>
-            <tr style="background:#f0fdf4;">
-              <td style="padding:12px;border:1px solid #bbf7d0;color:#16a34a;font-weight:bold;">إجمالي المبلغ المراد سداده</td>
-              <td style="padding:12px;border:1px solid #bbf7d0;font-weight:bold;color:#15803d;font-size:16px;">${calculations.totalPayback.toLocaleString()} ج.م</td>
-            </tr>
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:13px;font-weight:bold;color:#4f46e5;margin-bottom:10px;">العرض المالي (${months} شهر)</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;">
+            <tr><td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;width:40%;">سعر السلعة</td><td style="padding:8px;border:1px solid #e2e8f0;font-weight:bold;">${productPrice.toLocaleString()} ج.م</td></tr>
+            <tr><td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">المقدم</td><td style="padding:8px;border:1px solid #e2e8f0;font-weight:bold;color:#10b981;">${downPayment.toLocaleString()} ج.م (${calculations.downPaymentPercent}%)</td></tr>
+            <tr><td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">مبلغ التمويل</td><td style="padding:8px;border:1px solid #e2e8f0;font-weight:bold;">${calculations.principal.toLocaleString()} ج.م</td></tr>
+            <tr><td style="padding:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;">الفائدة (${interestRate}%)</td><td style="padding:8px;border:1px solid #e2e8f0;font-weight:bold;color:#ef4444;">${calculations.totalInterest.toLocaleString()} ج.م</td></tr>
+            <tr style="background:#f5f3ff;"><td style="padding:10px;border:1px solid #ddd6fe;font-weight:bold;">القسط الشهري</td><td style="padding:10px;border:1px solid #ddd6fe;font-weight:extrabold;color:#6366f1;font-size:15px;">${calculations.monthlyInstallment.toLocaleString()} ج.م</td></tr>
+            <tr style="background:#f0fdf4;"><td style="padding:10px;border:1px solid #bbf7d0;font-weight:bold;color:#16a34a;">الإجمالي</td><td style="padding:10px;border:1px solid #bbf7d0;font-weight:bold;color:#15803d;font-size:15px;">${calculations.totalPayback.toLocaleString()} ج.م</td></tr>
           </table>
         </div>
-
-        <div style="margin-bottom:25px;">
-          <h3 style="font-size:14px;font-weight:bold;color:#4f46e5;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;">جدول الأقساط المتوقعة</h3>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;">
-            <thead>
-              <tr style="background:#4f46e5;color:white;">
-                <th style="padding:10px;text-align:center;">رقم الدفعة</th>
-                <th style="padding:10px;text-align:center;">تاريخ الاستحقاق</th>
-                <th style="padding:10px;text-align:center;">قيمة الدفعة</th>
-              </tr>
-            </thead>
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:13px;font-weight:bold;color:#4f46e5;margin-bottom:10px;">جدول الأقساط</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #e2e8f0;">
+            <thead><tr style="background:#4f46e5;color:white;"><th style="padding:8px;text-align:center;">#</th><th style="padding:8px;text-align:center;">التاريخ</th><th style="padding:8px;text-align:center;">المبلغ</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>
-
-        <div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:40px;border-top:1px solid #e2e8f0;padding-top:15px;">
-          المحاكاة ذكية وتم إنشاؤها عبر نظام ${settings.appName}. تواصل معنا في حال الاستفسار: ${settings.companyPhone || "—"}
+        <div style="font-size:9px;color:#94a3b8;text-align:center;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:10px;">
+          نظام ${settings.appName} ${settings.companyPhone ? `| ${settings.companyPhone}` : ""}
         </div>
-      </div>
-    `;
-
+      </div>`;
     setPrintHtml(html);
     setPrintOpen(true);
   };
 
   const handleConvertToContract = () => {
-    showSuccess("🎯 تم تجهيز محاكاة التمويل وتحويلها للعقد!");
-    navigate("/contracts", {
-      state: { fromCalculator: true, price: productPrice, downPayment, months }
-    });
+    showSuccess("🎯 تم تجهيز المحاكاة!");
+    navigate("/contracts", { state: { fromCalculator: true, price: productPrice, downPayment, months } });
   };
 
   return (
     <Layout>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 page-enter-animation">
-        <div className="relative">
-          <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-violet-400 to-purple-500 rounded-full opacity-20 blur-xl" />
-          <div className="relative flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30">
-              <Calculator className="h-7 w-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">حاسبة الأقساط الذكية</h1>
-              <p className="text-slate-500 mt-1">محاكاة الخطط التمويلية ومقارنة السيناريوهات للعملاء</p>
-            </div>
-          </div>
+      {/* ===== Header ===== */}
+      <div className="flex items-center gap-4 mb-6 page-enter-animation">
+        <div className="w-14 h-14 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30">
+          <Calculator className="h-7 w-7 text-white" />
+        </div>
+        <div className="flex-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-800">حاسبة الأقساط الذكية</h1>
+          <p className="text-slate-500 text-sm">محاكاة ومقارنة خطط التمويل للعملاء</p>
+        </div>
+        <div className="hidden sm:flex gap-2">
+          <Button onClick={handlePrintQuote} variant="outline" className="rounded-xl h-10 gap-2 text-sm">
+            <Printer className="h-4 w-4" />طباعة العرض
+          </Button>
+          <Button onClick={handleConvertToContract} className="rounded-xl h-10 gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-sm">
+            <ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد
+          </Button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 page-enter-animation">
-        {/* Sliders and Controls */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm">
-            <CardHeader className="border-b border-slate-100/80">
-              <CardTitle className="text-md font-bold text-slate-800 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-violet-500" />
-                محددات التمويل والجدولة
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-8">
-              {/* Product Price */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-violet-500" />
-                    سعر المنتج الإجمالي
-                  </Label>
-                  <span className="font-extrabold text-lg text-violet-600">{productPrice.toLocaleString()} ج.م</span>
-                </div>
-                <Slider
-                  min={1000}
-                  max={200000}
-                  step={500}
-                  value={[productPrice]}
-                  onValueChange={(val) => {
-                    setProductPrice(val[0]);
-                    if (downPayment > val[0]) setDownPayment(val[0]);
-                  }}
-                  className="[&>span:first-child]:bg-violet-100 [&>span_span]:bg-violet-600"
-                />
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>1,000 ج.م</span>
-                  <span>200,000 ج.م</span>
-                </div>
+      {/* ===== بطاقات الملخص العلوية ===== */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white relative overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/10 rounded-full" />
+          <p className="text-[11px] text-violet-100 font-medium mb-1">القسط الشهري</p>
+          <p className="text-2xl font-extrabold">{calculations.monthlyInstallment.toLocaleString()}</p>
+          <p className="text-[10px] text-violet-200">ج.م / شهرياً</p>
+        </div>
+        <div className="p-4 rounded-2xl bg-white/80 border border-slate-100">
+          <p className="text-[11px] text-slate-500 font-medium mb-1">مبلغ التمويل</p>
+          <p className="text-2xl font-extrabold text-slate-800">{calculations.principal.toLocaleString()}</p>
+          <p className="text-[10px] text-slate-400">بعد خصم المقدم</p>
+        </div>
+        <div className="p-4 rounded-2xl bg-white/80 border border-slate-100">
+          <p className="text-[11px] text-slate-500 font-medium mb-1">إجمالي الفوائد</p>
+          <p className="text-2xl font-extrabold text-rose-600">+{calculations.totalInterest.toLocaleString()}</p>
+          <p className="text-[10px] text-slate-400">{interestRate}% سنوياً × {months} شهر</p>
+        </div>
+        <div className="p-4 rounded-2xl bg-white/80 border border-slate-100">
+          <p className="text-[11px] text-slate-500 font-medium mb-1">الإجمالي الكلي للسداد</p>
+          <p className="text-2xl font-extrabold text-emerald-600">{calculations.totalPayback.toLocaleString()}</p>
+          <p className="text-[10px] text-slate-400">تمويل + فوائد</p>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-12 gap-6">
+        {/* ===== العمود الأيسر: المحددات + السيناريوهات ===== */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* محددات التمويل Compact */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-5">
+                <Sparkles className="h-4 w-4 text-violet-500" />
+                <h3 className="font-bold text-sm text-slate-800">محددات التمويل</h3>
               </div>
 
-              {/* Down Payment */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-emerald-500" />
-                    الدفعة المقدمة (المقدم)
-                  </Label>
-                  <span className="font-extrabold text-lg text-emerald-600">
-                    {downPayment.toLocaleString()} ج.م ({calculations.downPaymentPercent}%)
-                  </span>
+              {/* الشبكة: 4 محددات في صفوف مزدوجة */}
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
+                {/* سعر المنتج */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <DollarSign className="h-3.5 w-3.5 text-violet-500" />
+                      سعر المنتج
+                    </Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={productPrice}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (v >= 0) {
+                            setProductPrice(v);
+                            if (downPayment > v) setDownPayment(v);
+                          }
+                        }}
+                        className="w-28 h-8 text-center text-sm font-bold rounded-lg border-violet-200 focus-visible:ring-violet-500"
+                      />
+                      <span className="text-xs text-slate-400">ج.م</span>
+                    </div>
+                  </div>
+                  <Slider
+                    min={1000} max={200000} step={500}
+                    value={[productPrice]}
+                    onValueChange={(val) => { setProductPrice(val[0]); if (downPayment > val[0]) setDownPayment(val[0]); }}
+                    className="[&>span:first-child]:bg-violet-100 [&>span_span]:bg-violet-600"
+                  />
                 </div>
-                <Slider
-                  min={0}
-                  max={productPrice}
-                  step={100}
-                  value={[downPayment]}
-                  onValueChange={(val) => setDownPayment(val[0])}
-                  className="[&>span:first-child]:bg-emerald-100 [&>span_span]:bg-emerald-500"
-                />
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>بدون مقدم</span>
-                  <span>سعر المنتج بالكامل</span>
-                </div>
-              </div>
 
-              {/* Interest Rate */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <Percent className="h-4 w-4 text-amber-500" />
-                    نسبة الفائدة السنوية المحتسبة
-                  </Label>
-                  <span className="font-extrabold text-lg text-amber-600">{interestRate}% سنوياً</span>
+                {/* المقدم */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+                      الدفعة المقدمة
+                    </Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={downPayment}
+                        onChange={(e) => { const v = Number(e.target.value); if (v >= 0 && v <= productPrice) setDownPayment(v); }}
+                        className="w-28 h-8 text-center text-sm font-bold rounded-lg border-emerald-200 focus-visible:ring-emerald-500"
+                      />
+                      <span className="text-[10px] text-slate-400 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">{calculations.downPaymentPercent}%</span>
+                    </div>
+                  </div>
+                  <Slider
+                    min={0} max={productPrice} step={100}
+                    value={[downPayment]}
+                    onValueChange={(val) => setDownPayment(val[0])}
+                    className="[&>span:first-child]:bg-emerald-100 [&>span_span]:bg-emerald-500"
+                  />
                 </div>
-                <Slider
-                  min={0}
-                  max={50}
-                  step={0.5}
-                  value={[interestRate]}
-                  onValueChange={(val) => setInterestRate(val[0])}
-                  className="[&>span:first-child]:bg-amber-100 [&>span_span]:bg-amber-500"
-                />
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>0% (بدون فوائد)</span>
-                  <span>50%</span>
-                </div>
-              </div>
 
-              {/* Number of Months */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-blue-500" />
-                    فترة السداد والتقسيط
-                  </Label>
-                  <span className="font-extrabold text-lg text-blue-600">{months} شهراً</span>
+                {/* الفائدة */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <Percent className="h-3.5 w-3.5 text-amber-500" />
+                      نسبة الفائدة السنوية
+                    </Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={interestRate}
+                        onChange={(e) => { const v = Number(e.target.value); if (v >= 0 && v <= 100) setInterestRate(v); }}
+                        className="w-20 h-8 text-center text-sm font-bold rounded-lg border-amber-200 focus-visible:ring-amber-500"
+                        step="0.5"
+                      />
+                      <span className="text-xs text-slate-400">% سنوياً</span>
+                    </div>
+                  </div>
+                  <Slider
+                    min={0} max={50} step={0.5}
+                    value={[interestRate]}
+                    onValueChange={(val) => setInterestRate(val[0])}
+                    className="[&>span:first-child]:bg-amber-100 [&>span_span]:bg-amber-500"
+                  />
                 </div>
-                <Slider
-                  min={3}
-                  max={48}
-                  step={1}
-                  value={[months]}
-                  onValueChange={(val) => { setMonths(val[0]); setSelectedScenario(null); }}
-                  className="[&>span:first-child]:bg-blue-100 [&>span_span]:bg-blue-600"
-                />
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>3 أشهر</span>
-                  <span>48 شهراً (4 سنوات)</span>
+
+                {/* المدة */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                      فترة السداد
+                    </Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={months}
+                        onChange={(e) => { const v = Number(e.target.value); if (v >= 1 && v <= 60) { setMonths(v); setSelectedScenario(null); } }}
+                        className="w-20 h-8 text-center text-sm font-bold rounded-lg border-blue-200 focus-visible:ring-blue-500"
+                      />
+                      <span className="text-xs text-slate-400">شهر</span>
+                    </div>
+                  </div>
+                  <Slider
+                    min={3} max={48} step={1}
+                    value={[months]}
+                    onValueChange={(val) => { setMonths(val[0]); setSelectedScenario(null); }}
+                    className="[&>span:first-child]:bg-blue-100 [&>span_span]:bg-blue-600"
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* ===== مقارنة السيناريوهات ===== */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm overflow-hidden">
-            <CardHeader className="border-b border-slate-100/80 pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-md font-bold text-slate-800 flex items-center gap-2">
-                  <GitCompareArrows className="h-5 w-5 text-indigo-500" />
-                  مقارنة سيناريوهات التمويل
-                </CardTitle>
-                <Badge className="bg-indigo-100 text-indigo-700 border-0 rounded-lg text-[10px] flex items-center gap-1">
-                  <Zap className="h-3 w-3" />
-                  قارن واختر الأنسب
+          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <GitCompareArrows className="h-4 w-4 text-indigo-500" />
+                  <h3 className="font-bold text-sm text-slate-800">مقارنة السيناريوهات</h3>
+                </div>
+                <Badge className="bg-indigo-50 text-indigo-600 border-0 rounded-lg text-[10px]">
+                  <Zap className="h-3 w-3 ml-0.5" />
+                  اضغط للتطبيق
                 </Badge>
               </div>
-              <p className="text-xs text-slate-500 mt-1">اختر من 3 سيناريوهات مختلفة ل/GPL/أفضل سعر شهري أو أقل فوائد</p>
-            </CardHeader>
-            <CardContent className="p-5">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+              <div className="grid grid-cols-3 gap-3">
                 {scenarios.map((scenario) => {
                   const isCurrent = selectedScenario === scenario.months;
                   const isBestInterest = bestScenario?.months === scenario.months;
                   const isCheapest = cheapestScenario?.months === scenario.months;
-
                   return (
                     <button
                       key={scenario.months}
                       onClick={() => applyScenario(scenario)}
                       className={cn(
-                        "relative p-5 rounded-2xl text-center transition-all duration-300 border-2 active:scale-[0.98] text-right",
+                        "relative p-4 rounded-2xl transition-all duration-200 border-2 active:scale-[0.97] text-center",
                         isCurrent
-                          ? "bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-300 shadow-md shadow-violet-500/10"
-                          : "bg-white/60 border-slate-100 hover:border-violet-200 hover:bg-violet-50/30"
+                          ? "bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-300 shadow-md"
+                          : "bg-white border-slate-100 hover:border-violet-200 hover:bg-violet-50/30"
                       )}
                     >
-                      {/* Selected check */}
                       {isCurrent && (
-                        <div className="absolute top-3 left-3">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-                            <CheckCircle2 className="h-4 w-4 text-white" />
+                        <div className="absolute top-2 left-2">
+                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+                            <CheckCircle2 className="h-3 w-3 text-white" />
                           </div>
                         </div>
                       )}
 
-                      {/* Tags */}
-                      <div className="flex justify-center gap-1.5 mb-3">
+                      {/* الشارات */}
+                      <div className="flex justify-center gap-1 mb-2 min-h-[18px]">
                         {isBestInterest && (
-                          <span className="text-[9px] font-bold bg-emerald-500 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                            <TrendingDown className="h-2.5 w-2.5" />
+                          <span className="text-[8px] font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">
                             أقل فوائد
                           </span>
                         )}
-                        {isCheapest && (
-                          <span className="text-[9px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                            <Wallet className="h-2.5 w-2.5" />
+                        {isCheapest && !isBestInterest && (
+                          <span className="text-[8px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full">
                             أخف قسط
                           </span>
                         )}
                       </div>
 
-                      {/* Duration */}
                       <div className={cn(
-                        "w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all",
+                        "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all",
                         isCurrent
-                          ? "bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg"
-                          : "bg-slate-100 text-slate-600"
+                          ? "bg-gradient-to-br from-violet-500 to-indigo-600 text-white"
+                          : "bg-slate-100 text-slate-500"
                       )}>
-                        <Clock className="h-6 w-6" />
+                        <Clock className="h-5 w-5" />
                       </div>
-                      <p className={cn("font-extrabold text-lg mb-1", isCurrent ? "text-violet-700" : "text-slate-800")}>{scenario.label}</p>
-                      <p className="text-[10px] text-slate-400 mb-4">{scenario.tag}</p>
 
-                      {/* Data */}
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-slate-500">القسط الشهري</span>
-                          <span className={cn("font-extrabold text-sm", isCurrent ? "text-violet-700" : "text-slate-800")}>
-                            {scenario.monthly.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ج.م</span>
+                      <p className={cn("font-extrabold text-base mb-0.5", isCurrent ? "text-violet-700" : "text-slate-800")}>
+                        {scenario.label}
+                      </p>
+                      <p className="text-[9px] text-slate-400 mb-3">{scenario.tag}</p>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-500">القسط</span>
+                          <span className={cn("font-extrabold", isCurrent ? "text-violet-700" : "text-slate-800")}>
+                            {scenario.monthly.toLocaleString()}
                           </span>
                         </div>
                         <div className="h-px bg-slate-100" />
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-slate-500">إجمالي الفوائد</span>
-                          <span className="font-bold text-sm text-rose-500">
-                            {scenario.totalInterest.toLocaleString()} <span className="text-[10px] font-normal text-rose-300">ج.م</span>
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-500">الفوائد</span>
+                          <span className="font-bold text-rose-500">
+                            {scenario.totalInterest.toLocaleString()}
                           </span>
                         </div>
                         <div className="h-px bg-slate-100" />
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-slate-500">الإجمالي الكلي</span>
-                          <span className="font-extrabold text-sm text-slate-800">
-                            {scenario.totalPayback.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ج.م</span>
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-500">الإجمالي</span>
+                          <span className="font-extrabold text-slate-800">
+                            {scenario.totalPayback.toLocaleString()}
                           </span>
                         </div>
                       </div>
 
-                      {/* Interest difference from best */}
                       {!isBestInterest && bestScenario && (
-                        <div className="mt-3 text-[10px] text-rose-400">
-                          +{(scenario.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م فوائد إضافية
-                        </div>
+                        <p className="mt-2 text-[9px] text-rose-400">
+                          +{(scenario.totalInterest - bestScenario.totalInterest).toLocaleString()} فوائد إضافية
+                        </p>
                       )}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Quick summary bar */}
-              <div className="mt-4 p-3 bg-slate-50 rounded-xl flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-xs text-slate-500">
+              {/* ملخص سريع */}
+              <div className="mt-3 p-2.5 bg-slate-50 rounded-xl flex items-center justify-between text-[11px] text-slate-500">
+                <div className="flex items-center gap-1.5">
                   <Info className="h-3.5 w-3.5 text-blue-500" />
-                  <span>
-                    الفرق بين الأقل والأعلى فوائد:{" "}
-                    <strong className="text-rose-600">
-                      {scenarios.length >= 2
-                        ? `${(Math.max(...scenarios.map(s => s.totalInterest)) - Math.min(...scenarios.map(s => s.totalInterest))).toLocaleString()} ج.م`
-                        : "—"
-                    }
-                    </strong>
-                  </span>
+                  الفرق بين الأقل والأعلى فوائد:
+                  <strong className="text-rose-600">
+                    {scenarios.length >= 2
+                      ? `${(Math.max(...scenarios.map(s => s.totalInterest)) - Math.min(...scenarios.map(s => s.totalInterest))).toLocaleString()} ج.م`
+                      : "—"}
+                  </strong>
                 </div>
                 {selectedScenario && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => { setSelectedScenario(null); }}
-                    className="text-xs text-violet-600 hover:text-violet-700 hover:bg-violet-50 gap-1 h-7 rounded-lg"
-                  >
-                    إعادة التعيين
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedScenario(null)} className="text-[10px] text-violet-600 h-6 rounded-lg">
+                    إعادة تعيين
                   </Button>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Real-time Schedule Preview */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm overflow-hidden">
-            <CardHeader className="border-b border-slate-100/80 flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-md font-bold text-slate-800 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-violet-500" />
-                جدول الأقساط والمواعيد المقترحة
-              </CardTitle>
-              <Badge className="bg-violet-100 text-violet-700 border-0 rounded-lg">{months} قسط مقترح</Badge>
-            </CardHeader>
+          {/* ===== نصيحة الاستشاري ===== */}
+          {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
+            <div className="p-3 bg-violet-50 border border-violet-200 rounded-2xl flex items-start gap-2 text-xs text-violet-800">
+              <Sparkles className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
+              <p>
+                <strong>نصيحة ذكية:</strong> لو اختارت <strong>{bestScenario.label}</strong> بدل <strong>{selectedScenario} شهر</strong>، هتوفر{" "}
+                <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong> فوائد إضافية!
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ===== العمود الأيمن: الجدول + الإجراءات ===== */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* جدول الأقساط التفصيلي */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
             <CardContent className="p-0">
-              <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100/60">
-                {calculations.schedule.map((inst) => (
-                  <div key={inst.number} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 font-extrabold flex items-center justify-center text-xs">
-                        #{inst.number}
-                      </div>
-                      <span className="text-xs text-slate-500 font-medium">{inst.date}</span>
-                    </div>
-                    <span className="font-extrabold text-sm text-slate-800">{inst.amount.toLocaleString()} ج.م</span>
-                  </div>
-                ))}
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-violet-500" />
+                  <h3 className="font-bold text-sm text-slate-800">جدول الأقساط</h3>
+                </div>
+                <Badge className="bg-violet-50 text-violet-600 border-0 rounded-lg text-[10px]">{months} قسط</Badge>
+              </div>
+              <div className="max-h-[380px] overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-slate-50 z-10">
+                    <tr className="border-b border-slate-200">
+                      <th className="py-2 px-3 text-right text-slate-500 font-semibold">#</th>
+                      <th className="py-2 px-3 text-right text-slate-500 font-semibold">التاريخ</th>
+                      <th className="py-2 px-3 text-center text-slate-500 font-semibold">المبلغ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {calculations.schedule.map((inst) => (
+                      <tr key={inst.number} className="hover:bg-violet-50/40 transition-colors">
+                        <td className="py-2.5 px-3 font-bold text-violet-600">{inst.number}</td>
+                        <td className="py-2.5 px-3 text-slate-500">{inst.date}</td>
+                        <td className="py-2.5 px-3 text-center font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Sidebar Summary */}
-        <div className="space-y-6">
+          {/* ===== ملخص العرض + أزرار ===== */}
           <Card className="border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative shadow-lg">
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
               <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
             </div>
-            <CardContent className="p-6 relative z-10 space-y-6 text-right">
-              <div>
-                <p className="text-xs text-purple-100 font-semibold mb-1">القسط الشهري المقدر</p>
-                <p className="text-3xl font-extrabold tracking-tight">
-                  {calculations.monthlyInstallment.toLocaleString()} <span className="text-sm font-bold text-purple-100">ج.م / شهر</span>
-                </p>
-              </div>
-
-              <div className="h-px bg-white/20" />
-
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="p-5 relative z-10">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-[11px] text-purple-100">المبلغ الأصلي الممول</p>
-                  <p className="font-extrabold text-md mt-1">{calculations.principal.toLocaleString()} ج.م</p>
+                  <p className="text-[11px] text-purple-100 font-medium">القسط الشهري</p>
+                  <p className="text-2xl font-extrabold">
+                    {calculations.monthlyInstallment.toLocaleString()} <span className="text-xs font-bold text-purple-200">ج.م</span>
+                  </p>
                 </div>
-                <div>
-                  <p className="text-[11px] text-purple-100">إجمالي الفوائد الكلية</p>
-                  <p className="font-extrabold text-md mt-1 text-amber-300">+{calculations.totalInterest.toLocaleString()} ج.م</p>
+                <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center">
+                  <Calculator className="h-6 w-6" />
                 </div>
               </div>
 
-              <div className="h-px bg-white/20" />
-
-              <div>
-                <p className="text-xs text-purple-100 font-semibold mb-1">إجمالي المبلغ المراد سداده</p>
-                <p className="text-xl font-bold">{calculations.totalPayback.toLocaleString()} ج.م</p>
-                <p className="text-[10px] text-purple-200 mt-1">تشمل مبلغ التمويل مضافاً إليه الفوائد المحتسبة</p>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                  <p className="text-[9px] text-purple-200 mb-0.5">التمويل</p>
+                  <p className="font-bold text-sm">{calculations.principal.toLocaleString()}</p>
+                </div>
+                <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                  <p className="text-[9px] text-purple-200 mb-0.5">الفوائد</p>
+                  <p className="font-bold text-sm text-amber-300">+{calculations.totalInterest.toLocaleString()}</p>
+                </div>
+                <div className="bg-white/10 rounded-xl p-2.5 text-center">
+                  <p className="text-[9px] text-purple-200 mb-0.5">الإجمالي</p>
+                  <p className="font-bold text-sm">{calculations.totalPayback.toLocaleString()}</p>
+                </div>
               </div>
 
-              <div className="flex gap-2.5 pt-2">
+              <div className="flex gap-2">
                 <Button
                   onClick={handlePrintQuote}
                   variant="secondary"
-                  className="rounded-xl h-11 bg-white hover:bg-slate-50 text-slate-800 shadow-md flex-1 gap-2 font-semibold active:scale-95"
+                  className="rounded-xl h-11 bg-white hover:bg-slate-50 text-slate-800 shadow-md flex-1 gap-2 font-semibold text-sm"
                 >
                   <Printer className="h-4 w-4" />
                   طباعة العرض
                 </Button>
                 <Button
                   onClick={handleConvertToContract}
-                  className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border-0 flex-1 gap-1.5 font-bold active:scale-95"
+                  className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border-0 flex-1 gap-1.5 font-bold text-sm"
                 >
                   <ArrowRight className="h-4 w-4 rotate-180" />
                   تحويل لعقد
@@ -564,44 +550,30 @@ const CalculatorPage = () => {
             </CardContent>
           </Card>
 
-          {/* Smart Advisor Widget */}
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <Info className="h-4.5 w-4.5 text-blue-500" />
-                استشاري التمويل الذكي
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
+          {/* استشاري مختصر */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <CardContent className="p-4 space-y-2.5">
+              <div className="flex items-center gap-2 mb-1">
+                <Info className="h-4 w-4 text-blue-500" />
+                <h3 className="font-bold text-xs text-slate-700">نصائح التمويل</h3>
+              </div>
               {calculations.downPaymentPercent < 15 ? (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs text-right leading-relaxed">
-                  ⚠️ <strong>مقدم التمويل منخفض:</strong> دفع مقدم أقل من 15% يزيد من مبلغ الفوائد المحتسبة على العميل وقيمة القسط الشهري. يُنصح برفع المقدم لتقليل المخاطر.
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 leading-relaxed">
+                  ⚠️ <strong>مقدم منخفض ({calculations.downPaymentPercent}%):</strong> يُنصح برفع المقدم لتقليل الفوائد والمخاطر.
                 </div>
               ) : (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs text-right leading-relaxed">
-                  ✓ <strong>مقدم تمويل ممتاز:</strong> المقدم المحتسب ({calculations.downPaymentPercent}%) يقلل التكلفة الإجمالية للتمويل ويحمي العميل من الالتزامات الكبيرة.
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-relaxed">
+                  ✓ <strong>مقدم ممتاز ({calculations.downPaymentPercent}%):</strong> يقلل التكلفة الإجمالية بشكل فعال.
                 </div>
               )}
-
-              {months > 24 ? (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-xs text-right leading-relaxed">
-                  💡 <strong>مدة سداد طويلة:</strong> توزيع القسط على {months} شهراً يمنح العميل راحة شهرية، لكنه يرفع الفوائد الإجمالية. تأكد من أن السلعة لها عمر افتراضي يغطي مدة القسط.
-                </div>
-              ) : (
-                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-800 text-xs text-right leading-relaxed">
-                  ✓ <strong>فترة سداد متوازنة:</strong> الجدولة على {months} شهراً مناسبة وتضمن تحصيل سريع للشركة مع تقليل التكلفة الإجمالية للعميل.
+              {months > 24 && (
+                <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 leading-relaxed">
+                  💡 المدة الطويلة ({months} شهر) تزيد الفوائد. تأكد من عمر المنتج.
                 </div>
               )}
-
-              {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
-                <div className="p-3 bg-violet-50 border border-violet-200 rounded-xl text-violet-800 text-xs text-right leading-relaxed">
-                  💎 <strong>نصيحة ذكية:</strong> لو اختارت <strong>{bestScenario.label}</strong> بدل <strong>{selectedScenario} شهر</strong>، هتوفر <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong> فوائد إضافية!
-                </div>
-              )}
-
               {selectedScenario && bestScenario && selectedScenario === bestScenario.months && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs text-right leading-relaxed">
-                  🎯 <strong>اختيار مثالي!</strong> اختاري أقل فترة سداد ({bestScenario.label}) لتوفير أكبر قدر من الفوائد.
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-relaxed">
+                  🎯 <strong>اختيار مثالي!</strong> أقل فترة سداد = أقل فوائد.
                 </div>
               )}
             </CardContent>
@@ -609,13 +581,17 @@ const CalculatorPage = () => {
         </div>
       </div>
 
-      <PrintDialog
-        open={printOpen}
-        onOpenChange={setPrintOpen}
-        htmlContent={printHtml}
-        title={`عرض محاكاة تقسيط - ${settings.companyName || settings.appName}`}
-        filename="installment-simulation.pdf"
-      />
+      {/* أزرار الجوال */}
+      <div className="sm:hidden fixed bottom-20 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-40 flex gap-3">
+        <Button onClick={handlePrintQuote} variant="outline" className="rounded-xl h-12 flex-1 gap-2">
+          <Printer className="h-4 w-4" />طباعة
+        </Button>
+        <Button onClick={handleConvertToContract} className="rounded-xl h-12 flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-teal-500">
+          <ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد
+        </Button>
+      </div>
+
+      <PrintDialog open={printOpen} onOpenChange={setPrintOpen} htmlContent={printHtml} title={`عرض تقسيط - ${settings.companyName || settings.appName}`} filename="installment-simulation.pdf" />
     </Layout>
   );
 };

@@ -6,8 +6,8 @@ import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import PrintDialog from "@/components/PrintDialog";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { showSuccess } from "@/utils/toast";
 import {
@@ -34,7 +34,6 @@ const Calculator = () => {
   const [downPayment, setDownPayment] = useState(5000);
   const [interestRate, setInterestRate] = useState(15);
   const [months, setMonths] = useState(12);
-  const [printOpen, setPrintOpen] = useState(false);
 
   const clampedDown = Math.min(downPayment, price);
   const financing = price - clampedDown;
@@ -67,7 +66,7 @@ const Calculator = () => {
     });
   }, [months, monthlyPayment]);
 
-  const generatePrintHtml = () => {
+  const handlePrint = () => {
     const rows = schedule.map((s) => `
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;">${s.num}</td>
@@ -85,7 +84,7 @@ const Calculator = () => {
       </tr>
     `).join("");
 
-    return `
+    const html = `
       <div style="font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;max-width:800px;margin:0 auto;">
         <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #8b5cf6;">
           ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="" style="width:60px;height:60px;border-radius:16px;object-fit:cover;margin-bottom:8px;">` : ""}
@@ -93,7 +92,6 @@ const Calculator = () => {
           <h2 style="font-size:17px;font-weight:600;color:#6366f1;margin:6px 0;">حاسبة الأقساط</h2>
           <p style="font-size:11px;color:#94a3b8;">تاريخ الحساب: ${new Date().toLocaleDateString("ar-EG")}</p>
         </div>
-
         <div style="margin-bottom:20px;">
           <h3 style="font-size:14px;font-weight:600;color:#6366f1;margin-bottom:10px;">البيانات الأساسية</h3>
           <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #e2e8f0;">
@@ -105,7 +103,6 @@ const Calculator = () => {
             <tr><td style="padding:10px 16px;">القسط الشهري</td><td style="padding:10px 16px;font-weight:700;color:#10b981;font-size:16px;">${monthlyPayment.toLocaleString()} ج.م × ${months} شهر</td></tr>
           </table>
         </div>
-
         <div style="margin-bottom:20px;">
           <h3 style="font-size:14px;font-weight:600;color:#6366f1;margin-bottom:10px;">مقارنة السيناريوهات</h3>
           <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;">
@@ -118,7 +115,6 @@ const Calculator = () => {
             <tbody>${scenarioRows}</tbody>
           </table>
         </div>
-
         <div style="margin-bottom:20px;">
           <h3 style="font-size:14px;font-weight:600;color:#6366f1;margin-bottom:10px;">جدول الأقساط (${months} شهر)</h3>
           <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;">
@@ -130,16 +126,12 @@ const Calculator = () => {
             <tbody>${rows}</tbody>
           </table>
         </div>
-
         <div style="text-align:center;margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;">
           ${settings.companyName ? settings.companyName + " | " : ""}نظام ${settings.appName} - حاسبة الأقساط
         </div>
       </div>
     `;
-  };
 
-  const handlePrint = () => {
-    const html = generatePrintHtml();
     const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>حاسبة الأقساط</title><style>@page{margin:15mm;size:A4}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;text-align:right;color:#1e293b;line-height:1.6;background:white;padding:20px}</style></head><body>${html}<script>window.onload=function(){window.print()}<\/script></body></html>`);
@@ -149,11 +141,6 @@ const Calculator = () => {
   const handleConvertToContract = () => {
     navigate("/contracts");
     showSuccess("تم التحويل لصفحة العقود - يمكنك إنشاء عقد جديد بالبيانات المحسوبة");
-  };
-
-  const getSliderColor = (value: number, max: number) => {
-    const percent = max > 0 ? (value / max) * 100 : 0;
-    return `${percent}%`;
   };
 
   return (
@@ -215,9 +202,7 @@ const Calculator = () => {
               </Button>
             </div>
           </div>
-
           <div className="h-px bg-white/15" />
-
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
               <p className="text-[11px] text-purple-200 mb-1">سعر المنتج</p>
@@ -253,34 +238,41 @@ const Calculator = () => {
                 <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">محددات التمويل</h3>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {/* سعر المنتج */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">سعر المنتج</label>
                     <div className="flex items-center gap-1.5">
                       <input
                         type="number"
                         value={price}
-                        onChange={(e) => { const v = Number(e.target.value); setPrice(v); setDownPayment(Math.min(downPayment, v)); }}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          setPrice(v);
+                          setDownPayment(Math.min(downPayment, v));
+                        }}
                         className="w-28 h-8 text-center text-sm font-bold rounded-lg border border-violet-200 focus:ring-violet-500 focus:border-violet-300 bg-slate-50/50 dark:bg-[#0a0d14] dark:border-slate-700 dark:text-slate-100 outline-none transition-all"
                       />
                       <span className="text-[10px] text-slate-400 min-w-[40px]">ج.م</span>
                     </div>
                   </div>
-                  <input
-                    type="range"
+                  <Slider
+                    value={[price]}
+                    onValueChange={(val) => {
+                      const v = val[0];
+                      setPrice(v);
+                      setDownPayment(Math.min(downPayment, v));
+                    }}
                     min={1000}
                     max={200000}
                     step={1000}
-                    value={price}
-                    onChange={(e) => { const v = Number(e.target.value); setPrice(v); setDownPayment(Math.min(downPayment, v)); }}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer accent-violet-600"
+                    className="w-full"
                   />
                 </div>
 
                 {/* الدفعة المقدمة */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">الدفعة المقدمة</label>
                     <div className="flex items-center gap-1.5">
@@ -293,19 +285,18 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">{downPercent}%</span>
                     </div>
                   </div>
-                  <input
-                    type="range"
+                  <Slider
+                    value={[clampedDown]}
+                    onValueChange={(val) => setDownPayment(val[0])}
                     min={0}
                     max={price}
                     step={500}
-                    value={clampedDown}
-                    onChange={(e) => setDownPayment(Number(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer accent-emerald-600"
+                    className="w-full"
                   />
                 </div>
 
                 {/* نسبة الفائدة */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">نسبة الفائدة السنوية</label>
                     <div className="flex items-center gap-1.5">
@@ -320,19 +311,18 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">% سنوياً</span>
                     </div>
                   </div>
-                  <input
-                    type="range"
+                  <Slider
+                    value={[interestRate]}
+                    onValueChange={(val) => setInterestRate(val[0])}
                     min={0}
                     max={50}
                     step={0.5}
-                    value={interestRate}
-                    onChange={(e) => setInterestRate(Number(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer accent-amber-500"
+                    className="w-full"
                   />
                 </div>
 
                 {/* فترة السداد */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">فترة السداد</label>
                     <div className="flex items-center gap-1.5">
@@ -347,14 +337,13 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">شهر</span>
                     </div>
                   </div>
-                  <input
-                    type="range"
+                  <Slider
+                    value={[months]}
+                    onValueChange={(val) => setMonths(val[0])}
                     min={3}
                     max={48}
                     step={1}
-                    value={months}
-                    onChange={(e) => setMonths(Number(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer accent-blue-600"
+                    className="w-full"
                   />
                 </div>
               </div>

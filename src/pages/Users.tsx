@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { api, ApiUser } from "@/lib/api";
-import { User as UserType, UserRole, ROLE_PERMISSIONS } from "@/types";
+import { UserRole, ROLE_PERMISSIONS } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
@@ -104,29 +104,46 @@ const Users = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[450px] rounded-3xl">
               <DialogHeader><DialogTitle className="text-xl">{editingUser ? "تعديل المستخدم" : "مستخدم جديد"}</DialogTitle></DialogHeader>
-              <div className="space-y-4 px-8">
-                <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">الاسم</Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="الاسم" /></div>
-                <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">البريد</Label><Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" dir="ltr" /></div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">الدور</Label>
-                  <Select value={formData.role} onValueChange={(val: UserRole) => setFormData({ ...formData, role: val })}>
-                    <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin"><span className="text-amber-600">●</span> مدير النظام</SelectItem>
-                      <SelectItem value="supervisor"><span className="text-blue-600">●</span> مشرف مالي</SelectItem>
-                      <SelectItem value="collector"><span className="text-emerald-600">●</span> محصل</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-3 px-8">
+                {/* الاسم + الدور في صف واحد */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">الاسم</Label>
+                    <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="الاسم" className="h-11" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">الدور</Label>
+                    <Select value={formData.role} onValueChange={(val: UserRole) => setFormData({ ...formData, role: val })}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin"><span className="text-amber-600">●</span> مدير النظام</SelectItem>
+                        <SelectItem value="supervisor"><span className="text-blue-600">●</span> مشرف مالي</SelectItem>
+                        <SelectItem value="collector"><span className="text-emerald-600">●</span> محصل</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+
+                {/* البريد - سطر كامل */}
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">البريد الإلكتروني</Label>
+                  <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" dir="ltr" className="h-11" />
+                </div>
+
+                {/* كلمة المرور */}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-600">{editingUser ? "كلمة المرور الجديدة (اختياري)" : "كلمة المرور"}</Label>
                   <div className="relative">
-                    <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="pl-10" placeholder={editingUser ? "اتركه فارغاً" : "6 أحرف على الأقل"} dir="ltr" />
+                    <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="pl-10 h-11" placeholder={editingUser ? "اتركه فارغاً" : "6 أحرف على الأقل"} dir="ltr" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
                   </div>
                 </div>
+
                 {formData.password && (
-                  <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">تأكيد كلمة المرور</Label><Input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="أعد الكتابة" dir="ltr" /></div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-slate-600">تأكيد كلمة المرور</Label>
+                    <Input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="أعد الكتابة" dir="ltr" className="h-11" />
+                  </div>
                 )}
               </div>
               <DialogFooter className="px-8">
@@ -140,7 +157,6 @@ const Users = () => {
         )}
       </div>
 
-      {/* المستخدم الحالي */}
       {currentUser && (
         <Card className="border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative mb-8">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -157,7 +173,6 @@ const Users = () => {
         </Card>
       )}
 
-      {/* قائمة المستخدمين */}
       <div className="grid gap-4">
         {users.map((u) => {
           const config = roleConfig[u.role] || roleConfig.collector;
@@ -199,7 +214,6 @@ const Users = () => {
         })}
       </div>
 
-      {/* تأكيد الحذف */}
       <Dialog open={deleteConfirm !== null} onOpenChange={(open) => { if (!open) setDeleteConfirm(null); }}>
         <DialogContent className="sm:max-w-[350px] rounded-3xl">
           <DialogHeader><DialogTitle className="text-xl flex items-center gap-2 text-red-600"><Trash2 className="h-5 w-5" />حذف المستخدم</DialogTitle><DialogDescription>هل أنت متأكد؟ لا يمكن التراجع.</DialogDescription></DialogHeader>
@@ -210,7 +224,6 @@ const Users = () => {
         </DialogContent>
       </Dialog>
 
-      {/* جدول الصلاحيات */}
       <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden mt-8">
         <CardContent className="p-6">
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Shield className="h-5 w-5 text-violet-500" />مقارنة الصلاحيات</h3>

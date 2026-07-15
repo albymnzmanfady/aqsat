@@ -51,42 +51,71 @@ const CustomerForm = ({ type, onSave, onCancel }: CustomerFormProps) => {
     }
   };
 
-  const fields = [
-    { key: "name" as const, label: "الاسم الكامل", icon: User, placeholder: "أدخل الاسم الكامل", maxLength: undefined, ltr: false },
-    { key: "phone" as const, label: "رقم الهاتف", icon: Phone, placeholder: "01012345678", maxLength: 11, ltr: true },
-    { key: "nationalId" as const, label: "الرقم القومي", icon: CreditCard, placeholder: "14 رقم", maxLength: 14, ltr: true },
-    { key: "address" as const, label: "العنوان", icon: MapPin, placeholder: "العنوان بالكامل", maxLength: undefined, ltr: false },
-  ];
-
   return (
-    <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-5">
-      {fields.map((field) => {
-        const Icon = field.icon;
-        const error = errors[field.key];
-        return (
-          <div key={field.key} className="space-y-1.5">
-            <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <Icon className="h-3.5 w-3.5 text-slate-400" />
-              {field.label}
-            </Label>
-            <Input
-              value={formData[field.key]}
-              onChange={(e) => {
-                const val = field.key === "phone" || field.key === "nationalId"
-                  ? e.target.value.replace(/[^0-9]/g, "")
-                  : e.target.value;
-                if (!field.maxLength || val.length <= field.maxLength) {
-                  setFormData({ ...formData, [field.key]: val });
-                }
-              }}
-              className={error ? "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300" : ""}
-              placeholder={field.placeholder}
-              dir={field.ltr ? "ltr" : "rtl"}
-            />
-            {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
-          </div>
-        );
-      })}
+    <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-4">
+      {/* الاسم - سطر كامل */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+          <User className="h-3.5 w-3.5 text-slate-400" />
+          الاسم الكامل
+        </Label>
+        <Input
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className={errors.name ? "border-red-300 focus-visible:ring-red-400/40 focus-visible:border-red-300 h-11" : "h-11"}
+          placeholder="أدخل الاسم الكامل"
+        />
+        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+      </div>
+
+      {/* الهاتف + الرقم القومي في صف واحد */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+            <Phone className="h-3.5 w-3.5 text-slate-400" />
+            رقم الهاتف
+          </Label>
+          <Input
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^0-9]/g, "") })}
+            className={errors.phone ? "border-red-300 h-11" : "h-11"}
+            placeholder="01012345678"
+            dir="ltr"
+            maxLength={11}
+          />
+          {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+            <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+            الرقم القومي
+          </Label>
+          <Input
+            value={formData.nationalId}
+            onChange={(e) => setFormData({ ...formData, nationalId: e.target.value.replace(/[^0-9]/g, "") })}
+            className={errors.nationalId ? "border-red-300 h-11" : "h-11"}
+            placeholder="14 رقماً"
+            dir="ltr"
+            maxLength={14}
+          />
+          {errors.nationalId && <p className="text-xs text-red-500">{errors.nationalId}</p>}
+        </div>
+      </div>
+
+      {/* العنوان - سطر كامل */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+          <MapPin className="h-3.5 w-3.5 text-slate-400" />
+          العنوان
+        </Label>
+        <Input
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          className={errors.address ? "border-red-300 h-11" : "h-11"}
+          placeholder="العنوان بالكامل"
+        />
+        {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
+      </div>
 
       <DialogFooter className="gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50">

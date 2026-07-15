@@ -168,49 +168,54 @@ const Products = () => {
               </DialogTitle>
               <DialogDescription>{editingProduct ? "تعديل بيانات المنتج" : "أدخل بيانات المنتج لإضافته إلى المخزن"}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-5 px-8 pb-2">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-600">اسم المنتج</Label>
-                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="مثال: ثلاجة سامسونج 14 قدم" className={cn(errors.name && "border-red-300")} />
-                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-600">التصنيف</Label>
-                <Input value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} placeholder="مثال: أجهزة كهربائية" className={cn(errors.category && "border-red-300")} />
-                {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
-              </div>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-                <p className="text-xs font-semibold text-slate-400 tracking-wider">الأسعار</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-slate-600">سعر التكلفة</Label>
-                    <Input type="number" value={formData.costPrice} onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })} placeholder="0" className={cn(errors.costPrice && "border-red-300")} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-slate-600">سعر البيع</Label>
-                    <Input type="number" value={formData.sellingPrice} onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })} placeholder="0" className={cn(errors.sellingPrice && "border-red-300")} />
-                  </div>
+            <div className="space-y-4 px-8 pb-2">
+              {/* الاسم + التصنيف في صف واحد */}
+              <div className="grid grid-cols-5 gap-3">
+                <div className="col-span-3 space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">اسم المنتج</Label>
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="مثال: ثلاجة سامسونج" className={cn(errors.name && "border-red-300 h-11")} />
+                  {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">التصنيف</Label>
+                  <Input value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} placeholder="مثال: كهربائيات" className={cn(errors.category && "border-red-300 h-11")} />
+                  {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
                 </div>
               </div>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-                <p className="text-xs font-semibold text-slate-400 tracking-wider">المخزون</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-slate-600">الرصيد الحالي</Label>
-                    <Input type="number" value={formData.currentStock} onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })} placeholder="0" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-slate-600">الحد الأدنى</Label>
-                    <Input type="number" value={formData.minStock} onChange={(e) => setFormData({ ...formData, minStock: e.target.value })} placeholder="0" />
-                  </div>
+
+              {/* سعر التكلفة + سعر البيع + الوحدة في صف واحد */}
+              <div className="grid grid-cols-5 gap-3">
+                <div className="col-span-2 space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">سعر التكلفة</Label>
+                  <Input type="number" value={formData.costPrice} onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })} placeholder="0" className={cn(errors.costPrice && "border-red-300 h-11")} />
+                  {errors.costPrice && <p className="text-xs text-red-500">{errors.costPrice}</p>}
+                </div>
+                <div className="col-span-2 space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">سعر البيع</Label>
+                  <Input type="number" value={formData.sellingPrice} onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })} placeholder="0" className={cn(errors.sellingPrice && "border-red-300 h-11")} />
+                  {errors.sellingPrice && <p className="text-xs text-red-500">{errors.sellingPrice}</p>}
+                </div>
+                <div className="col-span-1 space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الوحدة</Label>
+                  <Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder="قطعة" className="h-11" />
+                </div>
+              </div>
+
+              {/* الرصيد الحالي + الحد الأدنى في صف واحد */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الرصيد الحالي</Label>
+                  <Input type="number" value={formData.currentStock} onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })} placeholder="0" className={cn(errors.currentStock && "border-red-300 h-11")} />
+                  {errors.currentStock && <p className="text-xs text-red-500">{errors.currentStock}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">الوحدة</Label>
-                  <Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder="قطعة" />
+                  <Label className="text-sm font-medium text-slate-600">الحد الأدنى</Label>
+                  <Input type="number" value={formData.minStock} onChange={(e) => setFormData({ ...formData, minStock: e.target.value })} placeholder="0" className={cn(errors.minStock && "border-red-300 h-11")} />
+                  {errors.minStock && <p className="text-xs text-red-500">{errors.minStock}</p>}
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 pt-2 px-8 pb-8 justify-end">
+            <div className="flex gap-3 pt-2 px-8 pb-6 justify-end">
               <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11 px-6 border-slate-200 text-slate-600 hover:bg-slate-50">إلغاء</Button>
               <Button onClick={handleSave} className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-11 px-8 shadow-lg shadow-orange-500/20 gap-2">
                 <Sparkles className="h-4 w-4" />
@@ -222,10 +227,10 @@ const Products = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-0 bg-white/70 backdrop-blur-sm"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-md flex items-center justify-center"><Box className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">إجمالي المنتجات</p><p className="font-bold text-xl text-slate-800">{products.length}</p></div></div></CardContent></Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center"><Warehouse className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">رصيد المخزن</p><p className="font-bold text-xl text-slate-800">{totalStockValue.toLocaleString()} ج.م</p></div></div></CardContent></Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md flex items-center justify-center"><TrendingUp className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">قيمة المبيعات</p><p className="font-bold text-xl text-slate-800">{totalSellingValue.toLocaleString()} ج.م</p></div></div></CardContent></Card>
-        <Card className="border-0 bg-white/70 backdrop-blur-sm"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md flex items-center justify-center"><AlertTriangle className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">منتجات منخفضة</p><p className="font-bold text-xl text-amber-600">{lowStockProducts.length}</p></div></div></CardContent></Card>
+        <Card className="border-0 bg-white/70"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-md flex items-center justify-center"><Box className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">إجمالي المنتجات</p><p className="font-bold text-xl text-slate-800">{products.length}</p></div></div></CardContent></Card>
+        <Card className="border-0 bg-white/70"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center"><Warehouse className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">رصيد المخزن</p><p className="font-bold text-xl text-slate-800">{totalStockValue.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+        <Card className="border-0 bg-white/70"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md flex items-center justify-center"><TrendingUp className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">قيمة المبيعات</p><p className="font-bold text-xl text-slate-800">{totalSellingValue.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+        <Card className="border-0 bg-white/70"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md flex items-center justify-center"><AlertTriangle className="h-6 w-6 text-white" /></div><div><p className="text-sm text-slate-500">منتجات منخفضة</p><p className="font-bold text-xl text-amber-600">{lowStockProducts.length}</p></div></div></CardContent></Card>
       </div>
 
       {lowStockProducts.length > 0 && (

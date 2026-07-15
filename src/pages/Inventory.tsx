@@ -79,9 +79,7 @@ const Inventory = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const resetForm = () => {
     setFormData({ productId: "", type: "purchase", quantity: "", unitPrice: "", reference: "", notes: "" });
@@ -125,18 +123,10 @@ const Inventory = () => {
     totalTransactions: transactions.length,
   };
 
-  if (loading)
-    return (
-      <Layout>
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
-        </div>
-      </Layout>
-    );
+  if (loading) return <Layout><div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 text-violet-500 animate-spin" /></div></Layout>;
 
   return (
     <Layout>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="relative">
           <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-full opacity-20 blur-xl" />
@@ -151,13 +141,7 @@ const Inventory = () => {
           </div>
         </div>
 
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}
-        >
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 shadow-lg shadow-teal-500/30 h-12 px-6">
               <Plus className="h-5 w-5" />
@@ -174,35 +158,31 @@ const Inventory = () => {
             </DialogHeader>
 
             <div className="space-y-4 px-8">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-600">نوع الحركة</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(val: TxnType) =>
-                    setFormData({ ...formData, type: val, unitPrice: "" })
-                  }
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="purchase">مشتريات (إضافة للمخزون)</SelectItem>
-                    <SelectItem value="sale">مبيعات (خصم من المخزون)</SelectItem>
-                    <SelectItem value="adjustment">تسوية (تعديل الرصيد)</SelectItem>
-                    <SelectItem value="return">مرتجع (إعادة للمخزون)</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* نوع الحركة + الكمية في صف واحد */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">نوع الحركة</Label>
+                  <Select value={formData.type} onValueChange={(val: TxnType) => setFormData({ ...formData, type: val, unitPrice: "" })}>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="purchase">مشتريات</SelectItem>
+                      <SelectItem value="sale">مبيعات</SelectItem>
+                      <SelectItem value="adjustment">تسوية</SelectItem>
+                      <SelectItem value="return">مرتجع</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">الكمية</Label>
+                  <Input type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} placeholder="0" className="h-11" />
+                </div>
               </div>
 
+              {/* المنتج - سطر كامل */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium text-slate-600">المنتج</Label>
-                <Select
-                  value={formData.productId}
-                  onValueChange={(val) => setFormData({ ...formData, productId: val })}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="اختر المنتج" />
-                  </SelectTrigger>
+                <Select value={formData.productId} onValueChange={(val) => setFormData({ ...formData, productId: val })}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="اختر المنتج" /></SelectTrigger>
                   <SelectContent>
                     {products.map((p) => (
                       <SelectItem key={p.id} value={p.id.toString()}>
@@ -213,63 +193,28 @@ const Inventory = () => {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">الكمية</Label>
-                  <Input
-                    type="number"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                    placeholder="0"
-                  />
-                </div>
+              {/* سعر الوحدة + رقم المرجع في صف واحد */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-600">سعر الوحدة</Label>
-                  <Input
-                    type="number"
-                    value={formData.unitPrice}
-                    onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-                    placeholder="سعر التكلفة الافتراضي"
-                  />
+                  <Input type="number" value={formData.unitPrice} onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })} placeholder="الافتراضي" className="h-11" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-slate-600">رقم المرجع</Label>
+                  <Input value={formData.reference} onChange={(e) => setFormData({ ...formData, reference: e.target.value })} placeholder="فاتورة أو أمر" className="h-11" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">رقم المرجع</Label>
-                  <Input
-                    value={formData.reference}
-                    onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                    placeholder="رقم الفاتورة أو أمر الشراء"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-600">ملاحظات</Label>
-                  <Input
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="ملاحظة (اختياري)"
-                  />
-                </div>
+              {/* ملاحظات */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-600">ملاحظات</Label>
+                <Input value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="ملاحظة اختيارية" className="h-11" />
               </div>
             </div>
 
             <DialogFooter className="px-8">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  resetForm();
-                }}
-                className="rounded-xl h-11"
-              >
-                إلغاء
-              </Button>
-              <Button
-                onClick={handleAddTransaction}
-                className="rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 h-11 gap-2"
-                disabled={!formData.productId || !formData.quantity}
-              >
+              <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl h-11">إلغاء</Button>
+              <Button onClick={handleAddTransaction} className="rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 h-11 gap-2" disabled={!formData.productId || !formData.quantity}>
                 <Sparkles className="h-4 w-4" />
                 تسجيل الحركة
               </Button>
@@ -278,174 +223,88 @@ const Inventory = () => {
         </Dialog>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <Card className="border-0 bg-white/70 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md flex items-center justify-center">
-                <ClipboardList className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">إجمالي الحركات</p>
-                <p className="font-bold text-xl text-slate-800">{stats.totalTransactions}</p>
-              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md flex items-center justify-center"><ClipboardList className="h-6 w-6 text-white" /></div>
+              <div><p className="text-sm text-slate-500">إجمالي الحركات</p><p className="font-bold text-xl text-slate-800">{stats.totalTransactions}</p></div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-0 bg-white/70 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">إجمالي المشتريات</p>
-                <p className="font-bold text-xl text-slate-800">
-                  {stats.totalPurchases.toLocaleString()} ج.م
-                </p>
-              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md flex items-center justify-center"><TrendingUp className="h-6 w-6 text-white" /></div>
+              <div><p className="text-sm text-slate-500">إجمالي المشتريات</p><p className="font-bold text-xl text-slate-800">{stats.totalPurchases.toLocaleString()} ج.م</p></div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-0 bg-white/70 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md flex items-center justify-center">
-                <TrendingDown className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">إجمالي المبيعات</p>
-                <p className="font-bold text-xl text-slate-800">
-                  {stats.totalSales.toLocaleString()} ج.م
-                </p>
-              </div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md flex items-center justify-center"><TrendingDown className="h-6 w-6 text-white" /></div>
+              <div><p className="text-sm text-slate-500">إجمالي المبيعات</p><p className="font-bold text-xl text-slate-800">{stats.totalSales.toLocaleString()} ج.م</p></div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <Input
-            type="text"
-            placeholder="بحث باسم المنتج أو المرجع..."
-            className="pr-12 rounded-2xl bg-white/70 backdrop-blur-sm border-slate-200/50 h-12 shadow-sm focus:shadow-md transition-shadow"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <Input type="text" placeholder="بحث باسم المنتج أو المرجع..." className="pr-12 rounded-2xl bg-white/70 backdrop-blur-sm border-slate-200/50 h-12 shadow-sm focus:shadow-md transition-shadow" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
         <div className="flex gap-2 flex-wrap">
           {(["all", "purchase", "sale", "adjustment", "return"] as const).map((type) => (
-            <Button
-              key={type}
-              variant={filterType === type ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterType(type)}
-              className={cn(
-                "rounded-xl h-10 px-4",
-                filterType === type &&
-                  ({
-                    all: "bg-gradient-to-r from-slate-700 to-slate-800 text-white",
-                    purchase: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white",
-                    sale: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white",
-                    adjustment: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
-                    return: "bg-gradient-to-r from-purple-500 to-violet-500 text-white",
-                  }[type])
-              )}
-            >
+            <Button key={type} variant={filterType === type ? "default" : "outline"} size="sm" onClick={() => setFilterType(type)}
+              className={cn("rounded-xl h-10 px-4", filterType === type && ({ all: "bg-gradient-to-r from-slate-700 to-slate-800 text-white", purchase: "bg-gradient-to-r from-blue-500 to-cyan-500 text-white", sale: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white", adjustment: "bg-gradient-to-r from-amber-500 to-orange-500 text-white", return: "bg-gradient-to-r from-purple-500 to-violet-500 text-white" }[type]))}>
               {type === "all" ? "الكل" : typeConfig[type]?.label || type}
             </Button>
           ))}
         </div>
       </div>
 
-      {/* Transactions List */}
       <Card className="border-0 bg-white/70 backdrop-blur-sm overflow-hidden">
         <div className="divide-y divide-slate-100/80">
           {filteredTransactions.map((transaction) => {
             const config = typeConfig[transaction.type] || typeConfig.purchase;
             const Icon = config.icon;
             const productName = transaction.product_name || getProductName(transaction.product_id);
-
             return (
-              <div
-                key={transaction.id}
-                className="p-4 hover:bg-slate-50/50 transition-colors"
-              >
+              <div key={transaction.id} className="p-4 hover:bg-slate-50/50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div
-                      className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center shadow-md",
-                        transaction.type === "purchase"
-                          ? "bg-gradient-to-br from-blue-500 to-cyan-500"
-                          : transaction.type === "sale"
-                          ? "bg-gradient-to-br from-emerald-500 to-teal-500"
-                          : transaction.type === "adjustment"
-                          ? "bg-gradient-to-br from-amber-500 to-orange-500"
-                          : "bg-gradient-to-br from-purple-500 to-violet-500"
-                      )}
-                    >
+                    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-md", transaction.type === "purchase" ? "bg-gradient-to-br from-blue-500 to-cyan-500" : transaction.type === "sale" ? "bg-gradient-to-br from-emerald-500 to-teal-500" : transaction.type === "adjustment" ? "bg-gradient-to-br from-amber-500 to-orange-500" : "bg-gradient-to-br from-purple-500 to-violet-500")}>
                       <Icon className="h-6 w-6 text-white" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-slate-800">{productName}</h3>
-                        <Badge className={cn("rounded-lg border-0", config.color)}>
-                          {config.label}
-                        </Badge>
+                        <Badge className={cn("rounded-lg border-0", config.color)}>{config.label}</Badge>
                       </div>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="text-xs text-slate-500">
-                          الكمية: {Math.abs(transaction.quantity)}
-                        </span>
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <FileText className="h-3 w-3" />
-                          {transaction.reference}
-                        </span>
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {transaction.date}
-                        </span>
+                        <span className="text-xs text-slate-500">الكمية: {Math.abs(transaction.quantity)}</span>
+                        <span className="text-xs text-slate-500 flex items-center gap-1"><FileText className="h-3 w-3" />{transaction.reference}</span>
+                        <span className="text-xs text-slate-500 flex items-center gap-1"><Calendar className="h-3 w-3" />{transaction.date}</span>
                       </div>
-                      {transaction.notes && (
-                        <p className="text-xs text-slate-400 mt-1">{transaction.notes}</p>
-                      )}
+                      {transaction.notes && <p className="text-xs text-slate-400 mt-1">{transaction.notes}</p>}
                     </div>
                   </div>
-
                   <div className="text-left">
-                    <p
-                      className={cn(
-                        "font-bold",
-                        transaction.type === "purchase"
-                          ? "text-blue-600"
-                          : transaction.type === "sale"
-                          ? "text-emerald-600"
-                          : "text-slate-800"
-                      )}
-                    >
-                      {transaction.type === "purchase" ? "+" : ""}
-                      {transaction.total.toLocaleString()} ج.م
+                    <p className={cn("font-bold", transaction.type === "purchase" ? "text-blue-600" : transaction.type === "sale" ? "text-emerald-600" : "text-slate-800")}>
+                      {transaction.type === "purchase" ? "+" : ""}{transaction.total.toLocaleString()} ج.م
                     </p>
-                    <p className="text-xs text-slate-400">
-                      {transaction.unit_price.toLocaleString()} ج.م / للوحدة
-                    </p>
+                    <p className="text-xs text-slate-400">{transaction.unit_price.toLocaleString()} ج.م / للوحدة</p>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-
         {filteredTransactions.length === 0 && (
           <div className="text-center py-16">
-            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-              <ArrowDownUp className="h-10 w-10 text-slate-300" />
-            </div>
+            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4"><ArrowDownUp className="h-10 w-10 text-slate-300" /></div>
             <h3 className="text-lg font-bold text-slate-600 mb-2">لا توجد حركات</h3>
             <p className="text-slate-500">لم يتم العثور على حركات مطابقة</p>
           </div>

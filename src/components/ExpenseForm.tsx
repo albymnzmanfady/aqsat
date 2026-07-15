@@ -74,7 +74,8 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
   };
 
   return (
-    <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-5">
+    <form onSubmit={handleSubmit} className="px-8 pb-2 space-y-4">
+      {/* الوصف - سطر كامل */}
       <div className="space-y-1.5">
         <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-slate-400" />
@@ -83,34 +84,34 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
         <Input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className={errors.description ? "border-red-300 focus-visible:ring-red-400/40" : ""}
+          className={errors.description ? "border-red-300 h-11" : "h-11"}
           placeholder="مثال: إيجار المحل"
         />
         {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
       </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
-          <Tag className="h-3.5 w-3.5 text-slate-400" />
-          الفئة
-        </Label>
-        <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className={errors.category ? "border-red-300 focus:ring-red-400/40" : ""}>
-            <SelectValue placeholder="اختر الفئة" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id.toString()}>
-                {cat.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
+      {/* الفئة + المبلغ + التاريخ في صف واحد */}
+      <div className="grid grid-cols-5 gap-3">
+        <div className="col-span-2 space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+            <Tag className="h-3.5 w-3.5 text-slate-400" />
+            الفئة
+          </Label>
+          <Select value={categoryId} onValueChange={setCategoryId}>
+            <SelectTrigger className={errors.category ? "border-red-300 h-11" : "h-11"}>
+              <SelectValue placeholder="اختر" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id.toString()}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
+        </div>
+        <div className="col-span-2 space-y-1.5">
           <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
             <DollarSign className="h-3.5 w-3.5 text-slate-400" />
             المبلغ
@@ -119,12 +120,12 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className={errors.amount ? "border-red-300 focus-visible:ring-red-400/40" : ""}
+            className={errors.amount ? "border-red-300 h-11" : "h-11"}
             placeholder="0"
           />
           {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
         </div>
-        <div className="space-y-1.5">
+        <div className="col-span-1 space-y-1.5">
           <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5 text-slate-400" />
             التاريخ
@@ -133,23 +134,24 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className={errors.date ? "border-red-300 focus-visible:ring-red-400/40" : ""}
+            className={errors.date ? "border-red-300 h-11" : "h-11"}
           />
           {errors.date && <p className="text-xs text-red-500">{errors.date}</p>}
         </div>
       </div>
 
+      {/* ملاحظات */}
       <div className="space-y-1.5">
         <Label className="text-sm font-medium text-slate-600">ملاحظات</Label>
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="resize-none"
-          rows={2}
+          className="resize-none h-16 rounded-xl"
           placeholder="ملاحظة اختيارية"
         />
       </div>
 
+      {/* صورة الإيصال */}
       <div className="space-y-1.5">
         <Label className="text-sm font-medium text-slate-600">صورة الإيصال (اختياري)</Label>
         <input
@@ -164,7 +166,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
             <img
               src={receiptImage}
               alt="إيصال"
-              className="h-32 rounded-2xl object-cover border border-slate-200"
+              className="h-24 rounded-2xl object-cover border border-slate-200"
             />
             <Button
               type="button"
@@ -180,7 +182,7 @@ const ExpenseForm = ({ categories, onSave, onCancel, initialData }: ExpenseFormP
           <Button
             type="button"
             variant="outline"
-            className="rounded-xl h-12 gap-2 border-dashed border-slate-300 text-slate-500 hover:text-violet-600 hover:border-violet-300 hover:bg-violet-50/50"
+            className="rounded-xl h-10 gap-2 border-dashed border-slate-300 text-slate-500 hover:text-violet-600 hover:border-violet-300 hover:bg-violet-50/50"
             onClick={() => fileInputRef.current?.click()}
           >
             <ImageIcon className="h-4 w-4" />

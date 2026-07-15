@@ -10,11 +10,11 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = path.join(dataDir, "app.db");
 const db = new Database(dbPath);
 
-// Enable WAL mode for better performance
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 export function initDatabase() {
+  // إنشاء الجداول الأساسية
   db.exec(`
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,11 +52,13 @@ export function initDatabase() {
       start_date TEXT NOT NULL,
       end_date TEXT NOT NULL,
       status TEXT DEFAULT 'active',
+      guarantor_id INTEGER DEFAULT NULL,
       guarantor_name TEXT DEFAULT '',
       guarantor_phone TEXT DEFAULT '',
       created_at TEXT DEFAULT (date('now')),
       FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+      FOREIGN KEY (guarantor_id) REFERENCES customers(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS installments (
@@ -119,13 +121,27 @@ export function initDatabase() {
       value TEXT NOT NULL
     );
   `);
+
+  // === ترقيات تلقائية للجداول القديمة ===
+  const contractColumns = db.prepare("PRAGMA table_info(contracts)").all() as any[];
+  const hasGuarantorId = contractColumns.some((col) => col.name === "guarantor_id");
+  
+  if (!hasGuarantorId) {
+    console.log("[db] 🔄 Upgrading contracts table: adding guarantor_id column...");
+    try {
+      db.exec("ALTER TABLE contracts ADD COLUMN guarantor_id INTEGER DEFAULT NULL");
+      // محاولة إضافة foreign key (لن يعمل في SQLite لكن لا مشكلة)
+      console.log("[db] ✅ guarantor_id column added successfully");
+    } catch (e: any) {
+      console.log("[db] ⚠️ guarantor_id migration skipped:", e.message);
+    }
+  }
 }
 
 export function seedDatabase() {
   const customerCount = db.prepare("SELECT COUNT(*) as count FROM customers").get() as any;
   if (customerCount.count > 0) return;
 
-  // Seed customers
   const insertCustomer = db.prepare(
     "INSERT INTO customers (name, phone, national_id, address, type, created_at) VALUES (?, ?, ?, ?, ?, ?)"
   );
@@ -139,11 +155,8 @@ export function seedDatabase() {
     ["حسن مصطفى", "01078901234", "78901234567890", "القاهرة", "guarantor", "2025-01-05"],
     ["كريم عبد الرحمن", "01089012345", "89012345678901", "الجيزة", "guarantor", "2025-02-01"],
   ];
-  for (const c of customers) {
-    insertCustomer.run(...c);
-  }
+  for (const c of customers) insertCustomer.run(...c);
 
-  // Seed products
   const insertProduct = db.prepare(
     "INSERT INTO products (name, category, unit, cost_price, selling_price, current_stock, min_stock, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   );
@@ -154,27 +167,21 @@ export function seedDatabase() {
     ["مكيف سبليت 1.5 حصان", "أجهزة كهربائية", "قطعة", 20000, 32000, 4, 2, "2025-01-01"],
     ["بوتاجاز 4 شعلات", "أجهزة كهربائية", "قطعة", 5000, 8500, 1, 3, "2025-01-01"],
   ];
-  for (const p of products) {
-    insertProduct.run(...p);
-  }
+  for (const p of products) insertProduct.run(...p);
 
-  // Seed contracts
   const insertContract = db.prepare(
-    `INSERT INTO contracts (customer_id, customer_name, customer_phone, product_type, product_id, total_price, down_payment, number_of_receipts, installment_amount, start_date, end_date, status, guarantor_name, guarantor_phone, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO contracts (customer_id, customer_name, customer_phone, product_type, product_id, total_price, down_payment, number_of_receipts, installment_amount, start_date, end_date, status, guarantor_id, guarantor_name, guarantor_phone, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const contracts = [
-    [1, "أحمد محمد", "01012345678", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-01-15", "2026-01-15", "active", "علي أحمد", "01067890123", "2025-01-15"],
-    [2, "محمود علي", "01023456789", "غسالة", 2, 18000, 3000, 10, 1500, "2025-02-01", "2025-12-01", "active", "حسن مصطفى", "01078901234", "2025-02-01"],
-    [3, "محمد إبراهيم", "01034567890", "تلفاز", 3, 12000, 2000, 8, 1250, "2025-02-15", "2025-10-15", "active", "كريم عبد الرحمن", "01089012345", "2025-02-15"],
-    [4, "خالد حسن", "01045678901", "مكيف", 4, 32000, 7000, 15, 1667, "2025-03-01", "2026-06-01", "active", "علي أحمد", "01067890123", "2025-03-01"],
-    [5, "سعيد عبد الله", "01056789012", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-03-01", "2026-03-01", "active", "حسن مصطفى", "01078901234", "2025-03-01"],
+    [1, "أحمد محمد", "01012345678", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-01-15", "2026-01-15", "active", 6, "علي أحمد", "01067890123", "2025-01-15"],
+    [2, "محمود علي", "01023456789", "غسالة", 2, 18000, 3000, 10, 1500, "2025-02-01", "2025-12-01", "active", 7, "حسن مصطفى", "01078901234", "2025-02-01"],
+    [3, "محمد إبراهيم", "01034567890", "تلفاز", 3, 12000, 2000, 8, 1250, "2025-02-15", "2025-10-15", "active", 8, "كريم عبد الرحمن", "01089012345", "2025-02-15"],
+    [4, "خالد حسن", "01045678901", "مكيف", 4, 32000, 7000, 15, 1667, "2025-03-01", "2026-06-01", "active", 6, "علي أحمد", "01067890123", "2025-03-01"],
+    [5, "سعيد عبد الله", "01056789012", "ثلاجة", 1, 25000, 5000, 12, 1667, "2025-03-01", "2026-03-01", "active", 7, "حسن مصطفى", "01078901234", "2025-03-01"],
   ];
-  for (const c of contracts) {
-    insertContract.run(...c);
-  }
+  for (const c of contracts) insertContract.run(...c);
 
-  // Seed installments
   const insertInstallment = db.prepare(
     "INSERT INTO installments (contract_id, number, amount, due_date, is_paid, paid_date, day, month, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
   );
@@ -189,11 +196,8 @@ export function seedDatabase() {
     [3, 2, 1250, "2025-04-15", 0, null, 15, 4, 2025],
     [4, 1, 1667, "2025-04-01", 0, null, 1, 4, 2025],
   ];
-  for (const i of installments) {
-    insertInstallment.run(...i);
-  }
+  for (const i of installments) insertInstallment.run(...i);
 
-  // Seed expense categories
   const insertCategory = db.prepare("INSERT INTO expense_categories (name, color) VALUES (?, ?)");
   const categories = [
     ["إيجار", "bg-cyan-100 text-cyan-700"],
@@ -204,11 +208,8 @@ export function seedDatabase() {
     ["مصاريف إدارية", "bg-slate-100 text-slate-700"],
     ["أخرى", "bg-gray-100 text-gray-700"],
   ];
-  for (const c of categories) {
-    insertCategory.run(...c);
-  }
+  for (const c of categories) insertCategory.run(...c);
 
-  // Seed expenses
   const insertExpense = db.prepare(
     "INSERT INTO expenses (description, category_id, amount, date, note, created_at) VALUES (?, ?, ?, ?, ?, ?)"
   );
@@ -226,23 +227,16 @@ export function seedDatabase() {
     ["صيانة سيارات النقل", 4, 2400, "2025-03-08", "تغيير زيت وفلتر", "2025-03-08"],
     ["مصروفات نثرية", 7, 500, "2025-03-10", "", "2025-03-10"],
   ];
-  for (const e of expenses) {
-    insertExpense.run(...e);
-  }
+  for (const e of expenses) insertExpense.run(...e);
 
-  // Seed users (admin, supervisor, collector)
-  const insertUser = db.prepare(
-    "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)"
-  );
+  const insertUser = db.prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
   const users = [
     ["محمد أحمد", "admin@system.com", "admin123", "admin"],
     ["خالد علي", "supervisor@system.com", "super123", "supervisor"],
     ["سامي حسن", "collector@system.com", "collect123", "collector"],
   ];
   for (const u of users) {
-    try {
-      insertUser.run(...u);
-    } catch {}
+    try { insertUser.run(...u); } catch {}
   }
 }
 

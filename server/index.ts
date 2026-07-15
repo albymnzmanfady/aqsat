@@ -39,14 +39,25 @@ app.post('/api/users/login', (req, res) => {
 
 // ========== 2. إدارة العملاء ==========
 app.get('/api/customers', (req, res) => {
-  const { search } = req.query;
+  const { search, type } = req.query;
   try {
-    let customers;
+    let query = 'SELECT * FROM customers';
+    const conditions: string[] = [];
+    const params: any[] = [];
+
     if (search) {
-      customers = db.prepare('SELECT * FROM customers WHERE name LIKE ? OR phone LIKE ? ORDER BY id DESC').all(`%${search}%`, `%${search}%`);
-    } else {
-      customers = db.prepare('SELECT * FROM customers ORDER BY id DESC').all();
+      conditions.push('(name LIKE ? OR phone LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
     }
+    if (type) {
+      conditions.push('type = ?');
+      params.push(type);
+    }
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    query += ' ORDER BY id DESC';
+    const customers = db.prepare(query).all(...params);
     res.json(customers);
   } catch (error: any) {
     res.status(500).json({ error: 'خطأ في تحميل العملاء: ' + error.message });
@@ -71,7 +82,6 @@ app.post('/api/customers', (req, res) => {
     const result = db.prepare(
       'INSERT INTO customers (name, phone, national_id, address, type, created_at) VALUES (?, ?, ?, ?, ?, ?)'
     ).run(name.trim(), phone.trim(), nationalId || '', address || '', type || 'customer', new Date().toISOString().split('T')[0]);
-    
     const newCustomer = db.prepare('SELECT * FROM customers WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(newCustomer);
   } catch (error: any) {
@@ -96,14 +106,12 @@ app.put('/api/customers/:id', (req, res) => {
 app.delete('/api/customers/:id', (req, res) => {
   try {
     const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id) as any;
-    if (!customer) {
-      return res.status(404).json({ error: 'العميل غير موجود' });
-    }
+    if (!customer) return res.status(404).json({ error: 'العميل غير موجود' });
     const activeContracts = db.prepare(
       "SELECT COUNT(*) as count FROM contracts WHERE customer_id = ? AND status = 'active'"
     ).get(req.params.id) as any;
     if (activeContracts && activeContracts.count > 0) {
-      return res.status(400).json({ error: `لا يمكن حذف هذا العميل لأنه يرتبط بـ ${activeContracts.count} عقد(عقود) نشطة. قم بإتمام أو حذف العقود أولاً.` });
+      return res.status(400).json({ error: `لا يمكن حذف هذا العميل لأنه يرتبط بـ ${activeContracts.count} عقد(عقود) نشطة.` });
     }
     db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
     res.json({ success: true });
@@ -178,7 +186,9 @@ app.get('/api/contracts', (req, res) => {
   try {
     let contracts;
     if (search) {
-      contracts = db.prepare('SELECT * FROM contracts WHERE customer_name LIKE ? OR product_type LIKE ? OR customer_phone LIKE ? ORDER BY id DESC').all(`%${search}%`, `%${search}%`, `%${search}%`);
+      contracts = db.prepare(
+        'SELECT * FROM contracts WHERE customer_name LIKE ? OR product_type LIKE ? OR customer_phone LIKE ? ORDER BY id DESC'
+      ).all(`%${search}%`, `%${search}%`, `%${search}%`);
     } else {
       contracts = db.prepare('SELECT * FROM contracts ORDER BY id DESC').all();
     }
@@ -199,7 +209,7 @@ app.get('/api/contracts/:id', (req, res) => {
 });
 
 app.post('/api/contracts', (req, res) => {
-  const { customerId, customerName, customerPhone, productType, productId, totalPrice, downPayment, numberOfReceipts, installmentAmount, startDate, endDate, guarantorName, guarantorPhone } = req.body;
+  const { customerId, customerName, customerPhone, productType, productId, totalPrice, downPayment, numberOfReceipts, installmentAmount, startDate, endDate, guarantorId, guarantorName, guarantorPhone } = req.body;
   
   if (!customerName || !customerName.trim()) return res.status(400).json({ error: 'اسم العميل مطلوب' });
   if (!customerPhone || !customerPhone.trim()) return res.status(400).json({ error: 'رقم هاتف العميل مطلوب' });
@@ -210,22 +220,31 @@ app.post('/api/contracts', (req, res) => {
   try {
     if (productId) {
       const product = db.prepare('SELECT current_stock FROM products WHERE id = ?').get(productId) as any;
-      if (!product) {
-        return res.status(400).json({ error: 'المنتج غير موجود' });
-      }
-      if (product.current_stock <= 0) {
-        return res.status(400).json({ error: 'المخزون غير متوفر لهذا المنتج' });
+      if (!product) return res.status(400).json({ error: 'المنتج غير موجود' });
+      if (product.current_stock <= 0) return res.status(400).json({ error: 'المخزون غير متوفر لهذا المنتج' });
+    }
+
+    // إذا تم اختيار ضامن، نجلب بياناته للحفظ في العقد
+    let finalGuarantorName = guarantorName || '';
+    let finalGuarantorPhone = guarantorPhone || '';
+    let finalGuarantorId = guarantorId || null;
+
+    if (finalGuarantorId) {
+      const guarantor = db.prepare('SELECT name, phone FROM customers WHERE id = ?').get(finalGuarantorId) as any;
+      if (guarantor) {
+        finalGuarantorName = guarantor.name;
+        finalGuarantorPhone = guarantor.phone;
       }
     }
 
     const dbTxn = db.transaction(() => {
       const result = db.prepare(
-        `INSERT INTO contracts (customer_id, customer_name, customer_phone, product_type, product_id, total_price, down_payment, number_of_receipts, installment_amount, start_date, end_date, status, guarantor_name, guarantor_phone, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO contracts (customer_id, customer_name, customer_phone, product_type, product_id, total_price, down_payment, number_of_receipts, installment_amount, start_date, end_date, status, guarantor_id, guarantor_name, guarantor_phone, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         customerId || null, customerName.trim(), customerPhone.trim(), productType.trim(), productId || null,
         totalPrice || 0, downPayment || 0, numberOfReceipts || 1, installmentAmount || 0,
-        startDate, endDate || startDate, 'active', guarantorName || '', guarantorPhone || '', new Date().toISOString().split('T')[0]
+        startDate, endDate || startDate, 'active', finalGuarantorId, finalGuarantorName, finalGuarantorPhone, new Date().toISOString().split('T')[0]
       );
 
       const contractId = result.lastInsertRowid;
@@ -260,14 +279,31 @@ app.post('/api/contracts', (req, res) => {
 });
 
 app.put('/api/contracts/:id', (req, res) => {
-  const { status, guarantorName, guarantorPhone } = req.body;
+  const { status, guarantorId, guarantorName, guarantorPhone } = req.body;
   try {
-    const existing = db.prepare('SELECT * FROM contracts WHERE id = ?').get(req.params.id);
-    if (!existing) {
-      return res.status(404).json({ error: 'العقد غير موجود' });
+    const existing = db.prepare('SELECT * FROM contracts WHERE id = ?').get(req.params.id) as any;
+    if (!existing) return res.status(404).json({ error: 'العقد غير موجود' });
+
+    // إذا تم اختيار ضامن جديد، نجلب بياناته
+    let finalGuarantorName = guarantorName || existing.guarantor_name || '';
+    let finalGuarantorPhone = guarantorPhone || existing.guarantor_phone || '';
+    let finalGuarantorId = guarantorId !== undefined ? guarantorId : existing.guarantor_id;
+
+    if (guarantorId && guarantorId !== existing.guarantor_id) {
+      if (guarantorId) {
+        const guarantor = db.prepare('SELECT name, phone FROM customers WHERE id = ?').get(guarantorId) as any;
+        if (guarantor) {
+          finalGuarantorName = guarantor.name;
+          finalGuarantorPhone = guarantor.phone;
+        }
+      } else {
+        finalGuarantorName = '';
+        finalGuarantorPhone = '';
+      }
     }
-    db.prepare('UPDATE contracts SET status = ?, guarantor_name = ?, guarantor_phone = ? WHERE id = ?')
-      .run(status || 'active', guarantorName || '', guarantorPhone || '', req.params.id);
+
+    db.prepare('UPDATE contracts SET status = ?, guarantor_id = ?, guarantor_name = ?, guarantor_phone = ? WHERE id = ?')
+      .run(status || 'active', finalGuarantorId, finalGuarantorName, finalGuarantorPhone, req.params.id);
     const updated = db.prepare('SELECT * FROM contracts WHERE id = ?').get(req.params.id);
     res.json(updated);
   } catch (error: any) {
@@ -278,20 +314,17 @@ app.put('/api/contracts/:id', (req, res) => {
 app.delete('/api/contracts/:id', (req, res) => {
   try {
     const contract = db.prepare('SELECT * FROM contracts WHERE id = ?').get(req.params.id) as any;
-    if (!contract) {
-      return res.status(404).json({ error: 'العقد غير موجود' });
-    }
+    if (!contract) return res.status(404).json({ error: 'العقد غير موجود' });
 
     const dbTxn = db.transaction(() => {
       if (contract.product_id) {
         db.prepare('UPDATE products SET current_stock = current_stock + 1 WHERE id = ?').run(contract.product_id);
         db.prepare(
           'INSERT INTO inventory_transactions (product_id, type, quantity, unit_price, total, date, reference, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        ).run(contract.product_id, 'return', 1, contract.total_price / contract.number_of_receipts, contract.total_price, new Date().toISOString().split('T')[0], `حذف عقد #${contract.id}`, `استرجاع مخزون بسبب حذف العقد - العميل: ${contract.customer_name}`, new Date().toISOString().split('T')[0]);
+        ).run(contract.product_id, 'return', 1, contract.total_price / contract.number_of_receipts, contract.total_price, new Date().toISOString().split('T')[0], `حذف عقد #${contract.id}`, `استرجاع مخزون due to contract deletion - العميل: ${contract.customer_name}`, new Date().toISOString().split('T')[0]);
       }
       db.prepare('DELETE FROM contracts WHERE id = ?').run(req.params.id);
     });
-
     dbTxn();
     res.json({ success: true });
   } catch (error: any) {
@@ -308,8 +341,7 @@ app.get('/api/installments', (req, res) => {
       installments = db.prepare('SELECT * FROM installments WHERE contract_id = ? AND is_paid = ? ORDER BY number ASC')
         .all(contractId, isPaid === 'true' ? 1 : 0);
     } else if (contractId) {
-      installments = db.prepare('SELECT * FROM installments WHERE contract_id = ? ORDER BY number ASC')
-        .all(contractId);
+      installments = db.prepare('SELECT * FROM installments WHERE contract_id = ? ORDER BY number ASC').all(contractId);
     } else {
       installments = db.prepare('SELECT * FROM installments ORDER BY id DESC').all();
     }
@@ -323,9 +355,7 @@ app.put('/api/installments/:id', (req, res) => {
   const { isPaid, paidDate } = req.body;
   try {
     const existing = db.prepare('SELECT * FROM installments WHERE id = ?').get(req.params.id);
-    if (!existing) {
-      return res.status(404).json({ error: 'القسط غير موجود' });
-    }
+    if (!existing) return res.status(404).json({ error: 'القسط غير موجود' });
     db.prepare('UPDATE installments SET is_paid = ?, paid_date = ? WHERE id = ?')
       .run(isPaid ? 1 : 0, paidDate || null, req.params.id);
     const updated = db.prepare('SELECT * FROM installments WHERE id = ?').get(req.params.id);
@@ -379,10 +409,8 @@ app.post('/api/inventory', (req, res) => {
       const result = db.prepare(
         'INSERT INTO inventory_transactions (product_id, type, quantity, unit_price, total, date, reference, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).run(productId, type, quantity, unitPrice, total, new Date().toISOString().split('T')[0], reference || '', notes || '', new Date().toISOString().split('T')[0]);
-
       const qtyChange = (type === 'purchase' || type === 'return') ? Math.abs(quantity) : -Math.abs(quantity);
       db.prepare('UPDATE products SET current_stock = MAX(0, current_stock + ?) WHERE id = ?').run(qtyChange, productId);
-
       return result.lastInsertRowid;
     });
 
@@ -415,21 +443,10 @@ app.get('/api/expenses', (req, res) => {
     `;
     const params: any[] = [];
     const conditions: string[] = [];
-
-    if (search) {
-      conditions.push('e.description LIKE ?');
-      params.push(`%${search}%`);
-    }
-    if (categoryId) {
-      conditions.push('e.category_id = ?');
-      params.push(categoryId);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+    if (search) { conditions.push('e.description LIKE ?'); params.push(`%${search}%`); }
+    if (categoryId) { conditions.push('e.category_id = ?'); params.push(categoryId); }
+    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
     query += ' ORDER BY e.id DESC';
-
     const expenses = db.prepare(query).all(...params);
     res.json(expenses);
   } catch (error: any) {
@@ -458,12 +475,9 @@ app.put('/api/expenses/:id', (req, res) => {
   const { description, categoryId, amount, date, note, receiptImage } = req.body;
   try {
     const existing = db.prepare('SELECT * FROM expenses WHERE id = ?').get(req.params.id);
-    if (!existing) {
-      return res.status(404).json({ error: 'المصروف غير موجود' });
-    }
-    db.prepare(
-      'UPDATE expenses SET description = ?, category_id = ?, amount = ?, date = ?, note = ?, receipt_image = ? WHERE id = ?'
-    ).run(description || '', categoryId || null, amount || 0, date || '', note || '', receiptImage || null, req.params.id);
+    if (!existing) return res.status(404).json({ error: 'المصروف غير موجود' });
+    db.prepare('UPDATE expenses SET description = ?, category_id = ?, amount = ?, date = ?, note = ?, receipt_image = ? WHERE id = ?')
+      .run(description || '', categoryId || null, amount || 0, date || '', note || '', receiptImage || null, req.params.id);
     const updated = db.prepare('SELECT * FROM expenses WHERE id = ?').get(req.params.id);
     res.json(updated);
   } catch (error: any) {
@@ -495,15 +509,10 @@ app.post('/api/users', (req, res) => {
   if (!name || !name.trim()) return res.status(400).json({ error: 'اسم المستخدم مطلوب' });
   if (!email || !email.trim()) return res.status(400).json({ error: 'البريد الإلكتروني مطلوب' });
   if (!password || password.length < 6) return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
-  
   try {
     const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim()) as any;
-    if (existing) {
-      return res.status(400).json({ error: 'البريد الإلكتروني مستخدم بالفعل' });
-    }
-    const result = db.prepare(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)'
-    ).run(name.trim(), email.trim(), password, role || 'collector');
+    if (existing) return res.status(400).json({ error: 'البريد الإلكتروني مستخدم بالفعل' });
+    const result = db.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run(name.trim(), email.trim(), password, role || 'collector');
     const newUser = db.prepare('SELECT id, name, email, role, avatar FROM users WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(newUser);
   } catch (error: any) {
@@ -517,16 +526,12 @@ app.put('/api/users/:id', (req, res) => {
   try {
     if (email) {
       const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.trim(), req.params.id) as any;
-      if (existing) {
-        return res.status(400).json({ error: 'البريد الإلكتروني مستخدم بالفعل لمستخدم آخر' });
-      }
+      if (existing) return res.status(400).json({ error: 'البريد الإلكتروني مستخدم بالفعل لمستخدم آخر' });
     }
     if (password) {
-      db.prepare('UPDATE users SET name = ?, email = ?, password = ?, role = ? WHERE id = ?')
-        .run(name.trim(), email?.trim() || '', password, role || 'collector', req.params.id);
+      db.prepare('UPDATE users SET name = ?, email = ?, password = ?, role = ? WHERE id = ?').run(name.trim(), email?.trim() || '', password, role || 'collector', req.params.id);
     } else {
-      db.prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?')
-        .run(name.trim(), email?.trim() || '', role || 'collector', req.params.id);
+      db.prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?').run(name.trim(), email?.trim() || '', role || 'collector', req.params.id);
     }
     const updated = db.prepare('SELECT id, name, email, role, avatar FROM users WHERE id = ?').get(req.params.id);
     res.json(updated);
@@ -541,9 +546,7 @@ app.put('/api/users/:id/password', (req, res) => {
   if (newPassword.length < 6) return res.status(400).json({ error: 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل' });
   try {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as any;
-    if (!user) {
-      return res.status(404).json({ error: 'المستخدم غير موجود' });
-    }
+    if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
     if (user.password === currentPassword) {
       db.prepare('UPDATE users SET password = ? WHERE id = ?').run(newPassword, req.params.id);
       res.json({ success: true });
@@ -558,14 +561,10 @@ app.put('/api/users/:id/password', (req, res) => {
 app.delete('/api/users/:id', (req, res) => {
   try {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as any;
-    if (!user) {
-      return res.status(404).json({ error: 'المستخدم غير موجود' });
-    }
+    if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
     if (user.role === 'admin') {
       const adminCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'").get() as any;
-      if (adminCount && adminCount.count <= 1) {
-        return res.status(400).json({ error: 'لا يمكن حذف آخر مدير في النظام' });
-      }
+      if (adminCount && adminCount.count <= 1) return res.status(400).json({ error: 'لا يمكن حذف آخر مدير في النظام' });
     }
     db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
     res.json({ success: true });
@@ -578,11 +577,7 @@ app.delete('/api/users/:id', (req, res) => {
 app.get('/api/settings/:key', (req, res) => {
   try {
     const row = db.prepare('SELECT value FROM app_settings WHERE key = ?').get(req.params.key) as any;
-    if (row) {
-      res.json(JSON.parse(row.value));
-    } else {
-      res.json(null);
-    }
+    res.json(row ? JSON.parse(row.value) : null);
   } catch (error: any) {
     res.status(500).json({ error: 'خطأ في تحميل الإعدادات: ' + error.message });
   }
@@ -590,32 +585,22 @@ app.get('/api/settings/:key', (req, res) => {
 
 app.put('/api/settings/:key', (req, res) => {
   try {
-    const valStr = JSON.stringify(req.body);
-    db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)')
-      .run(req.params.key, valStr);
+    db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)').run(req.params.key, JSON.stringify(req.body));
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: 'خطأ في حفظ الإعدادات: ' + error.message });
   }
 });
 
-// ========== 11. استيراد وتصدير النسخة الاحتياطية ==========
+// ========== 11. النسخة الاحتياطية ==========
 app.get('/api/backup/export', (req, res) => {
   try {
-    const tables = [
-      'customers', 'products', 'contracts', 'installments', 
-      'inventory_transactions', 'expense_categories', 'expenses', 
-      'users', 'app_settings'
-    ];
+    const tables = ['customers', 'products', 'contracts', 'installments', 'inventory_transactions', 'expense_categories', 'expenses', 'users', 'app_settings'];
     const data: Record<string, any> = {};
     for (const table of tables) {
       data[table] = db.prepare(`SELECT * FROM ${table}`).all();
     }
-    data._metadata = {
-      exportDate: new Date().toISOString(),
-      version: "1.0",
-      tablesCount: tables.length
-    };
+    data._metadata = { exportDate: new Date().toISOString(), version: "1.0", tablesCount: tables.length };
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename=aqsat-backup.json');
     res.json(data);
@@ -626,38 +611,20 @@ app.get('/api/backup/export', (req, res) => {
 
 app.post('/api/backup/import', (req, res) => {
   const data = req.body;
-  
-  if (!data || typeof data !== 'object') {
-    return res.status(400).json({ error: 'الملف غير صالح: البيانات غير مكتملة' });
-  }
-
-  const validTables = [
-    'customers', 'products', 'contracts', 'installments', 
-    'inventory_transactions', 'expense_categories', 'expenses', 
-    'users', 'app_settings'
-  ];
-
+  if (!data || typeof data !== 'object') return res.status(400).json({ error: 'الملف غير صالح' });
+  const validTables = ['customers', 'products', 'contracts', 'installments', 'inventory_transactions', 'expense_categories', 'expenses', 'users', 'app_settings'];
   const providedTables = Object.keys(data).filter(t => validTables.includes(t));
-  if (providedTables.length === 0) {
-    return res.status(400).json({ error: 'الملف لا يحتوي على جداول صالحة. تأكد من أن الملف تم تصديره من النظام.' });
-  }
-
+  if (providedTables.length === 0) return res.status(400).json({ error: 'الملف لا يحتوي على جداول صالحة' });
   if (data.contracts && Array.isArray(data.contracts)) {
-    for (const contract of data.contracts) {
-      if (!contract.customer_name || !contract.customer_phone) {
-        return res.status(400).json({ error: 'البيانات غير مكتملة: العقد يفتقر لبيانات العميل' });
-      }
+    for (const c of data.contracts) {
+      if (!c.customer_name || !c.customer_phone) return res.status(400).json({ error: 'البيانات غير مكتملة: العقد يفتقر لبيانات العميل' });
     }
   }
-
   if (data.users && Array.isArray(data.users)) {
-    for (const user of data.users) {
-      if (!user.email || !user.password) {
-        return res.status(400).json({ error: 'البيانات غير مكتملة: المستخدم يفتقر للبريد أو كلمة المرور' });
-      }
+    for (const u of data.users) {
+      if (!u.email || !u.password) return res.status(400).json({ error: 'البيانات غير مكتملة: المستخدم يفتقر للبريد أو كلمة المرور' });
     }
   }
-
   try {
     const dbTxn = db.transaction(() => {
       for (const table of validTables) {
@@ -668,8 +635,7 @@ app.post('/api/backup/import', (req, res) => {
             const placeholders = columns.map(() => '?').join(',');
             const stmt = db.prepare(`INSERT INTO ${table} (${columns.join(',')}) VALUES (${placeholders})`);
             for (const row of data[table]) {
-              const values = columns.map(col => row[col]);
-              stmt.run(...values);
+              stmt.run(...columns.map(col => row[col]));
             }
           }
         }
@@ -682,39 +648,25 @@ app.post('/api/backup/import', (req, res) => {
   }
 });
 
-// ========== 12. نقطة فحص صحة الخادم ==========
+// ========== 12. صحة الخادم ==========
 app.get('/api/health', (req, res) => {
   try {
     const customerCount = (db.prepare('SELECT COUNT(*) as count FROM customers').get() as any).count;
     const contractCount = (db.prepare('SELECT COUNT(*) as count FROM contracts').get() as any).count;
     const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as any).count;
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      data: {
-        customers: customerCount,
-        contracts: contractCount,
-        users: userCount,
-      }
-    });
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), data: { customers: customerCount, contracts: contractCount, users: userCount } });
   } catch (error: any) {
     res.status(500).json({ status: 'error', error: error.message });
   }
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  app.use('/', createProxyMiddleware({
-    target: 'http://localhost:8080',
-    changeOrigin: true,
-    ws: true,
-  }));
+  app.use('/', createProxyMiddleware({ target: 'http://localhost:8080', changeOrigin: true, ws: true }));
 } else {
   const distPath = path.join(process.cwd(), "dist");
   if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
+    app.get("*", (_req, res) => { res.sendFile(path.join(distPath, "index.html")); });
   }
 }
 

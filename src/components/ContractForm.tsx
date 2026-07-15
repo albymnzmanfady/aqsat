@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogFooter, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Calculator, Package, User, Shield, Plus } from "lucide-react";
+import { Sparkles, Calculator, Package, User, Shield, Plus, Percent } from "lucide-react";
 import { ApiCustomer, ApiProduct } from "@/lib/api";
 import { showSuccess, showError } from "@/utils/toast";
 import { api } from "@/lib/api";
@@ -29,21 +29,18 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
   const [showNewProductDialog, setShowNewProductDialog] = useState(false);
 
-  // نموذج ضامن جديد
   const [newGuarantorName, setNewGuarantorName] = useState("");
   const [newGuarantorPhone, setNewGuarantorPhone] = useState("");
   const [newGuarantorNationalId, setNewGuarantorNationalId] = useState("");
   const [newGuarantorAddress, setNewGuarantorAddress] = useState("");
   const [guarantorErrors, setGuarantorErrors] = useState<Record<string, string>>({});
 
-  // نموذج عميل جديد
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [newCustomerNationalId, setNewCustomerNationalId] = useState("");
   const [newCustomerAddress, setNewCustomerAddress] = useState("");
   const [customerErrors, setCustomerErrors] = useState<Record<string, string>>({});
 
-  // نموذج منتج جديد
   const [newProductName, setNewProductName] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("");
   const [newProductUnit, setNewProductUnit] = useState("قطعة");
@@ -60,6 +57,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
     numberOfReceipts: initialValues?.numberOfReceipts || "",
     startDate: new Date().toISOString().split("T")[0],
     guarantorId: "",
+    interestRate: "0",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -82,42 +80,37 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
   const selectedProduct = localProducts.find((p) => p.id === Number(formData.productId));
   const selectedCustomer = localCustomers.find((c) => c.id === Number(formData.customerId));
   const selectedGuarantor = localGuarantors.find((g) => g.id === Number(formData.guarantorId));
-  const total = selectedProduct?.selling_price || 0;
+  const basePrice = selectedProduct?.selling_price || 0;
+  const interestRate = Number(formData.interestRate) || 0;
+  const total = Math.round(basePrice * (1 + interestRate / 100));
   const down = Number(formData.downPayment) || 0;
   const receipts = Number(formData.numberOfReceipts) || 1;
   const installmentAmount = receipts > 0 ? Math.ceil((total - down) / receipts) : 0;
+  const interestAmount = total - basePrice;
 
-  // === تعامل مع اختيار العميل ===
   const handleCustomerSelect = (value: string) => {
     if (value === "new") { setShowNewCustomerDialog(true); return; }
     setFormData({ ...formData, customerId: value });
   };
 
-  // === تعامل مع اختيار الضامن (بدون حقول يدوية) ===
   const handleGuarantorSelect = (value: string) => {
     if (value === "new") { setShowNewGuarantorDialog(true); return; }
     setFormData({ ...formData, guarantorId: value });
   };
 
-  // === تعامل مع اختيار المنتج ===
   const handleProductSelect = (value: string) => {
     if (value === "new") { setShowNewProductDialog(true); return; }
     setFormData({ ...formData, productId: value });
   };
 
-  // === إضافة عميل جديد ===
-  const validateNewCustomer = () => {
+  const handleAddNewCustomer = async () => {
     const errs: Record<string, string> = {};
     if (!newCustomerName.trim()) errs.name = "الاسم مطلوب";
     if (!newCustomerPhone.trim() || !/^01[0-9]{9}$/.test(newCustomerPhone.replace(/\s/g, ""))) errs.phone = "رقم غير صحيح";
     if (!newCustomerNationalId.trim() || !/^[0-9]{14}$/.test(newCustomerNationalId.replace(/\s/g, ""))) errs.nationalId = "14 رقماً";
     if (!newCustomerAddress.trim()) errs.address = "العنوان مطلوب";
     setCustomerErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleAddNewCustomer = async () => {
-    if (!validateNewCustomer()) return;
+    if (Object.keys(errs).length > 0) return;
     try {
       const newCustomer = await api.customers.create({ name: newCustomerName.trim(), phone: newCustomerPhone.trim(), nationalId: newCustomerNationalId.trim(), address: newCustomerAddress.trim(), type: "customer" });
       setLocalCustomers((prev) => [...prev, newCustomer]);
@@ -128,18 +121,13 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
     } catch (e: any) { showError("خطأ: " + e.message); }
   };
 
-  // === إضافة ضامن جديد ===
-  const validateNewGuarantor = () => {
+  const handleAddNewGuarantor = async () => {
     const errs: Record<string, string> = {};
     if (!newGuarantorName.trim()) errs.name = "الاسم مطلوب";
     if (!newGuarantorPhone.trim() || !/^01[0-9]{9}$/.test(newGuarantorPhone.replace(/\s/g, ""))) errs.phone = "رقم غير صحيح";
     if (!newGuarantorNationalId.trim() || !/^[0-9]{14}$/.test(newGuarantorNationalId.replace(/\s/g, ""))) errs.nationalId = "14 رقماً";
     setGuarantorErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleAddNewGuarantor = async () => {
-    if (!validateNewGuarantor()) return;
+    if (Object.keys(errs).length > 0) return;
     try {
       const newGuarantor = await api.customers.create({ name: newGuarantorName.trim(), phone: newGuarantorPhone.trim(), nationalId: newGuarantorNationalId.trim(), address: newGuarantorAddress.trim(), type: "guarantor" });
       setLocalGuarantors((prev) => [...prev, newGuarantor]);
@@ -150,19 +138,14 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
     } catch (e: any) { showError("خطأ: " + e.message); }
   };
 
-  // === إضافة منتج جديد ===
-  const validateNewProduct = () => {
+  const handleAddNewProduct = async () => {
     const errs: Record<string, string> = {};
     if (!newProductName.trim()) errs.name = "اسم المنتج مطلوب";
     if (!newProductCategory.trim()) errs.category = "التصنيف مطلوب";
     if (!newProductCostPrice || Number(newProductCostPrice) <= 0) errs.costPrice = "سعر التكلفة غير صحيح";
     if (!newProductSellingPrice || Number(newProductSellingPrice) <= 0) errs.sellingPrice = "سعر البيع غير صحيح";
     setProductErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleAddNewProduct = async () => {
-    if (!validateNewProduct()) return;
+    if (Object.keys(errs).length > 0) return;
     try {
       const newProd = await api.products.create({ name: newProductName.trim(), category: newProductCategory.trim(), unit: newProductUnit.trim() || "قطعة", costPrice: Number(newProductCostPrice), sellingPrice: Number(newProductSellingPrice), currentStock: Number(newProductCurrentStock), minStock: Number(newProductMinStock) });
       setLocalProducts((prev) => [...prev, newProd]);
@@ -173,20 +156,19 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
     } catch (e: any) { showError("خطأ: " + e.message); }
   };
 
-  // === التحقق من صحة النموذج ===
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.customerId) newErrors.customerId = "اختر العميل";
     if (!formData.productId) newErrors.productId = "اختر المنتج";
     else if (selectedProduct && selectedProduct.current_stock <= 0) newErrors.productId = "غير متوفر";
-    if (Number(formData.downPayment) >= total && total > 0) newErrors.downPayment = "المقدم لا يساوي السعر";
+    if (down >= total && total > 0) newErrors.downPayment = "المقدم لا يمكن أن يساوي أو يزيد عن السعر";
     if (!formData.numberOfReceipts || Number(formData.numberOfReceipts) <= 0) newErrors.numberOfReceipts = "1 على الأقل";
     if (!formData.startDate) newErrors.startDate = "تاريخ البدء مطلوب";
+    if (interestRate < 0 || interestRate > 100) newErrors.interestRate = "من 0% إلى 100%";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // === إرسال النموذج ===
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduct || !validate()) return;
@@ -199,8 +181,11 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
       customerPhone: customer?.phone || "",
       productType: selectedProduct.name,
       productId: selectedProduct.id,
-      totalPrice: selectedProduct.selling_price,
-      downPayment: Number(formData.downPayment),
+      basePrice: basePrice,
+      totalPrice: total,
+      interestRate: interestRate,
+      interestAmount: interestAmount,
+      downPayment: down,
       numberOfReceipts: Number(formData.numberOfReceipts),
       installmentAmount,
       startDate: formData.startDate,
@@ -237,23 +222,21 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
         {/* اختيار الضامن */}
         <div className="border-t border-slate-100 pt-4">
           <div className="flex items-center gap-2 mb-3"><Shield className="h-4 w-4 text-slate-400" /><p className="text-sm font-semibold text-slate-600">بيانات الضامن (اختياري)</p></div>
-          <div className="space-y-3">
-            <Select value={formData.guarantorId} onValueChange={handleGuarantorSelect}>
-              <SelectTrigger><SelectValue placeholder="اختر ضامن من القائمة" /></SelectTrigger>
-              <SelectContent>
-                {localGuarantors.filter((g) => g.type === "guarantor").map((g) => <SelectItem key={g.id} value={g.id.toString()}>{g.name} - {g.phone}</SelectItem>)}
-                <SelectItem value="new"><div className="flex items-center gap-2 text-violet-600 font-semibold"><Plus className="h-3.5 w-3.5" />ضامن جديد</div></SelectItem>
-              </SelectContent>
-            </Select>
-            {selectedGuarantor && (
-              <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">{selectedGuarantor.name.charAt(0)}</div>
-                  <div><p className="font-semibold text-sm text-slate-700">{selectedGuarantor.name}</p><p className="text-xs text-slate-500">{selectedGuarantor.phone}</p></div>
-                </div>
+          <Select value={formData.guarantorId} onValueChange={handleGuarantorSelect}>
+            <SelectTrigger><SelectValue placeholder="اختر ضامن من القائمة" /></SelectTrigger>
+            <SelectContent>
+              {localGuarantors.filter((g) => g.type === "guarantor").map((g) => <SelectItem key={g.id} value={g.id.toString()}>{g.name} - {g.phone}</SelectItem>)}
+              <SelectItem value="new"><div className="flex items-center gap-2 text-violet-600 font-semibold"><Plus className="h-3.5 w-3.5" />ضامن جديد</div></SelectItem>
+            </SelectContent>
+          </Select>
+          {selectedGuarantor && (
+            <div className="mt-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">{selectedGuarantor.name.charAt(0)}</div>
+                <div><p className="font-semibold text-sm text-slate-700">{selectedGuarantor.name}</p><p className="text-xs text-slate-500">{selectedGuarantor.phone}</p></div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* اختيار المنتج */}
@@ -267,6 +250,48 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
             </SelectContent>
           </Select>
           {errors.productId && <p className="text-xs text-red-500">{errors.productId}</p>}
+          {selectedProduct && (
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">سعر المنتج الأصلي</span>
+                <span className="font-bold text-slate-800">{basePrice.toLocaleString()} ج.م</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* نسبة الفائدة */}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+            <Percent className="h-3.5 w-3.5 text-amber-500" />
+            نسبة الفائدة المضافة (اختياري)
+          </Label>
+          <div className="relative">
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              value={formData.interestRate}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || (Number(val) >= 0 && Number(val) <= 100)) {
+                  setFormData({ ...formData, interestRate: val });
+                }
+              }}
+              placeholder="0"
+              className="pl-8"
+            />
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-semibold">%</span>
+          </div>
+          {errors.interestRate && <p className="text-xs text-red-500">{errors.interestRate}</p>}
+          {interestRate > 0 && (
+            <div className="p-2 bg-amber-50/80 border border-amber-100 rounded-xl">
+              <p className="text-xs text-amber-700 text-center">
+                إضافة <span className="font-bold">{interestRate}%</span> = <span className="font-bold">+{interestAmount.toLocaleString()} ج.م</span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* الحقول المالية */}
@@ -278,14 +303,40 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
         <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">تاريخ البدء</Label><Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className={errors.startDate ? "border-red-300" : ""} />{errors.startDate && <p className="text-xs text-red-500">{errors.startDate}</p>}</div>
 
         {/* الملخص */}
-        {installmentAmount > 0 && selectedProduct && (
+        {selectedProduct && total > 0 && (
           <div className="p-5 bg-gradient-to-br from-violet-50 via-purple-50/80 to-indigo-50 rounded-2xl border border-violet-100">
-            <div className="flex items-center gap-2 mb-3"><div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center"><Calculator className="h-4 w-4 text-white" /></div><span className="text-sm font-bold text-violet-700">ملخص</span></div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-white/60 rounded-xl p-3 border border-violet-100/50"><p className="text-xs text-slate-500">السعر</p><p className="font-bold text-slate-800">{total.toLocaleString()} ج.م</p></div>
-              <div className="bg-white/60 rounded-xl p-3 border border-violet-100/50"><p className="text-xs text-slate-500">المتبقي</p><p className="font-bold text-slate-800">{(total - down).toLocaleString()} ج.م</p></div>
-              <div className="bg-violet-100/50 rounded-xl p-3 border border-violet-200/50"><p className="text-xs text-violet-600">القسط الشهري</p><p className="font-bold text-violet-700">{installmentAmount.toLocaleString()} ج.م</p></div>
-              <div className="bg-white/60 rounded-xl p-3 border border-violet-100/50"><p className="text-xs text-slate-500">العدد</p><p className="font-bold text-slate-800">{receipts} قسط</p></div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center"><Calculator className="h-4 w-4 text-white" /></div>
+              <span className="text-sm font-bold text-violet-700">ملخص العقد المالي</span>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between p-2 bg-white/60 rounded-xl border border-violet-100/50">
+                <span className="text-xs text-slate-500">سعر المنتج الأصلي</span>
+                <span className="font-bold text-slate-800">{basePrice.toLocaleString()} ج.م</span>
+              </div>
+              {interestRate > 0 && (
+                <div className="flex items-center justify-between p-2 bg-amber-50/60 rounded-xl border border-amber-100/50">
+                  <span className="text-xs text-amber-600">إضافة فائدة ({interestRate}%)</span>
+                  <span className="font-bold text-amber-600">+{interestAmount.toLocaleString()} ج.م</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between p-2 bg-white/60 rounded-xl border border-violet-100/50">
+                <span className="text-xs text-slate-500">السعر الإجمالي</span>
+                <span className="font-extrabold text-violet-700">{total.toLocaleString()} ج.م</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-white/60 rounded-xl border border-violet-100/50">
+                <span className="text-xs text-slate-500">المقدم</span>
+                <span className="font-bold text-slate-800">{down.toLocaleString()} ج.م</span>
+              </div>
+              <div className="h-px bg-violet-200/50" />
+              <div className="flex items-center justify-between p-2 bg-violet-100/50 rounded-xl border border-violet-200/50">
+                <span className="text-xs text-violet-600 font-semibold">المتبقي للسداد</span>
+                <span className="font-bold text-violet-700">{(total - down).toLocaleString()} ج.م</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-xl border border-violet-200/50">
+                <span className="text-xs text-violet-600 font-bold">القسط الشهري × {receipts} شهر</span>
+                <span className="font-extrabold text-lg text-violet-700">{installmentAmount.toLocaleString()} ج.م</span>
+              </div>
             </div>
           </div>
         )}

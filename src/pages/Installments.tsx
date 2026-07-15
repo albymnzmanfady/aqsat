@@ -54,7 +54,7 @@ const Installments = () => {
       setInstallments(inst);
       setContracts(cont);
     } catch (e: any) {
-      showError("خطأ: " + e.message);
+      showError("خطأ في تحميل بيانات الأقساط: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,6 @@ const Installments = () => {
     return d;
   }, []);
 
-  // فلترة الأقساط حسب النوع
   const filteredInstallments = useMemo(() => {
     return installments.filter((i) => {
       if (activeFilter === "pending") return !i.is_paid;
@@ -82,7 +81,6 @@ const Installments = () => {
     });
   }, [installments, activeFilter, today]);
 
-  // تجميع الأقساط حسب العقد
   const groupedByContract = useMemo(() => {
     const groups: Record<number, { contract: ApiContract; installments: ApiInstallment[] }> = {};
 
@@ -98,7 +96,6 @@ const Installments = () => {
       }
     });
 
-    // ترتيب حسب عدد الأقساط غير المدفوعة (الأكثر أقساط غير مدفوعة أولاً)
     return Object.values(groups).sort((a, b) => {
       const aUnpaid = a.installments.filter((i) => !i.is_paid).length;
       const bUnpaid = b.installments.filter((i) => !i.is_paid).length;
@@ -106,7 +103,6 @@ const Installments = () => {
     });
   }, [filteredInstallments, contracts]);
 
-  // فلترة حسب البحث
   const searchedGroups = useMemo(() => {
     if (!searchQuery.trim()) return groupedByContract;
     const q = searchQuery.toLowerCase();
@@ -118,7 +114,6 @@ const Installments = () => {
     );
   }, [groupedByContract, searchQuery]);
 
-  // إحصائيات
   const stats = useMemo(() => {
     const total = filteredInstallments.length;
     const paid = filteredInstallments.filter((i) => i.is_paid).length;
@@ -196,10 +191,10 @@ const Installments = () => {
         isPaid: type === "pay",
         paidDate: type === "pay" ? new Date().toISOString().split("T")[0] : null,
       });
-      showSuccess(type === "pay" ? "✅ تم تسجيل السداد" : "✅ تم إلغاء السداد");
+      showSuccess(type === "pay" ? "✅ تم تسجيل السداد بنجاح" : "✅ تم إلغاء السداد");
       fetchData();
     } catch (e: any) {
-      showError("خطأ: " + e.message);
+      showError("خطأ في تسجيل السداد: " + e.message);
     }
     setConfirmDialog(null);
   };
@@ -209,17 +204,21 @@ const Installments = () => {
     if (!contract) return;
     const config = getWhatsAppConfig();
     if (!config.endpoint) {
-      showError("يرجى إعداد واتساب من الإعدادات");
+      showError("يرجى إعداد واتساب من صفحة الإعدادات أولاً");
       return;
     }
     setSendingId(installment.id);
-    const dueDate = `${installment.day}/${installment.month}/${installment.year}`;
-    const message = installment.is_paid
-      ? MESSAGE_TEMPLATES.installmentPaid(contract.customer_name, installment.amount, dueDate, installment.number)
-      : MESSAGE_TEMPLATES.installmentDue(contract.customer_name, installment.amount, dueDate, installment.number);
-    const result = await sendWhatsAppMessage(contract.customer_phone, message, config);
-    if (result.success) showSuccess("✅ تم إرسال الإشعار");
-    else showError(result.message);
+    try {
+      const dueDate = `${installment.day}/${installment.month}/${installment.year}`;
+      const message = installment.is_paid
+        ? MESSAGE_TEMPLATES.installmentPaid(contract.customer_name, installment.amount, dueDate, installment.number)
+        : MESSAGE_TEMPLATES.installmentDue(contract.customer_name, installment.amount, dueDate, installment.number);
+      const result = await sendWhatsAppMessage(contract.customer_phone, message, config);
+      if (result.success) showSuccess("✅ تم إرسال الإشعار بنجاح");
+      else showError(result.message);
+    } catch (e: any) {
+      showError("خطأ في إرسال الإشعار: " + e.message);
+    }
     setSendingId(null);
   };
 
@@ -233,8 +232,9 @@ const Installments = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center py-32">
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
           <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">جاري تحميل بيانات الأقساط...</p>
         </div>
       </Layout>
     );
@@ -357,20 +357,10 @@ const Installments = () => {
               </button>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={expandAll}
-            className="rounded-xl h-12 px-4 text-xs"
-          >
+          <Button variant="outline" size="sm" onClick={expandAll} className="rounded-xl h-12 px-4 text-xs">
             فتح الكل
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={collapseAll}
-            className="rounded-xl h-12 px-4 text-xs"
-          >
+          <Button variant="outline" size="sm" onClick={collapseAll} className="rounded-xl h-12 px-4 text-xs">
             إغلاق الكل
           </Button>
         </div>
@@ -412,7 +402,6 @@ const Installments = () => {
                 hasOverdue && unpaidInGroup > 0 && "ring-1 ring-rose-200 dark:ring-rose-900/50"
               )}
             >
-              {/* رأس العقد - قابل للضغط */}
               <button
                 onClick={() => toggleContract(contract.id)}
                 className="w-full p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all duration-200 cursor-pointer active:scale-[0.99]"
@@ -482,7 +471,6 @@ const Installments = () => {
                 </div>
               </button>
 
-              {/* قائمة الأقساط المنسدلة */}
               <div className={cn(
                 "overflow-hidden transition-all duration-300 ease-in-out",
                 isExpanded ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
@@ -505,7 +493,7 @@ const Installments = () => {
                           key={inst.id}
                           className={cn(
                             "flex items-center justify-between p-3.5 px-4 border-b border-slate-50 dark:border-slate-800/50 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors",
-                            isOverdue && "bg-rose-50/30 dark:bg-rose-950/10 border-r-3 border-r-rose-400"
+                            isOverdue && "bg-rose-50/30 dark:bg-rose-950/10 border-r-[3px] border-r-rose-400"
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -516,7 +504,7 @@ const Installments = () => {
                               {inst.number}
                             </div>
                             <div>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className="font-semibold text-sm text-slate-700 dark:text-slate-200">
                                   {inst.amount.toLocaleString()} ج.م
                                 </p>
@@ -544,6 +532,7 @@ const Installments = () => {
                                 size="sm"
                                 className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-700 active:scale-90"
                                 onClick={() => handlePrintReceipt(inst, contract)}
+                                title="طباعة الإيصال"
                               >
                                 <Printer className="h-3.5 w-3.5" />
                               </Button>
@@ -554,6 +543,7 @@ const Installments = () => {
                               className="h-8 w-8 p-0 rounded-lg text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-700 active:scale-90"
                               onClick={() => handleSendReminder(inst)}
                               disabled={sendingId === inst.id}
+                              title="إرسال تذكير واتساب"
                             >
                               {sendingId === inst.id ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

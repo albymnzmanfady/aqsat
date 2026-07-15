@@ -41,7 +41,6 @@ const CalculatorPage = () => {
   const [printOpen, setPrintOpen] = useState(false);
   const [printHtml, setPrintHtml] = useState("");
 
-  // ===== Calculations =====
   const calculations = useMemo(() => {
     const principal = Math.max(0, productPrice - downPayment);
     const totalInterest = Math.round(principal * (interestRate / 100) * (months / 12));
@@ -57,17 +56,12 @@ const CalculatorPage = () => {
       schedule.push({
         number: i,
         amount: monthlyInstallment,
-        principal: Math.round(principal / months),
-        interest: Math.round(totalInterest / months),
-        balance: Math.round(principal - (principal / months) * i + (totalInterest - totalInterest / months * i)),
         date: dueDate.toLocaleDateString("ar-EG", { day: 'numeric', month: 'short' })
       });
     }
-
     return { principal, totalInterest, totalPayback, monthlyInstallment, downPaymentPercent, schedule };
   }, [productPrice, downPayment, interestRate, months]);
 
-  // ===== Scenarios =====
   const scenarios = useMemo<Scenario[]>(() => {
     const principal = Math.max(0, productPrice - downPayment);
     const options = [
@@ -98,7 +92,6 @@ const CalculatorPage = () => {
     setSelectedScenario(scenario.months);
   };
 
-  // ===== Print =====
   const handlePrintQuote = () => {
     const rows = calculations.schedule
       .map((inst) => `
@@ -163,7 +156,7 @@ const CalculatorPage = () => {
 
   return (
     <Layout>
-      {/* ===== Header ===== */}
+      {/* Header */}
       <div className="flex items-center gap-4 mb-6 page-enter-animation">
         <div className="w-14 h-14 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30">
           <Calculator className="h-7 w-7 text-white" />
@@ -182,7 +175,7 @@ const CalculatorPage = () => {
         </div>
       </div>
 
-      {/* ===== بطاقات الملخص العلوية ===== */}
+      {/* بطاقات الملخص العلوية */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="p-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white relative overflow-hidden">
           <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/10 rounded-full" />
@@ -208,129 +201,61 @@ const CalculatorPage = () => {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-6">
-        {/* ===== العمود الأيسر: المحددات + السيناريوهات ===== */}
+        {/* العمود الأيسر */}
         <div className="lg:col-span-7 space-y-5">
-          {/* محددات التمويل Compact */}
+          {/* محددات التمويل */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-5">
                 <Sparkles className="h-4 w-4 text-violet-500" />
                 <h3 className="font-bold text-sm text-slate-800">محددات التمويل</h3>
               </div>
-
-              {/* الشبكة: 4 محددات في صفوف مزدوجة */}
               <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
-                {/* سعر المنتج */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                      <DollarSign className="h-3.5 w-3.5 text-violet-500" />
-                      سعر المنتج
-                    </Label>
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5 text-violet-500" />سعر المنتج</Label>
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={productPrice}
-                        onChange={(e) => {
-                          const v = Number(e.target.value);
-                          if (v >= 0) {
-                            setProductPrice(v);
-                            if (downPayment > v) setDownPayment(v);
-                          }
-                        }}
-                        className="w-28 h-8 text-center text-sm font-bold rounded-lg border-violet-200 focus-visible:ring-violet-500"
-                      />
+                      <Input type="number" value={productPrice} onChange={(e) => { const v = Number(e.target.value); if (v >= 0) { setProductPrice(v); if (downPayment > v) setDownPayment(v); } }} className="w-28 h-8 text-center text-sm font-bold rounded-lg border-violet-200 focus-visible:ring-violet-500" />
                       <span className="text-xs text-slate-400">ج.م</span>
                     </div>
                   </div>
-                  <Slider
-                    min={1000} max={200000} step={500}
-                    value={[productPrice]}
-                    onValueChange={(val) => { setProductPrice(val[0]); if (downPayment > val[0]) setDownPayment(val[0]); }}
-                    className="[&>span:first-child]:bg-violet-100 [&>span_span]:bg-violet-600"
-                  />
+                  <Slider min={1000} max={200000} step={500} value={[productPrice]} onValueChange={(val) => { setProductPrice(val[0]); if (downPayment > val[0]) setDownPayment(val[0]); }} className="[&>span:first-child]:bg-violet-100 [&>span_span]:bg-violet-600" />
                 </div>
-
-                {/* المقدم */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                      <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
-                      الدفعة المقدمة
-                    </Label>
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5 text-emerald-500" />الدفعة المقدمة</Label>
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={downPayment}
-                        onChange={(e) => { const v = Number(e.target.value); if (v >= 0 && v <= productPrice) setDownPayment(v); }}
-                        className="w-28 h-8 text-center text-sm font-bold rounded-lg border-emerald-200 focus-visible:ring-emerald-500"
-                      />
+                      <Input type="number" value={downPayment} onChange={(e) => { const v = Number(e.target.value); if (v >= 0 && v <= productPrice) setDownPayment(v); }} className="w-28 h-8 text-center text-sm font-bold rounded-lg border-emerald-200 focus-visible:ring-emerald-500" />
                       <span className="text-[10px] text-slate-400 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">{calculations.downPaymentPercent}%</span>
                     </div>
                   </div>
-                  <Slider
-                    min={0} max={productPrice} step={100}
-                    value={[downPayment]}
-                    onValueChange={(val) => setDownPayment(val[0])}
-                    className="[&>span:first-child]:bg-emerald-100 [&>span_span]:bg-emerald-500"
-                  />
+                  <Slider min={0} max={productPrice} step={100} value={[downPayment]} onValueChange={(val) => setDownPayment(val[0])} className="[&>span:first-child]:bg-emerald-100 [&>span_span]:bg-emerald-500" />
                 </div>
-
-                {/* الفائدة */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                      <Percent className="h-3.5 w-3.5 text-amber-500" />
-                      نسبة الفائدة السنوية
-                    </Label>
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><Percent className="h-3.5 w-3.5 text-amber-500" />نسبة الفائدة السنوية</Label>
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={interestRate}
-                        onChange={(e) => { const v = Number(e.target.value); if (v >= 0 && v <= 100) setInterestRate(v); }}
-                        className="w-20 h-8 text-center text-sm font-bold rounded-lg border-amber-200 focus-visible:ring-amber-500"
-                        step="0.5"
-                      />
+                      <Input type="number" value={interestRate} onChange={(e) => { const v = Number(e.target.value); if (v >= 0 && v <= 100) setInterestRate(v); }} className="w-20 h-8 text-center text-sm font-bold rounded-lg border-amber-200 focus-visible:ring-amber-500" step="0.5" />
                       <span className="text-xs text-slate-400">% سنوياً</span>
                     </div>
                   </div>
-                  <Slider
-                    min={0} max={50} step={0.5}
-                    value={[interestRate]}
-                    onValueChange={(val) => setInterestRate(val[0])}
-                    className="[&>span:first-child]:bg-amber-100 [&>span_span]:bg-amber-500"
-                  />
+                  <Slider min={0} max={50} step={0.5} value={[interestRate]} onValueChange={(val) => setInterestRate(val[0])} className="[&>span:first-child]:bg-amber-100 [&>span_span]:bg-amber-500" />
                 </div>
-
-                {/* المدة */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                      فترة السداد
-                    </Label>
+                    <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-blue-500" />فترة السداد</Label>
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={months}
-                        onChange={(e) => { const v = Number(e.target.value); if (v >= 1 && v <= 60) { setMonths(v); setSelectedScenario(null); } }}
-                        className="w-20 h-8 text-center text-sm font-bold rounded-lg border-blue-200 focus-visible:ring-blue-500"
-                      />
+                      <Input type="number" value={months} onChange={(e) => { const v = Number(e.target.value); if (v >= 1 && v <= 60) { setMonths(v); setSelectedScenario(null); } }} className="w-20 h-8 text-center text-sm font-bold rounded-lg border-blue-200 focus-visible:ring-blue-500" />
                       <span className="text-xs text-slate-400">شهر</span>
                     </div>
                   </div>
-                  <Slider
-                    min={3} max={48} step={1}
-                    value={[months]}
-                    onValueChange={(val) => { setMonths(val[0]); setSelectedScenario(null); }}
-                    className="[&>span:first-child]:bg-blue-100 [&>span_span]:bg-blue-600"
-                  />
+                  <Slider min={3} max={48} step={1} value={[months]} onValueChange={(val) => { setMonths(val[0]); setSelectedScenario(null); }} className="[&>span:first-child]:bg-blue-100 [&>span_span]:bg-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* ===== مقارنة السيناريوهات ===== */}
+          {/* مقارنة السيناريوهات */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
@@ -338,244 +263,155 @@ const CalculatorPage = () => {
                   <GitCompareArrows className="h-4 w-4 text-indigo-500" />
                   <h3 className="font-bold text-sm text-slate-800">مقارنة السيناريوهات</h3>
                 </div>
-                <Badge className="bg-indigo-50 text-indigo-600 border-0 rounded-lg text-[10px]">
-                  <Zap className="h-3 w-3 ml-0.5" />
-                  اضغط للتطبيق
-                </Badge>
+                <Badge className="bg-indigo-50 text-indigo-600 border-0 rounded-lg text-[10px]"><Zap className="h-3 w-3 ml-0.5" />اضغط للتطبيق</Badge>
               </div>
-
               <div className="grid grid-cols-3 gap-3">
                 {scenarios.map((scenario) => {
                   const isCurrent = selectedScenario === scenario.months;
                   const isBestInterest = bestScenario?.months === scenario.months;
                   const isCheapest = cheapestScenario?.months === scenario.months;
                   return (
-                    <button
-                      key={scenario.months}
-                      onClick={() => applyScenario(scenario)}
-                      className={cn(
-                        "relative p-4 rounded-2xl transition-all duration-200 border-2 active:scale-[0.97] text-center",
-                        isCurrent
-                          ? "bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-300 shadow-md"
-                          : "bg-white border-slate-100 hover:border-violet-200 hover:bg-violet-50/30"
-                      )}
-                    >
-                      {isCurrent && (
-                        <div className="absolute top-2 left-2">
-                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-                            <CheckCircle2 className="h-3 w-3 text-white" />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* الشارات */}
+                    <button key={scenario.months} onClick={() => applyScenario(scenario)}
+                      className={cn("relative p-4 rounded-2xl transition-all duration-200 border-2 active:scale-[0.97] text-center",
+                        isCurrent ? "bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-300 shadow-md" : "bg-white border-slate-100 hover:border-violet-200 hover:bg-violet-50/30")}>
+                      {isCurrent && <div className="absolute top-2 left-2"><div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center"><CheckCircle2 className="h-3 w-3 text-white" /></div></div>}
                       <div className="flex justify-center gap-1 mb-2 min-h-[18px]">
-                        {isBestInterest && (
-                          <span className="text-[8px] font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">
-                            أقل فوائد
-                          </span>
-                        )}
-                        {isCheapest && !isBestInterest && (
-                          <span className="text-[8px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full">
-                            أخف قسط
-                          </span>
-                        )}
+                        {isBestInterest && <span className="text-[8px] font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">أقل فوائد</span>}
+                        {isCheapest && !isBestInterest && <span className="text-[8px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full">أخف قسط</span>}
                       </div>
-
-                      <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all",
-                        isCurrent
-                          ? "bg-gradient-to-br from-violet-500 to-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-500"
-                      )}>
-                        <Clock className="h-5 w-5" />
-                      </div>
-
-                      <p className={cn("font-extrabold text-base mb-0.5", isCurrent ? "text-violet-700" : "text-slate-800")}>
-                        {scenario.label}
-                      </p>
+                      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all",
+                        isCurrent ? "bg-gradient-to-br from-violet-500 to-indigo-600 text-white" : "bg-slate-100 text-slate-500")}><Clock className="h-5 w-5" /></div>
+                      <p className={cn("font-extrabold text-base mb-0.5", isCurrent ? "text-violet-700" : "text-slate-800")}>{scenario.label}</p>
                       <p className="text-[9px] text-slate-400 mb-3">{scenario.tag}</p>
-
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-500">القسط</span>
-                          <span className={cn("font-extrabold", isCurrent ? "text-violet-700" : "text-slate-800")}>
-                            {scenario.monthly.toLocaleString()}
-                          </span>
-                        </div>
+                        <div className="flex items-center justify-between text-[11px]"><span className="text-slate-500">القسط</span><span className={cn("font-extrabold", isCurrent ? "text-violet-700" : "text-slate-800")}>{scenario.monthly.toLocaleString()}</span></div>
                         <div className="h-px bg-slate-100" />
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-500">الفوائد</span>
-                          <span className="font-bold text-rose-500">
-                            {scenario.totalInterest.toLocaleString()}
-                          </span>
-                        </div>
+                        <div className="flex items-center justify-between text-[11px]"><span className="text-slate-500">الفوائد</span><span className="font-bold text-rose-500">{scenario.totalInterest.toLocaleString()}</span></div>
                         <div className="h-px bg-slate-100" />
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-500">الإجمالي</span>
-                          <span className="font-extrabold text-slate-800">
-                            {scenario.totalPayback.toLocaleString()}
-                          </span>
-                        </div>
+                        <div className="flex items-center justify-between text-[11px]"><span className="text-slate-500">الإجمالي</span><span className="font-extrabold text-slate-800">{scenario.totalPayback.toLocaleString()}</span></div>
                       </div>
-
-                      {!isBestInterest && bestScenario && (
-                        <p className="mt-2 text-[9px] text-rose-400">
-                          +{(scenario.totalInterest - bestScenario.totalInterest).toLocaleString()} فوائد إضافية
-                        </p>
-                      )}
+                      {!isBestInterest && bestScenario && <p className="mt-2 text-[9px] text-rose-400">+{(scenario.totalInterest - bestScenario.totalInterest).toLocaleString()} فوائد إضافية</p>}
                     </button>
                   );
                 })}
               </div>
-
-              {/* ملخص سريع */}
               <div className="mt-3 p-2.5 bg-slate-50 rounded-xl flex items-center justify-between text-[11px] text-slate-500">
                 <div className="flex items-center gap-1.5">
                   <Info className="h-3.5 w-3.5 text-blue-500" />
-                  الفرق بين الأقل والأعلى فوائد:
-                  <strong className="text-rose-600">
-                    {scenarios.length >= 2
-                      ? `${(Math.max(...scenarios.map(s => s.totalInterest)) - Math.min(...scenarios.map(s => s.totalInterest))).toLocaleString()} ج.م`
-                      : "—"}
-                  </strong>
+                  الفرق بين الأقل والأعلى فوائد: <strong className="text-rose-600">{scenarios.length >= 2 ? `${(Math.max(...scenarios.map(s => s.totalInterest)) - Math.min(...scenarios.map(s => s.totalInterest))).toLocaleString()} ج.م` : "—"}</strong>
                 </div>
-                {selectedScenario && (
-                  <Button size="sm" variant="ghost" onClick={() => setSelectedScenario(null)} className="text-[10px] text-violet-600 h-6 rounded-lg">
-                    إعادة تعيين
-                  </Button>
-                )}
+                {selectedScenario && <Button size="sm" variant="ghost" onClick={() => setSelectedScenario(null)} className="text-[10px] text-violet-600 h-6 rounded-lg">إعادة تعيين</Button>}
               </div>
             </CardContent>
           </Card>
 
-          {/* ===== نصيحة الاستشاري ===== */}
           {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
             <div className="p-3 bg-violet-50 border border-violet-200 rounded-2xl flex items-start gap-2 text-xs text-violet-800">
               <Sparkles className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
-              <p>
-                <strong>نصيحة ذكية:</strong> لو اختارت <strong>{bestScenario.label}</strong> بدل <strong>{selectedScenario} شهر</strong>، هتوفر{" "}
-                <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong> فوائد إضافية!
-              </p>
+              <p><strong>نصيحة ذكية:</strong> لو اختارت <strong>{bestScenario.label}</strong> بدل <strong>{selectedScenario} شهر</strong>، هتوفر <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong> فوائد إضافية!</p>
             </div>
           )}
-        </div>
 
-        {/* ===== العمود الأيمن: الجدول + الإجراءات ===== */}
-        <div className="lg:col-span-5 space-y-5">
-          {/* جدول الأقساط التفصيلي */}
+          {/* جدول الأقساط */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
             <CardContent className="p-0">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-violet-500" />
-                  <h3 className="font-bold text-sm text-slate-800">جدول الأقساط</h3>
-                </div>
-                <Badge className="bg-violet-50 text-violet-600 border-0 rounded-lg text-[10px]">{months} قسط</Badge>
+                <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-violet-500" /><h3 className="font-bold text-sm text-slate-800">جدول الأقساط التفصيلي</h3></div>
+                <Badge className="bg-violet-50 text-violet-600 border-0 rounded-lg text-[10px]">{months} قسط × {calculations.monthlyInstallment.toLocaleString()} ج.م</Badge>
               </div>
-              <div className="max-h-[380px] overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-slate-50 z-10">
-                    <tr className="border-b border-slate-200">
-                      <th className="py-2 px-3 text-right text-slate-500 font-semibold">#</th>
-                      <th className="py-2 px-3 text-right text-slate-500 font-semibold">التاريخ</th>
-                      <th className="py-2 px-3 text-center text-slate-500 font-semibold">المبلغ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {calculations.schedule.map((inst) => (
-                      <tr key={inst.number} className="hover:bg-violet-50/40 transition-colors">
-                        <td className="py-2.5 px-3 font-bold text-violet-600">{inst.number}</td>
-                        <td className="py-2.5 px-3 text-slate-500">{inst.date}</td>
-                        <td className="py-2.5 px-3 text-center font-extrabold text-slate-800">{inst.amount.toLocaleString()} ج.م</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="max-h-[280px] overflow-y-auto divide-y divide-slate-50">
+                {calculations.schedule.map((inst) => (
+                  <div key={inst.number} className="flex items-center justify-between px-5 py-2.5 hover:bg-violet-50/40 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-violet-50 text-violet-600 font-extrabold flex items-center justify-center text-[10px]">{inst.number}</div>
+                      <span className="text-[11px] text-slate-500 font-medium">{inst.date}</span>
+                    </div>
+                    <span className="font-extrabold text-xs text-slate-800">{inst.amount.toLocaleString()} ج.م</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* ===== ملخص العرض + أزرار ===== */}
-          <Card className="border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative shadow-lg">
+        {/* العمود الأيمن */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* الكارت البنفسجي */}
+          <Card className="border-0 bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 text-white overflow-hidden relative shadow-lg shadow-violet-500/20">
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
-              <div className="absolute -bottom-5 -left-5 w-24 h-24 bg-white/10 rounded-full" />
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-xl" />
+              <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-400/20 rounded-full blur-xl" />
             </div>
-            <CardContent className="p-5 relative z-10">
-              <div className="flex items-center justify-between mb-4">
+            <CardContent className="p-6 relative z-10 space-y-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] text-purple-100 font-medium">القسط الشهري</p>
-                  <p className="text-2xl font-extrabold">
-                    {calculations.monthlyInstallment.toLocaleString()} <span className="text-xs font-bold text-purple-200">ج.م</span>
-                  </p>
+                  <p className="text-xs text-purple-100 font-semibold mb-1">القسط الشهري المقدر</p>
+                  <p className="text-4xl font-extrabold tracking-tight leading-none">{calculations.monthlyInstallment.toLocaleString()}</p>
+                  <p className="text-sm text-purple-200 mt-1 font-medium">ج.م / شهرياً × {months} شهر</p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center">
-                  <Calculator className="h-6 w-6" />
-                </div>
+                <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20"><Wallet className="h-8 w-8" /></div>
               </div>
-
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-white/10 rounded-xl p-2.5 text-center">
-                  <p className="text-[9px] text-purple-200 mb-0.5">التمويل</p>
-                  <p className="font-bold text-sm">{calculations.principal.toLocaleString()}</p>
-                </div>
-                <div className="bg-white/10 rounded-xl p-2.5 text-center">
-                  <p className="text-[9px] text-purple-200 mb-0.5">الفوائد</p>
-                  <p className="font-bold text-sm text-amber-300">+{calculations.totalInterest.toLocaleString()}</p>
-                </div>
-                <div className="bg-white/10 rounded-xl p-2.5 text-center">
-                  <p className="text-[9px] text-purple-200 mb-0.5">الإجمالي</p>
-                  <p className="font-bold text-sm">{calculations.totalPayback.toLocaleString()}</p>
-                </div>
+              <div className="h-px bg-white/20" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">سعر المنتج</p><p className="font-bold text-sm">{productPrice.toLocaleString()} ج.م</p></div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">المقدم ({calculations.downPaymentPercent}%)</p><p className="font-bold text-sm">{downPayment.toLocaleString()} ج.م</p></div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">مبلغ التمويل</p><p className="font-bold text-sm">{calculations.principal.toLocaleString()} ج.م</p></div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10"><p className="text-[10px] text-purple-200 mb-1">الفوائد ({interestRate}%)</p><p className="font-bold text-sm text-amber-300">+{calculations.totalInterest.toLocaleString()} ج.م</p></div>
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handlePrintQuote}
-                  variant="secondary"
-                  className="rounded-xl h-11 bg-white hover:bg-slate-50 text-slate-800 shadow-md flex-1 gap-2 font-semibold text-sm"
-                >
-                  <Printer className="h-4 w-4" />
-                  طباعة العرض
-                </Button>
-                <Button
-                  onClick={handleConvertToContract}
-                  className="rounded-xl h-11 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border-0 flex-1 gap-1.5 font-bold text-sm"
-                >
-                  <ArrowRight className="h-4 w-4 rotate-180" />
-                  تحويل لعقد
-                </Button>
+              <div className="h-px bg-white/20" />
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/15 text-center">
+                <p className="text-xs text-purple-200 mb-1">إجمالي المبلغ المطلوب سداده</p>
+                <p className="text-2xl font-extrabold">{calculations.totalPayback.toLocaleString()} <span className="text-sm font-bold text-purple-200">ج.م</span></p>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={handlePrintQuote} variant="secondary" className="rounded-xl h-12 bg-white hover:bg-slate-50 text-slate-800 shadow-md flex-1 gap-2 font-bold text-sm"><Printer className="h-4 w-4" />طباعة العرض</Button>
+                <Button onClick={handleConvertToContract} className="rounded-xl h-12 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border-0 flex-1 gap-2 font-bold text-sm"><ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد</Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* استشاري مختصر */}
+          {/* نصائح التمويل */}
           <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
-            <CardContent className="p-4 space-y-2.5">
-              <div className="flex items-center gap-2 mb-1">
-                <Info className="h-4 w-4 text-blue-500" />
-                <h3 className="font-bold text-xs text-slate-700">نصائح التمويل</h3>
-              </div>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2 mb-1"><Info className="h-4 w-4 text-blue-500" /><h3 className="font-bold text-xs text-slate-700">نصائح التمويل الذكية</h3></div>
               {calculations.downPaymentPercent < 15 ? (
-                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 leading-relaxed">
-                  ⚠️ <strong>مقدم منخفض ({calculations.downPaymentPercent}%):</strong> يُنصح برفع المقدم لتقليل الفوائد والمخاطر.
-                </div>
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 leading-relaxed">⚠️ <strong>مقدم منخفض ({calculations.downPaymentPercent}%):</strong> يُنصح برفع المقدم لتقليل الفوائد والمخاطر.</div>
               ) : (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-relaxed">
-                  ✓ <strong>مقدم ممتاز ({calculations.downPaymentPercent}%):</strong> يقلل التكلفة الإجمالية بشكل فعال.
-                </div>
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-relaxed">✓ <strong>مقدم ممتاز ({calculations.downPaymentPercent}%):</strong> يقلل التكلفة الإجمالية للتمويل.</div>
               )}
-              {months > 24 && (
-                <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 leading-relaxed">
-                  💡 المدة الطويلة ({months} شهر) تزيد الفوائد. تأكد من عمر المنتج.
-                </div>
+              {months > 24 && <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 leading-relaxed">💡 المدة الطويلة ({months} شهر) تزيد الفوائد. تأكد من عمر المنتج.</div>}
+              {selectedScenario && bestScenario && selectedScenario === bestScenario.months && <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-relaxed">🎯 <strong>اختيار مثالي!</strong> أقل فترة سداد = أقل فوائد.</div>}
+              {selectedScenario && bestScenario && selectedScenario !== bestScenario.months && (
+                <div className="p-3 bg-violet-50 border border-violet-200 rounded-xl text-[11px] text-violet-800 leading-relaxed">💎 <strong>نصيحة ذكية:</strong> لو اختارت <strong>{bestScenario.label}</strong> بدلاً من <strong>{selectedScenario} شهر</strong>، هتوفر <strong>{(calculations.totalInterest - bestScenario.totalInterest).toLocaleString()} ج.م</strong> فوائد إضافية!</div>
               )}
-              {selectedScenario && bestScenario && selectedScenario === bestScenario.months && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 leading-relaxed">
-                  🎯 <strong>اختيار مثالي!</strong> أقل فترة سداد = أقل فوائد.
-                </div>
-              )}
+            </CardContent>
+          </Card>
+
+          {/* مقارنة سريعة */}
+          <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3"><GitCompareArrows className="h-4 w-4 text-indigo-500" /><h3 className="font-bold text-xs text-slate-700">مقارنة سريعة</h3></div>
+              <div className="space-y-2">
+                {scenarios.map((s) => {
+                  const isActive = selectedScenario === s.months;
+                  const isBest = bestScenario?.months === s.months;
+                  return (
+                    <div key={s.months} className={cn("flex items-center justify-between p-2.5 rounded-xl transition-all text-[11px]",
+                      isActive ? "bg-violet-50 border border-violet-200" : "bg-slate-50 border border-transparent hover:border-slate-200")}>
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold",
+                          isActive ? "bg-violet-500 text-white" : "bg-slate-200 text-slate-500")}>{s.months}</div>
+                        <span className="font-semibold text-slate-700">{s.label}</span>
+                        {isBest && <span className="text-[8px] font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">الأفضل</span>}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-slate-800">{s.monthly.toLocaleString()} ج.م</span>
+                        <span className="text-[9px] text-rose-400">فوائد: {s.totalInterest.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -583,12 +419,8 @@ const CalculatorPage = () => {
 
       {/* أزرار الجوال */}
       <div className="sm:hidden fixed bottom-20 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-40 flex gap-3">
-        <Button onClick={handlePrintQuote} variant="outline" className="rounded-xl h-12 flex-1 gap-2">
-          <Printer className="h-4 w-4" />طباعة
-        </Button>
-        <Button onClick={handleConvertToContract} className="rounded-xl h-12 flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-teal-500">
-          <ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد
-        </Button>
+        <Button onClick={handlePrintQuote} variant="outline" className="rounded-xl h-12 flex-1 gap-2"><Printer className="h-4 w-4" />طباعة</Button>
+        <Button onClick={handleConvertToContract} className="rounded-xl h-12 flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-teal-500"><ArrowRight className="h-4 w-4 rotate-180" />تحويل لعقد</Button>
       </div>
 
       <PrintDialog open={printOpen} onOpenChange={setPrintOpen} htmlContent={printHtml} title={`عرض تقسيط - ${settings.companyName || settings.appName}`} filename="installment-simulation.pdf" />

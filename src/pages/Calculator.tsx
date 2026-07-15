@@ -257,18 +257,19 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">ج.م</span>
                     </div>
                   </div>
-                  <Slider
-                    value={[price]}
-                    onValueChange={(val) => {
-                      const v = val[0];
-                      setPrice(v);
-                      setDownPayment(Math.min(downPayment, v));
-                    }}
-                    min={1000}
-                    max={200000}
-                    step={1000}
-                    className="w-full"
-                  />
+                  <div className="calculator-slider slider-violet px-1">
+                    <Slider
+                      value={[price]}
+                      onValueChange={(val) => {
+                        const v = val[0];
+                        setPrice(v);
+                        setDownPayment(Math.min(downPayment, v));
+                      }}
+                      min={1000}
+                      max={200000}
+                      step={1000}
+                    />
+                  </div>
                 </div>
 
                 {/* الدفعة المقدمة */}
@@ -285,14 +286,15 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">{downPercent}%</span>
                     </div>
                   </div>
-                  <Slider
-                    value={[clampedDown]}
-                    onValueChange={(val) => setDownPayment(val[0])}
-                    min={0}
-                    max={price}
-                    step={500}
-                    className="w-full"
-                  />
+                  <div className="calculator-slider slider-emerald px-1">
+                    <Slider
+                      value={[clampedDown]}
+                      onValueChange={(val) => setDownPayment(val[0])}
+                      min={0}
+                      max={price}
+                      step={500}
+                    />
+                  </div>
                 </div>
 
                 {/* نسبة الفائدة */}
@@ -311,14 +313,15 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">% سنوياً</span>
                     </div>
                   </div>
-                  <Slider
-                    value={[interestRate]}
-                    onValueChange={(val) => setInterestRate(val[0])}
-                    min={0}
-                    max={50}
-                    step={0.5}
-                    className="w-full"
-                  />
+                  <div className="calculator-slider slider-amber px-1">
+                    <Slider
+                      value={[interestRate]}
+                      onValueChange={(val) => setInterestRate(val[0])}
+                      min={0}
+                      max={50}
+                      step={0.5}
+                    />
+                  </div>
                 </div>
 
                 {/* فترة السداد */}
@@ -337,14 +340,15 @@ const Calculator = () => {
                       <span className="text-[10px] text-slate-400 min-w-[40px]">شهر</span>
                     </div>
                   </div>
-                  <Slider
-                    value={[months]}
-                    onValueChange={(val) => setMonths(val[0])}
-                    min={3}
-                    max={48}
-                    step={1}
-                    className="w-full"
-                  />
+                  <div className="calculator-slider slider-blue px-1">
+                    <Slider
+                      value={[months]}
+                      onValueChange={(val) => setMonths(val[0])}
+                      min={3}
+                      max={48}
+                      step={1}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>

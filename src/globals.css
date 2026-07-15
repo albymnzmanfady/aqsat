@@ -205,3 +205,99 @@
 .animate-gentle-pulse {
   animation: gentle-pulse 2s ease-in-out infinite;
 }
+
+/* ===== Calculator Colored Sliders ===== */
+.calculator-slider [data-orientation="horizontal"] {
+  height: 10px !important;
+  border-radius: 999px !important;
+}
+
+.calculator-slider [data-orientation="horizontal"] > span:first-child {
+  height: 10px !important;
+  border-radius: 999px !important;
+  background: #e2e8f0 !important;
+}
+
+.dark .calculator-slider [data-orientation="horizontal"] > span:first-child {
+  background: #1e293b !important;
+}
+
+.calculator-slider [data-orientation="horizontal"] > span:last-child > span {
+  height: 10px !important;
+  border-radius: 999px !important;
+}
+
+.calculator-slider [role="slider"] {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  cursor: grab !important;
+  transition: box-shadow 0.2s ease, transform 0.15s ease !important;
+}
+
+.calculator-slider [role="slider"]:active {
+  cursor: grabbing !important;
+  transform: scale(1.15) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.calculator-slider [role="slider"]:focus-visible {
+  outline: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Violet - سعر المنتج */
+.slider-violet [data-orientation="horizontal"] > span:first-child > span {
+  background: linear-gradient(90deg, #a78bfa, #8b5cf6, #7c3aed) !important;
+}
+.slider-violet [role="slider"] {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+  border-color: white !important;
+}
+
+/* Emerald - الدفعة المقدمة */
+.slider-emerald [data-orientation="horizontal"] > span:first-child > span {
+  background: linear-gradient(90deg, #6ee7b7, #34d399, #10b981) !important;
+}
+.slider-emerald [role="slider"] {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border-color: white !important;
+}
+
+/* Amber - نسبة الفائدة */
+.slider-amber [data-orientation="horizontal"] > span:first-child > span {
+  background: linear-gradient(90deg, #fcd34d, #fbbf24, #f59e0b) !important;
+}
+.slider-amber [role="slider"] {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  border-color: white !important;
+}
+
+/* Blue - فترة السداد */
+.slider-blue [data-orientation="horizontal"] > span:first-child > span {
+  background: linear-gradient(90deg, #93c5fd, #60a5fa, #3b82f6) !important;
+}
+.slider-blue [role="slider"] {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  border-color: white !important;
+}
+
+/* Dark mode thumb border adjustments */
+.dark .calculator-slider [role="slider"] {
+  border-color: #1e293b !important;
+}
+
+.dark .slider-violet [role="slider"] {
+  border-color: #1e293b !important;
+}
+.dark .slider-emerald [role="slider"] {
+  border-color: #1e293b !important;
+}
+.dark .slider-amber [role="slider"] {
+  border-color: #1e293b !important;
+}
+.dark .slider-blue [role="slider"] {
+  border-color: #1e293b !important;
+}

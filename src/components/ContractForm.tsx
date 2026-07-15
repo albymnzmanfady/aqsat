@@ -181,10 +181,10 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
       customerPhone: customer?.phone || "",
       productType: selectedProduct.name,
       productId: selectedProduct.id,
-      basePrice: basePrice,
+      basePrice,
       totalPrice: total,
-      interestRate: interestRate,
-      interestAmount: interestAmount,
+      interestRate,
+      interestAmount,
       downPayment: down,
       numberOfReceipts: Number(formData.numberOfReceipts),
       installmentAmount,
@@ -221,7 +221,7 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
 
         {/* اختيار الضامن */}
         <div className="border-t border-slate-100 pt-4">
-          <div className="flex items-center gap-2 mb-3"><Shield className="h-4 w-4 text-slate-400" /><p className="text-sm font-semibold text-slate-600">بيانات الضامن (اختياري)</p></div>
+          <div className="flex items-center gap-2 mb-3"><Shield className="h-4 w-4 text-slate-400" /><p className="text-sm font-semibold text-slate-600">الضامن (اختياري)</p></div>
           <Select value={formData.guarantorId} onValueChange={handleGuarantorSelect}>
             <SelectTrigger><SelectValue placeholder="اختر ضامن من القائمة" /></SelectTrigger>
             <SelectContent>
@@ -239,103 +239,101 @@ const ContractForm = ({ customers, guarantors, products, onSave, onCancel, initi
           )}
         </div>
 
-        {/* اختيار المنتج */}
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2"><Package className="h-3.5 w-3.5 text-slate-400" />المنتج</Label>
-          <Select value={formData.productId} onValueChange={handleProductSelect}>
-            <SelectTrigger className={errors.productId ? "border-red-300" : ""}><SelectValue placeholder="اختر المنتج" /></SelectTrigger>
-            <SelectContent>
-              {localProducts.map((p) => <SelectItem key={p.id} value={p.id.toString()} disabled={p.current_stock <= 0}>{p.name} ({p.current_stock} {p.unit})</SelectItem>)}
-              <SelectItem value="new"><div className="flex items-center gap-2 text-violet-600 font-semibold"><Plus className="h-3.5 w-3.5" />منتج جديد</div></SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.productId && <p className="text-xs text-red-500">{errors.productId}</p>}
-          {selectedProduct && (
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">سعر المنتج الأصلي</span>
-                <span className="font-bold text-slate-800">{basePrice.toLocaleString()} ج.م</span>
-              </div>
+        {/* المنتج + نسبة الفائدة في صف واحد */}
+        <div className="border-t border-slate-100 pt-4 space-y-1.5">
+          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2"><Package className="h-3.5 w-3.5 text-slate-400" />المنتج والأسعار</Label>
+          <div className="grid grid-cols-5 gap-3">
+            {/* المنتج - يأخذ 3 أعمدة */}
+            <div className="col-span-3 space-y-1.5">
+              <Select value={formData.productId} onValueChange={handleProductSelect}>
+                <SelectTrigger className={errors.productId ? "border-red-300 h-12" : "h-12"}><SelectValue placeholder="اختر المنتج" /></SelectTrigger>
+                <SelectContent>
+                  {localProducts.map((p) => <SelectItem key={p.id} value={p.id.toString()} disabled={p.current_stock <= 0}>{p.name} ({p.current_stock} {p.unit})</SelectItem>)}
+                  <SelectItem value="new"><div className="flex items-center gap-2 text-violet-600 font-semibold"><Plus className="h-3.5 w-3.5" />منتج جديد</div></SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.productId && <p className="text-xs text-red-500">{errors.productId}</p>}
             </div>
-          )}
-        </div>
 
-        {/* نسبة الفائدة */}
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-600 flex items-center gap-2">
-            <Percent className="h-3.5 w-3.5 text-amber-500" />
-            نسبة الفائدة المضافة (اختياري)
-          </Label>
-          <div className="relative">
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              value={formData.interestRate}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "" || (Number(val) >= 0 && Number(val) <= 100)) {
-                  setFormData({ ...formData, interestRate: val });
-                }
-              }}
-              placeholder="0"
-              className="pl-8"
-            />
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-semibold">%</span>
+            {/* نسبة الفائدة - يأخذ عمودين */}
+            <div className="col-span-2 space-y-1.5">
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={formData.interestRate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (Number(val) >= 0 && Number(val) <= 100)) {
+                      setFormData({ ...formData, interestRate: val });
+                    }
+                  }}
+                  placeholder="فائدة %"
+                  className={errors.interestRate ? "border-red-300 h-12 pl-8" : "h-12 pl-8"}
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                  <Percent className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs text-amber-600 font-bold">%</span>
+                </div>
+              </div>
+              {errors.interestRate && <p className="text-xs text-red-500">{errors.interestRate}</p>}
+            </div>
           </div>
-          {errors.interestRate && <p className="text-xs text-red-500">{errors.interestRate}</p>}
-          {interestRate > 0 && (
-            <div className="p-2 bg-amber-50/80 border border-amber-100 rounded-xl">
-              <p className="text-xs text-amber-700 text-center">
-                إضافة <span className="font-bold">{interestRate}%</span> = <span className="font-bold">+{interestAmount.toLocaleString()} ج.م</span>
-              </p>
+
+          {/* معلومات سعر المنتج والفوائد */}
+          {selectedProduct && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                <p className="text-[10px] text-slate-400 mb-0.5">السعر الأصلي</p>
+                <p className="font-bold text-sm text-slate-800">{basePrice.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ج.م</span></p>
+              </div>
+              {interestRate > 0 && (
+                <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-100 text-center">
+                  <p className="text-[10px] text-amber-500 mb-0.5">الفائدة (+{interestRate}%)</p>
+                  <p className="font-bold text-sm text-amber-600">+{interestAmount.toLocaleString()} <span className="text-[10px] font-normal text-amber-400">ج.م</span></p>
+                </div>
+              )}
+              <div className={`p-2.5 rounded-xl text-center ${interestRate > 0 ? 'bg-violet-50 border border-violet-100' : 'bg-slate-50 border border-slate-100'}`}>
+                <p className={`text-[10px] mb-0.5 ${interestRate > 0 ? 'text-violet-500' : 'text-slate-400'}`}>السعر النهائي</p>
+                <p className="font-extrabold text-sm text-violet-700">{total.toLocaleString()} <span className="text-[10px] font-normal text-violet-400">ج.م</span></p>
+              </div>
             </div>
           )}
         </div>
 
         {/* الحقول المالية */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">المقدم</Label><Input type="number" value={formData.downPayment} onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })} placeholder="0" className={errors.downPayment ? "border-red-300" : ""} />{errors.downPayment && <p className="text-xs text-red-500">{errors.downPayment}</p>}</div>
-          <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">عدد الأقساط</Label><Input type="number" value={formData.numberOfReceipts} onChange={(e) => setFormData({ ...formData, numberOfReceipts: e.target.value })} placeholder="12" className={errors.numberOfReceipts ? "border-red-300" : ""} />{errors.numberOfReceipts && <p className="text-xs text-red-500">{errors.numberOfReceipts}</p>}</div>
+          <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">المقدم</Label><Input type="number" value={formData.downPayment} onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })} placeholder="0" className={errors.downPayment ? "border-red-300 h-12" : "h-12"} />{errors.downPayment && <p className="text-xs text-red-500">{errors.downPayment}</p>}</div>
+          <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">عدد الأقساط</Label><Input type="number" value={formData.numberOfReceipts} onChange={(e) => setFormData({ ...formData, numberOfReceipts: e.target.value })} placeholder="12" className={errors.numberOfReceipts ? "border-red-300 h-12" : "h-12"} />{errors.numberOfReceipts && <p className="text-xs text-red-500">{errors.numberOfReceipts}</p>}</div>
         </div>
 
-        <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">تاريخ البدء</Label><Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className={errors.startDate ? "border-red-300" : ""} />{errors.startDate && <p className="text-xs text-red-500">{errors.startDate}</p>}</div>
+        <div className="space-y-1.5"><Label className="text-sm font-medium text-slate-600">تاريخ البدء</Label><Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className={errors.startDate ? "border-red-300 h-12" : "h-12"} />{errors.startDate && <p className="text-xs text-red-500">{errors.startDate}</p>}</div>
 
         {/* الملخص */}
         {selectedProduct && total > 0 && (
-          <div className="p-5 bg-gradient-to-br from-violet-50 via-purple-50/80 to-indigo-50 rounded-2xl border border-violet-100">
+          <div className="p-4 bg-gradient-to-br from-violet-50 via-purple-50/80 to-indigo-50 rounded-2xl border border-violet-100">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center"><Calculator className="h-4 w-4 text-white" /></div>
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center"><Calculator className="h-3.5 w-3.5 text-white" /></div>
               <span className="text-sm font-bold text-violet-700">ملخص العقد المالي</span>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between p-2 bg-white/60 rounded-xl border border-violet-100/50">
-                <span className="text-xs text-slate-500">سعر المنتج الأصلي</span>
-                <span className="font-bold text-slate-800">{basePrice.toLocaleString()} ج.م</span>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="bg-white/60 rounded-xl p-2.5 border border-violet-100/50">
+                <p className="text-[10px] text-slate-400">السعر الإجمالي</p>
+                <p className="font-extrabold text-violet-700">{total.toLocaleString()} ج.م</p>
               </div>
-              {interestRate > 0 && (
-                <div className="flex items-center justify-between p-2 bg-amber-50/60 rounded-xl border border-amber-100/50">
-                  <span className="text-xs text-amber-600">إضافة فائدة ({interestRate}%)</span>
-                  <span className="font-bold text-amber-600">+{interestAmount.toLocaleString()} ج.م</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between p-2 bg-white/60 rounded-xl border border-violet-100/50">
-                <span className="text-xs text-slate-500">السعر الإجمالي</span>
-                <span className="font-extrabold text-violet-700">{total.toLocaleString()} ج.م</span>
+              <div className="bg-white/60 rounded-xl p-2.5 border border-violet-100/50">
+                <p className="text-[10px] text-slate-400">المقدم</p>
+                <p className="font-bold text-slate-800">{down.toLocaleString()} ج.م</p>
               </div>
-              <div className="flex items-center justify-between p-2 bg-white/60 rounded-xl border border-violet-100/50">
-                <span className="text-xs text-slate-500">المقدم</span>
-                <span className="font-bold text-slate-800">{down.toLocaleString()} ج.م</span>
+              <div className="bg-white/60 rounded-xl p-2.5 border border-violet-100/50">
+                <p className="text-[10px] text-slate-400">المتبقي للسداد</p>
+                <p className="font-bold text-violet-600">{(total - down).toLocaleString()} ج.م</p>
               </div>
-              <div className="h-px bg-violet-200/50" />
-              <div className="flex items-center justify-between p-2 bg-violet-100/50 rounded-xl border border-violet-200/50">
-                <span className="text-xs text-violet-600 font-semibold">المتبقي للسداد</span>
-                <span className="font-bold text-violet-700">{(total - down).toLocaleString()} ج.م</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-xl border border-violet-200/50">
-                <span className="text-xs text-violet-600 font-bold">القسط الشهري × {receipts} شهر</span>
-                <span className="font-extrabold text-lg text-violet-700">{installmentAmount.toLocaleString()} ج.م</span>
+              <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-xl p-2.5 border border-violet-200/50">
+                <p className="text-[10px] text-violet-600 font-bold">القسط الشهري × {receipts}</p>
+                <p className="font-extrabold text-violet-700">{installmentAmount.toLocaleString()} ج.م</p>
               </div>
             </div>
           </div>

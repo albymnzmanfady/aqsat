@@ -19,14 +19,12 @@ const DEFAULT_SETTINGS: GeneralSettings = {
   companyAddress: "",
 };
 
-const SETTINGS_KEY = "general_settings";
-
 export function useAppSettings() {
   const [settings, setSettings] = useState<GeneralSettings>(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    api.getSettings(SETTINGS_KEY)
+    api.getSettings("general")
       .then((data) => {
         if (data) setSettings({ ...DEFAULT_SETTINGS, ...data });
       })
@@ -37,7 +35,7 @@ export function useAppSettings() {
   const updateSettings = useCallback((newSettings: Partial<GeneralSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      api.updateSettings(SETTINGS_KEY, updated).catch(console.error);
+      api.updateSettings("general", updated).catch(console.error);
       return updated;
     });
   }, []);

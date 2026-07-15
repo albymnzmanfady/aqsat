@@ -27,7 +27,7 @@ import {
   Plus, CreditCard, Users, FileText, AlertTriangle, 
   CheckCircle2, Clock, Loader2,
   TrendingUp, Wallet, Sparkles, Calendar,
-  ChevronLeft, Send, CheckCircle, Coins, Search, X
+  ChevronLeft, Send, CheckCircle, Coins, Search, X, RefreshCw
 } from "lucide-react";
 import { sendWhatsAppMessage, getWhatsAppConfig, MESSAGE_TEMPLATES } from "@/components/WhatsAppService";
 
@@ -40,26 +40,37 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overdue" | "today" | "recent">("overdue");
   const [sendingId, setSendingId] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [quickSearch, setQuickSearch] = useState("");
   const [confirmPayInstallment, setConfirmPayInstallment] = useState<any | null>(null);
   const [activeModal, setActiveModal] = useState<"total" | "collected" | "remaining" | "overdue" | "today" | "activeContracts" | null>(null);
 
+  const fetchData = async () => {
+    try {
+      const [c, i, cu] = await Promise.all([
+        api.contracts.list(),
+        api.installments.list(),
+        api.customers.list()
+      ]);
+      setContracts(c);
+      setInstallments(i);
+      setCustomers(cu);
+    } catch (err: any) {
+      showError("حدث خطأ أثناء تحميل البيانات: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
-    Promise.all([
-      api.contracts.list(),
-      api.installments.list(),
-      api.customers.list()
-    ])
-      .then(([c, i, cu]) => { 
-        setContracts(c); 
-        setInstallments(i); 
-        setCustomers(cu);
-      })
-      .catch((err) => {
-        showError("حدث خطأ أثناء تحميل البيانات: " + err.message);
-      })
-      .finally(() => setLoading(false));
+    fetchData();
   }, []);
 
   const today = useMemo(() => {
@@ -206,6 +217,7 @@ const Index = () => {
       setQuickSearch("");
       setConfirmPayInstallment(null);
       
+      // إعادة تحميل البيانات بعد التحصيل
       const [c, i] = await Promise.all([api.contracts.list(), api.installments.list()]);
       setContracts(c);
       setInstallments(i);
@@ -269,13 +281,24 @@ const Index = () => {
                 لديك اليوم مهام تحصيل هامة. إليك ملخص حي لكافة المؤشرات المالية والحركات النشطة بالنظام.
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center gap-3 self-start md:self-auto shadow-inner">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-amber-300" />
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-purple-200">تاريخ اليوم</p>
-                <p className="text-sm font-bold">{new Date().toLocaleDateString("ar-EG", { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleRefresh}
+                variant="ghost"
+                className="rounded-xl h-10 gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                disabled={refreshing}
+              >
+                <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+                تحديث
+              </Button>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center gap-3 self-start md:self-auto shadow-inner">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-amber-300" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-purple-200">تاريخ اليوم</p>
+                  <p className="text-sm font-bold">{new Date().toLocaleDateString("ar-EG", { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                </div>
               </div>
             </div>
           </div>
